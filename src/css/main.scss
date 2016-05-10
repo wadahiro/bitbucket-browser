@@ -1,0 +1,129 @@
+// custom color
+$blue: #205081;
+$turquoise: #3b73af;
+$green: #3b7fc4;
+
+@import '../../node_modules/bulma/bulma.sass';
+@import '../../node_modules/react-select/dist/react-select';
+@import '../../node_modules/font-awesome/scss/font-awesome';
+
+// @FIXME
+.branch-table > div > div > div > table > thead > tr > th > span {
+    color: #222324;
+}
+
+.branch-table td ul {
+    padding-left: 10px;
+}
+
+.branch-table th {
+    word-break:break-all;
+    word-wrap: break-word;
+}
+.branch-table td {
+    word-break:break-all;
+    word-wrap: break-word;
+}
+
+.progress {
+    margin-bottom: 0px;
+}
+
+.behind-ahead-graph {
+    color: #707070;
+    font-size: 12px;
+    margin: 0 auto;
+    width: 200px;
+    text-align: center;
+    
+    .count-graph {        
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+        display: inline-block;
+        padding: 5px 5px 0;
+        position: relative;
+        width: 100px;
+        vertical-align: text-bottom;
+        
+        .count-bar {
+            height: 5px;
+            position: absolute;
+            top: 0;
+        }
+    }
+    .count-graph+.count-graph {
+        border-left: 1px solid #ccc;
+    }
+    .behind-graph {
+        text-align: right;
+        .count-bar {
+            background-color: #ccc;
+            right: 0;
+        }
+    }
+    .ahead-graph {
+        text-align: left;
+        .count-bar {
+            background-color: #3b73af;
+            left: 0;
+        }
+    }
+}
+
+.behind-graph-container {
+    margin-right: 10px;
+}
+
+.behind-graph-container .progress {
+    border-radius: 0px;
+    -webkit-box-shadow: 0px 0px;
+    box-shadow: 0px 0px;
+    background-color: #FFF;
+    
+    display: block;
+    float: right;
+    height: 5px;
+    line-height: 30px;
+}
+
+.behind-graph-container span {
+    color: #000;
+    float: right;
+    padding-right: 3px;
+}
+
+.ahead-graph-container {
+    margin-left: -23px;
+    margin-right: 23px;
+    padding-left: 2px;
+    border-left-color: grey;
+    border-left-width: 1px;
+    border-left-style: solid;
+}
+
+.ahead-graph-container .progress {
+    border-radius: 0px;
+    -webkit-box-shadow: 0px 0px;
+    box-shadow: 0px 0px;
+    background-color: #FFF;
+    
+    height: 5px;
+    line-height: 30px;
+}
+
+.ahead-graph-container span {
+    color: #000;
+    float: left;
+    padding-left: 3px;
+}
+
+@keyframes spin {
+    from { transform: scale(1) rotate(0deg); }
+    to { transform: scale(1) rotate(360deg); }
+}
+
+@-webkit-keyframes spin2 {
+    from { -webkit-transform: rotate(0deg); }
+    to { -webkit-transform: rotate(360deg); }
+}
