@@ -5,10 +5,12 @@ import * as _ from 'lodash';
 import * as B from './bulma';
 import { PullRequestCount, PullRequestStatus, BranchInfo, BuildStatus, SonarStatus,
     isAuthenticated, loadBranchInfos, fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from './BitbucketApi';
+import * as SQAPI from './SonarQubeApi';
 import SearchBox from './SearchBox';
 import BitbucketTable from './BitbucketTable';
 import Spinner from './Spinner';
 import { Settings } from './Settings';
+import { SonarQubeLoginModal } from './components/SonarQubeLoginModal';
 
 // require("babel-polyfill");
 require('whatwg-fetch');
@@ -17,8 +19,12 @@ require('whatwg-fetch');
 interface State {
     settings?: Settings;
     loading?: boolean;
+
+    sonarQubeAuthenticated?: boolean;
+
     branchInfosLoaded?: boolean;
     branchInfos?: BranchInfo[];
+
     projectIncludes?: string;
     projectExcludes?: string;
     repoIncludes?: string;
@@ -34,8 +40,12 @@ class App extends React.Component<React.Props<App>, State> {
     state: State = {
         settings: null,
         loading: false,
+
+        sonarQubeAuthenticated: true,
+
         branchInfosLoaded: false,
         branchInfos: [],
+
         projectIncludes: '',
         projectExcludes: '',
         repoIncludes: '',
@@ -73,11 +83,15 @@ class App extends React.Component<React.Props<App>, State> {
                     let branchExcludes = params['branchExcludes'] ? params['branchExcludes'] : '';
                     let branchAuthorExcludes = params['branchAuthorExcludes'] ? params['branchAuthorExcludes'] : '';
 
-                    const authenticated = await isAuthenticated();
-                    if (!authenticated) {
+                    const bitbucketAuthenticated = await isAuthenticated();
+                    const sonarQubeAuthenticated = await SQAPI.isAuthenticated(x);
+
+                    if (!bitbucketAuthenticated) {
+                        // Redirect to Bitbucket Login page
                         location.href = `/stash/login?next=/stash-browser${encodeURIComponent(location.hash)}`;
                     } else {
                         this.setState({
+                            sonarQubeAuthenticated,
                             projectIncludes,
                             repoIncludes,
                             branchIncludes,
@@ -87,7 +101,9 @@ class App extends React.Component<React.Props<App>, State> {
                             branchExcludes,
                             branchAuthorExcludes
                         }, () => {
-                            this.loadBranchInfos();
+                            if (sonarQubeAuthenticated) {
+                                this.loadBranchInfos();
+                            }
                         });
                     }
                 });
@@ -126,6 +142,14 @@ class App extends React.Component<React.Props<App>, State> {
         });
     };
 
+    handleSonarQubeAuthenticated = () => {
+        this.setState({
+            sonarQubeAuthenticated: true
+        }, () => {
+            this.loadBranchInfos();
+        });
+    };
+
     loadBranchInfos = () => {
         const executorSize = 10;
 
@@ -133,14 +157,20 @@ class App extends React.Component<React.Props<App>, State> {
             loading: true,
             branchInfos: []
         }, async () => {
+            const { settings } = this.state;
+            
             const loaded = await loadBranchInfos(this.state.settings, branchInfoOfSomeProjects => {
+                
                 // important! share fetch instance
-                const fetch = new B.LazyFetch<PullRequestCount>(() => {
+                const fetchPrCount = new B.LazyFetch<PullRequestCount>(() => {
                     return fetchPullRequests(branchInfoOfSomeProjects[0]);
                 });
 
                 const branchInfos = branchInfoOfSomeProjects.map(x => {
-                    x.pullRequestStatus = fetch;
+                    x.pullRequestStatus = fetchPrCount;
+                    x.sonarQubeMetrics = new B.LazyFetch<SQAPI.SonarQubeMetrics>(() => {
+                        return SQAPI.fetchMetricsByKey(settings, x.repo, x.branch);
+                    });
                     return x;
                 });
 
@@ -263,9 +293,6 @@ class App extends React.Component<React.Props<App>, State> {
             const updatedRows = this.state.branchInfos.map(x => {
                 if (x.id === branchInfo.id) {
                     x.sonarStatus = sonarStatus;
-                    if (sonarStatus === null) {
-                        console.log("set null")
-                    }
                 }
                 return x;
             });
@@ -284,8 +311,38 @@ class App extends React.Component<React.Props<App>, State> {
         updateRow(null);
     };
 
+    handleSonarQubeMetrics = (fetch: B.LazyFetch<SQAPI.SonarQubeMetrics>, branchInfo: BranchInfo) => {
+        console.log('handleSonarQubeMetrics', branchInfo.sonarQubeMetrics)
+        if (branchInfo.sonarQubeMetrics === null) {
+            return;
+        }
+
+        const updateRow = (sonarQubeMetrics) => {
+            const updatedRows = this.state.branchInfos.map(x => {
+                if (x.id === branchInfo.id) {
+                    x.sonarQubeMetrics = sonarQubeMetrics;
+                }
+                return x;
+            });
+            this.setState({
+                branchInfos: updatedRows
+            });
+        };
+        if (branchInfo.sonarQubeMetrics !== null) {
+            fetch.fetch()
+                .then(sonarQubeMetrics => {
+                    console.log('handleSonarQubeMetrics end')
+                    updateRow(sonarQubeMetrics);
+                });
+        }
+
+        updateRow(null);
+    };
+
     render() {
-        const { settings, branchInfos, loading, branchInfosLoaded,
+        const { settings,
+            sonarQubeAuthenticated,
+            branchInfos, loading, branchInfosLoaded,
             projectIncludes, projectExcludes,
             repoIncludes, repoExcludes,
             branchIncludes, branchExcludes, branchAuthorIncludes, branchAuthorExcludes } = this.state;
@@ -334,39 +391,48 @@ class App extends React.Component<React.Props<App>, State> {
                     </nav>
                 </section>
 
-                <B.Section>
-                    <B.Container isFluid>
-                        { branchInfos.length > 0 &&
-                            [<SearchBox
-                                key='searchBox'
-                                data={branchInfos}
-                                onChange={this.onChange}
-                                defaultProjectIncludes={projectIncludes}
-                                defaultRepoIncludes={repoIncludes}
-                                defaultBranchIncludes={branchIncludes}
-                                defaultBranchAuthorIncludes={branchAuthorIncludes}
-                                defaultProjectExcludes={projectExcludes}
-                                defaultRepoExcludes={repoExcludes}
-                                defaultBranchExcludes={branchExcludes}
-                                defaultBranchAuthorExcludes={branchAuthorExcludes}
-                                />,
-                                <hr key='hr'/>]
-                        }
-                        {
-                            settings &&
-                            <div className='branch-table' style={{ padding: '0px 10px 0px 10px' }}>
-                                <BitbucketTable
-                                    settings={settings}
-                                    showFilter={true}
-                                    results={filteredBranchInfos}
-                                    handlePullRequestCount={this.handlePullRequestCount}
-                                    handleBuildStatus={this.handleBuildStatus}
-                                    handleSonarStatus={this.handleSonarStatus}
-                                    />
-                            </div>
-                        }
-                    </B.Container>
-                </B.Section>
+                { sonarQubeAuthenticated ?
+                    <B.Section>
+                        <B.Container isFluid>
+                            { branchInfos.length > 0 &&
+                                [<SearchBox
+                                    key='searchBox'
+                                    data={branchInfos}
+                                    onChange={this.onChange}
+                                    defaultProjectIncludes={projectIncludes}
+                                    defaultRepoIncludes={repoIncludes}
+                                    defaultBranchIncludes={branchIncludes}
+                                    defaultBranchAuthorIncludes={branchAuthorIncludes}
+                                    defaultProjectExcludes={projectExcludes}
+                                    defaultRepoExcludes={repoExcludes}
+                                    defaultBranchExcludes={branchExcludes}
+                                    defaultBranchAuthorExcludes={branchAuthorExcludes}
+                                    />,
+                                    <hr key='hr'/>]
+                            }
+                            {
+                                settings &&
+                                <div className='branch-table' style={{ padding: '0px 10px 0px 10px' }}>
+                                    <BitbucketTable
+                                        settings={settings}
+                                        showFilter={true}
+                                        results={filteredBranchInfos}
+                                        handlePullRequestCount={this.handlePullRequestCount}
+                                        handleBuildStatus={this.handleBuildStatus}
+                                        handleSonarStatus={this.handleSonarStatus}
+                                        handleSonarQubeMetrics={this.handleSonarQubeMetrics}
+                                        />
+                                </div>
+                            }
+                        </B.Container>
+                    </B.Section>
+                    : settings &&
+                    <SonarQubeLoginModal
+                        settings={settings}
+                        show={!sonarQubeAuthenticated}
+                        onAuthenticated={this.handleSonarQubeAuthenticated} />
+                }
+
                 <B.Footer>
                     <p>
                         <strong>{settings && settings.title}</strong>.The source code is licensed <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.

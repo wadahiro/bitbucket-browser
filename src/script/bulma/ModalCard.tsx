@@ -3,6 +3,7 @@ import * as React from 'react';
 export class ModalCard extends React.Component<any, any> {
     static defaultProps = {
         show: false,
+        showClose: true,
         onHide: null
     };
 
@@ -18,7 +19,7 @@ export class ModalCard extends React.Component<any, any> {
             // color: '#69707a',
             // fontSize: '1rem'
         };
-        const { title } = this.props;
+        const { title, showClose } = this.props;
 
         return (
             <div style={modalStyle} className={`modal ${show}`}>
@@ -26,7 +27,9 @@ export class ModalCard extends React.Component<any, any> {
                 <div className='modal-card'>
                     <header className='modal-card-head'>
                         <p className='modal-card-title'>{title}</p>
-                        <button className='delete' onClick={this.close}></button>
+                        { showClose &&
+                            <button className='delete' onClick={this.close}></button>
+                        }
                     </header>
                     <section className='modal-card-body'>
                         {this.props.children}

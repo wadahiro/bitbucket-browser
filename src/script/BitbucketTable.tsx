@@ -4,6 +4,7 @@ import * as _ from 'lodash';
 import { BehindAheadBranch, PullRequestStatus, BuildStatus, SonarStatus,
     BranchInfo, PullRequestCount,
     fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from './BitbucketApi';
+import { SonarQubeMetrics } from './SonarQubeApi'
 import * as B from './bulma';
 import Spinner from './Spinner';
 import { BehindAheadGraph } from './components/BehindAheadGraph';
@@ -123,14 +124,15 @@ const COLUMN_METADATA = [
     },
     {
         name: 'sonarStatus',
-        label: 'Sonar Status',
+        label: 'Sonar for Stash Metric',
         order: 15,
         width: 300,
         visible: true,
         sortEnabled: false,
-        renderer: SonarStatusFormatter
+        renderer: SonarForBitbucketMetricFormatter
     }
-    // branchNameLink column is added in 'componentDidMount' because of
+    // sonarQubeMetrics column is added in 'componentDidMount'
+    // branchNameLink column is added in 'componentDidMount'
 ];
 
 interface Props extends React.Props<BitbucketDataTable> {
@@ -142,6 +144,7 @@ interface Props extends React.Props<BitbucketDataTable> {
     handlePullRequestCount: (prCount: B.LazyFetch<PullRequestCount>, branchInfo: BranchInfo) => void;
     handleBuildStatus: (buildStatus: B.LazyFetch<BuildStatus>, branchInfo: BranchInfo) => void;
     handleSonarStatus: (sonarStatus: B.LazyFetch<SonarStatus>, branchInfo: BranchInfo) => void;
+    handleSonarQubeMetrics: (sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics>, branchInfo: BranchInfo) => void;
 }
 
 export default class BitbucketDataTable extends React.Component<Props, any> {
@@ -151,7 +154,7 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
     };
 
     render() {
-        const { settings, results, handlePullRequestCount, handleBuildStatus, handleSonarStatus } = this.props;
+        const { settings, results, handlePullRequestCount, handleBuildStatus, handleSonarStatus, handleSonarQubeMetrics } = this.props;
 
         const resolvedColumnMetadata = COLUMN_METADATA.map(colMeta => {
             const meta = resolveCustomComponent(colMeta);
@@ -167,11 +170,23 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
             return meta;
         });
 
+
+        resolvedColumnMetadata.push(
+            {
+                name: 'sonarQubeMetrics',
+                label: 'SonarQube Metrics',
+                order: 16,
+                width: 300,
+                visible: true,
+                sortEnabled: false,
+                renderer: SonarQubeMetricsFormatter(settings),
+                lazyFetch: handleSonarQubeMetrics
+            }
+        );
         resolvedColumnMetadata.push(
             {
                 name: 'branchNameLink',
                 label: settings.branchNameLinkResolver.displayName,
-                order: 100,
                 width: 100,
                 visible: true,
                 renderer: BranchNameLinkFormatter(settings.branchNameLinkResolver)
@@ -331,7 +346,7 @@ function BuildStatusFormatter(buildStatus: BuildStatus, values, metadata) {
     );
 }
 
-function SonarStatusFormatter(sonarStatus: SonarStatus, branchInfo: BranchInfo, metadata) {
+function SonarForBitbucketMetricFormatter(sonarStatus: SonarStatus, branchInfo: BranchInfo, metadata) {
     if (sonarStatus === null) {
         return LOADING;
     }
@@ -378,15 +393,36 @@ function SonarStatusFormatter(sonarStatus: SonarStatus, branchInfo: BranchInfo, 
 }
 
 function _toSonarDisplayName(key: string): string {
+    // see http://docs.sonarqube.org/display/SONARQUBE43/Metric+definitions
     switch (key) {
-        case 'duplicatedLines':
+        case 'lines':
             return 'Dupl. lines';
-        case 'coverage':
+
+        case 'duplicatedLines': // Sonar For Bitbucket
+        case 'duplicated_lines':
+            return 'Dupl. lines';
+
+        case 'coverage': // Sonar For Bitbucket
             return 'Coverage';
-        case 'violations':
+
+        case 'violations': // Sonar For Bitbucket
             return 'All issues';
-        case 'technicalDebt':
+
+        case 'blocker_violations':
+            return 'Blocker issues';
+        case 'critical_violations':
+            return 'Critical issues';
+        case 'mejor_violations':
+            return 'Major issues';
+        case 'minor_violations':
+            return 'Minor issues';
+        case 'info_violations':
+            return 'Info issues';
+
+        case 'technicalDebt': // Sonar For Bitbucket
+        case 'sqale_index':
             return 'Tech. dept';
+
         default:
             return key;
     }
@@ -421,6 +457,43 @@ function _toSonarDisplayValue(key: string, value: string | number): string {
     }
 }
 
+
+function SonarQubeMetricsFormatter(settings: Settings) {
+    return (metrics: SonarQubeMetrics, branchInfo: BranchInfo, metadata) => {
+        if (metrics === null) {
+            return LOADING;
+        }
+        if (metrics.err_code === 404) {
+            return <span>-</span>;
+        }
+
+        const style = {
+            fontSize: 11
+        };
+
+        return <div>
+            <h3><a href={`${settings.sonarStatusResolver.baseUrl}/dashboard/index/${metrics.id}`} target='_blank'>{metrics.name}</a></h3>
+            <table className='table is-narrow' style={style}>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    { metrics.msr.map(metric => {
+                        return (
+                            <tr key={metric.key}>
+                                <td>{_toSonarDisplayName(metric.key) }</td>
+                                <td>{metric.frmt_val}</td>
+                            </tr>
+                        );
+                    }) }
+                </tbody>
+            </table>
+        </div>;
+    }
+}
 
 // transformer
 function projectLink(data, values: BranchInfo) {

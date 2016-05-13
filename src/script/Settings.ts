@@ -1,7 +1,4 @@
-export interface Settings {
-    title: string;
-    branchNameLinkResolver: BranchNameLinkResolver;
-}
+
 
 export interface BranchNameLinkResolver {
     pattern: string;
@@ -9,3 +6,14 @@ export interface BranchNameLinkResolver {
     displayName: string;
 }
 
+export interface SonarStatusResolver {
+    baseUrl: string;
+    projectBaseKey: string;
+    metrics: string;
+}
+
+export interface Settings {
+    title: string;
+    branchNameLinkResolver: BranchNameLinkResolver;
+    sonarStatusResolver: SonarStatusResolver;
+}

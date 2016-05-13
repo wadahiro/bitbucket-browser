@@ -1,5 +1,6 @@
 import { Settings } from './Settings';
 import * as B from './bulma';
+import { SonarQubeMetrics } from './SonarQubeApi';
 
 // bitbucket rest api models
 interface BitBucketPage {
@@ -246,6 +247,7 @@ export interface BranchInfo extends Branch {
     pullRequestStatus: B.LazyFetch<PullRequestCount> | PullRequestStatus
     buildStatus: B.LazyFetch<BuildStatus> | BuildStatus;
     sonarStatus: B.LazyFetch<SonarStatus> | SonarStatus;
+    sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics> | SonarQubeMetrics;
 }
 export interface BehindAheadBranch {
     aheadBranch: number;
@@ -295,7 +297,8 @@ export async function loadBranchInfos(settings: Settings, handleProjectBranchInf
                                     branchNameLink: getBranchNameLink(settings, b.branch),
                                     pullRequestStatus: null,
                                     buildStatus: null,
-                                    sonarStatus: null
+                                    sonarStatus: null,
+                                    sonarQubeMetrics: null
                                 } as BranchInfo);
                                 return branchInfo;
                             });
