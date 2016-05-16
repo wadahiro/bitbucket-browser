@@ -189,19 +189,21 @@ class App extends React.Component<React.Props<App>, State> {
             const repos = await fetchAllRepos();
             const branchInfosPromises = await fetchBranchInfos(settings, repos);
 
-            const finished = branchInfosPromises.map(p => {
-                return p.then(branchInfos => {
-                    this.setState({
-                        branchInfos: this.state.branchInfos.concat(resolveLazyFetch(branchInfos))
-                    });
-                    return true;
+            const finished = _.chunk(branchInfosPromises, 6).map(async (x) => {
+                const results = await Promise.all<BranchInfo[]>(x);
+                const branchInfos = _.flatten(results);
+                this.setState({
+                    branchInfos: this.state.branchInfos.concat(resolveLazyFetch(branchInfos))
                 });
+                return true;
             });
 
-            const results = await Promise.all<boolean>(finished);
-            this.setState({
-                loading: false
-            });
+            Promise.all(finished)
+                .then(x => {
+                    this.setState({
+                        loading: false
+                    });
+                });
         });
     };
 

@@ -50,21 +50,21 @@ const COLUMN_METADATA = [
         name: 'branchAuthor',
         label: 'Branch Author',
         order: 5,
-        width: 100,
+        width: 120,
         visible: true
     },
     {
         name: 'branchCreated',
         label: 'Branch Created',
         order: 6,
-        width: 100,
+        width: 120,
         visible: true
     },
     {
         name: 'latestCommitDate',
         label: 'Updated',
         order: 7,
-        width: 100,
+        width: 120,
         visible: true,
         renderer: CommitLink
     },
@@ -82,7 +82,7 @@ const COLUMN_METADATA = [
         name: 'pullRequestStatus',
         label: 'Pull Request Status',
         order: 9,
-        width: 120,
+        width: 130,
         visible: true,
         sortEnabled: false,
         renderer: PullRequestStatusFormatter
@@ -119,7 +119,7 @@ const COLUMN_METADATA = [
         name: 'buildStatus',
         label: 'Build Status',
         order: 14,
-        width: 200,
+        width: 130,
         visible: true,
         sortEnabled: false,
         renderer: BuildStatusFormatter
@@ -201,7 +201,6 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
             <div>
                 <B.Columns>
                     <B.Table
-                        fixed={true}
                         columnMetadata={resolvedColumnMetadata}
                         enableSort={true}
                         showPagination={true}
