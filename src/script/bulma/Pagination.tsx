@@ -11,8 +11,8 @@ interface Props extends React.Props<Pagination> {
 
 export class Pagination extends React.Component<Props, any> {
     static defaultProps = {
-        paddingTop: 5,
-        paddingBottom: 5,
+        paddingTop: 10,
+        paddingBottom: 10,
         maxButtons: 10
     };
 

@@ -6,13 +6,13 @@ import * as B from './bulma';
 import { PullRequestCount, PullRequestStatus, BranchInfo, BuildStatus, SonarStatus,
     isAuthenticated, fetchAllRepos, fetchBranchInfos, fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from './BitbucketApi';
 import * as SQAPI from './SonarQubeApi';
-import SearchBox from './SearchBox';
 import BitbucketTable from './BitbucketTable';
 import Spinner from './Spinner';
 import { Settings } from './Settings';
 import { SonarQubeLoginModal } from './components/SonarQubeLoginModal';
+import { SidebarFilter } from './components/SidebarFilter';
 
-// require("babel-polyfill");
+// require('babel-polyfill');
 require('whatwg-fetch');
 
 
@@ -35,6 +35,7 @@ interface State {
     branchAuthorExcludes?: string;
 
     resultsPerPage?: number;
+    sidebarFilterOpened?: boolean;
 }
 
 class App extends React.Component<React.Props<App>, State> {
@@ -57,7 +58,8 @@ class App extends React.Component<React.Props<App>, State> {
         branchAuthorIncludes: '',
         branchAuthorExcludes: '',
 
-        resultsPerPage: 5
+        resultsPerPage: 5,
+        sidebarFilterOpened: false
     };
 
     componentDidMount() {
@@ -367,13 +369,19 @@ class App extends React.Component<React.Props<App>, State> {
         }
     };
 
+    handleToggleSidebar = (e: React.SyntheticEvent) => {
+        this.setState({
+            sidebarFilterOpened: !this.state.sidebarFilterOpened
+        });
+    };
+
     render() {
         const { settings,
             branchInfos, loading, branchInfosLoaded,
             projectIncludes, projectExcludes,
             repoIncludes, repoExcludes,
             branchIncludes, branchExcludes, branchAuthorIncludes, branchAuthorExcludes,
-            resultsPerPage } = this.state;
+            resultsPerPage, sidebarFilterOpened } = this.state;
 
         const filteredBranchInfos = filterBranchInfo(branchInfos,
             toArray(projectIncludes), toArray(projectExcludes),
@@ -390,78 +398,84 @@ class App extends React.Component<React.Props<App>, State> {
         ];
 
         return (
-            <div>
-                <section className='hero is-info is-left is-bold'>
-                    <nav className="nav">
-                        <div className="container is-fluid">
-                            <div className="nav-left">
-                                <p className="nav-item title">
-                                    {settings && settings.title}
-                                    &nbsp;
-                                    {loading &&
-                                        <B.Loading />
+            <SidebarFilter
+                data={branchInfos}
+                onChange={this.onChange}
+                projectIncludes={projectIncludes}
+                repoIncludes={repoIncludes}
+                branchIncludes={branchIncludes}
+                branchAuthorIncludes={branchAuthorIncludes}
+                projectExcludes={projectExcludes}
+                repoExcludes={repoExcludes}
+                branchExcludes={branchExcludes}
+                branchAuthorExcludes={branchAuthorExcludes}
+                onClose={this.handleToggleSidebar}
+                open={sidebarFilterOpened}
+                >
+                <div>
+                    <section className='hero is-info is-left is-bold'>
+                        <nav className='nav'>
+                            <div className='container is-fluid'>
+                                <div className='nav-left'>
+                                    { !sidebarFilterOpened &&
+                                        <p className='nav-item'>
+                                            <a onClick={this.handleToggleSidebar}>
+                                                <B.Icon iconClassName='fa fa-angle-double-right' color={'white'} />
+                                            </a>
+                                        </p>
                                     }
-                                </p>
-                            </div>
+                                    <p className='nav-item title'>
+                                        {settings && settings.title}
+                                        &nbsp;
+                                        {loading &&
+                                            <B.Loading />
+                                        }
+                                    </p>
+                                </div>
 
-                            <span className="nav-toggle">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </span>
-
-                            <div className="nav-right nav-menu">
-                                <span className="nav-item">
-                                    <a className="button is-success" onClick={this.loadBranchInfos} disabled={loading}>Reload</a>
+                                <span className='nav-toggle'>
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
                                 </span>
-                            </div>
-                        </div>
-                    </nav>
-                </section>
 
-                <B.Section>
-                    <B.Container isFluid>
-                        { branchInfos.length > 0 &&
-                            [<SearchBox
-                                key='searchBox'
-                                data={branchInfos}
-                                onChange={this.onChange}
-                                defaultProjectIncludes={projectIncludes}
-                                defaultRepoIncludes={repoIncludes}
-                                defaultBranchIncludes={branchIncludes}
-                                defaultBranchAuthorIncludes={branchAuthorIncludes}
-                                defaultProjectExcludes={projectExcludes}
-                                defaultRepoExcludes={repoExcludes}
-                                defaultBranchExcludes={branchExcludes}
-                                defaultBranchAuthorExcludes={branchAuthorExcludes}
-                                />,
-                                <hr key='hr'/>]
-                        }
-                        {
-                            settings &&
-                            <div className='branch-table' style={{ padding: '0px 10px 0px 10px' }}>
-                                <BitbucketTable
-                                    settings={settings}
-                                    showFilter={true}
-                                    results={filteredBranchInfos}
-                                    resultsPerPage={resultsPerPage}
-                                    handlePullRequestCount={this.handlePullRequestCount}
-                                    handleBuildStatus={this.handleBuildStatus}
-                                    handleSonarStatus={this.handleSonarStatus}
-                                    handleSonarQubeMetrics={this.handleSonarQubeMetrics}
-                                    handleSonarQubeAuthenticated={this.handleSonarQubeAuthenticated}
-                                    />
+                                <div className='nav-right nav-menu'>
+                                    <span className='nav-item'>
+                                        <a className='button is-success' onClick={this.loadBranchInfos} disabled={loading}>Reload</a>
+                                    </span>
+                                </div>
                             </div>
-                        }
-                    </B.Container>
-                </B.Section>
+                        </nav>
+                    </section>
 
-                <B.Footer>
-                    <p>
-                        <strong>{settings && settings.title}</strong>.The source code is licensed <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
-                    </p>
-                </B.Footer>
-            </div >
+                    <B.Section>
+                        <B.Container isFluid>
+                            {
+                                settings &&
+                                <div className='branch-table' style={{ padding: '0px 10px 0px 10px' }}>
+                                    <BitbucketTable
+                                        settings={settings}
+                                        showFilter={true}
+                                        results={filteredBranchInfos}
+                                        resultsPerPage={resultsPerPage}
+                                        handlePullRequestCount={this.handlePullRequestCount}
+                                        handleBuildStatus={this.handleBuildStatus}
+                                        handleSonarStatus={this.handleSonarStatus}
+                                        handleSonarQubeMetrics={this.handleSonarQubeMetrics}
+                                        handleSonarQubeAuthenticated={this.handleSonarQubeAuthenticated}
+                                        />
+                                </div>
+                            }
+                        </B.Container>
+                    </B.Section>
+
+                    <B.Footer>
+                        <p>
+                            <strong>{settings && settings.title}</strong>.The source code is licensed <a href='http://opensource.org/licenses/mit-license.php'>MIT</a>.
+                        </p>
+                    </B.Footer>
+                </div >
+            </SidebarFilter>
         );
     }
 }

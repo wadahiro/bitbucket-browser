@@ -73,7 +73,7 @@ const COLUMN_METADATA = [
         label: 'Behind/Ahead Branch',
         renderer: BehindAheadGraphFormatter,
         order: 8,
-        width: 200,
+        width: 120,
         headerCenter: true,
         visible: true,
         sortEnabled: false

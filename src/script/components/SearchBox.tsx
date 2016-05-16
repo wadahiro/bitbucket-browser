@@ -2,8 +2,8 @@ import * as React from 'react';
 import * as _ from 'lodash';
 const Select = require('react-select');
 
-import * as B from './bulma';
-import { BranchInfo } from './BitbucketApi';
+import * as B from '../bulma';
+import { BranchInfo } from '../BitbucketApi';
 
 interface Props extends React.Props<SearchBox> {
     defaultProjectIncludes?: string;
@@ -72,8 +72,8 @@ export default class SearchBox extends React.Component<Props, any> {
         const excludes = 'Excludes...';
 
         return (
-            <B.Columns>
-                <B.Column size={3} style={style}>
+            <div>
+                <div style={style}>
                     <label className='control-label'>Project</label>
                     <div style={selectStyle}>
                         <Select name='projectIncludes' placeholder={includes} value={defaultProjectIncludes} options={projectOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'projectIncludes') } />
@@ -81,8 +81,9 @@ export default class SearchBox extends React.Component<Props, any> {
                     <div style={selectStyle}>
                         <Select name='projectExcludes' placeholder={excludes} value={defaultProjectExcludes} options={projectOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'projectExcludes') } />
                     </div>
-                </B.Column>
-                <B.Column size={3} style={style}>
+                </div>
+                <hr />
+                <div style={style}>
                     <label className='control-label'>Repository</label>
                     <div style={selectStyle}>
                         <Select name='repoIncludes' placeholder={includes} value={defaultRepoIncludes} options={repoOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'repoIncludes') } />
@@ -90,8 +91,9 @@ export default class SearchBox extends React.Component<Props, any> {
                     <div style={selectStyle}>
                         <Select name='repoExcludes' placeholder={excludes} value={defaultRepoExcludes} options={repoOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'repoExcludes') } />
                     </div>
-                </B.Column>
-                <B.Column size={3} style={style}>
+                </div>
+                <hr />
+                <div style={style}>
                     <label className='control-label'>Branch</label>
                     <div style={selectStyle}>
                         <Select name='branchIncludes' placeholder={includes} value={defaultBranchIncludes} options={branchOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchIncludes') } />
@@ -99,8 +101,9 @@ export default class SearchBox extends React.Component<Props, any> {
                     <div style={selectStyle}>
                         <Select name='branchExcludes' placeholder={excludes} value={defaultBranchExcludes} options={branchOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchExcludes') } />
                     </div>
-                </B.Column>
-                <B.Column size={3} style={style}>
+                </div>
+                <hr />
+                <div style={style}>
                     <label className='control-label'>Branch Author</label>
                     <div style={selectStyle}>
                         <Select name='branchAuthorIncludes' placeholder={includes} value={defaultBranchAuthorIncludes} options={branchAuthorOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchAuthorIncludes') } />
@@ -108,8 +111,8 @@ export default class SearchBox extends React.Component<Props, any> {
                     <div style={selectStyle}>
                         <Select name='branchAuthorExcludes' placeholder={excludes} value={defaultBranchAuthorExcludes} options={branchAuthorOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchAuthorExcludes') } />
                     </div>
-                </B.Column>
-            </B.Columns>
+                </div>
+            </div>
         );
     }
 }
