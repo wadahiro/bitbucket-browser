@@ -279,37 +279,30 @@ export async function isAuthenticated(): Promise<boolean> {
     return true;
 }
 
-export async function loadBranchInfos(settings: Settings, handleProjectBranchInfos: (rows: BranchInfo[]) => void, executorSize = 5): Promise<boolean[]> {
+export async function fetchBranchInfos(settings: Settings, repos: Repo[]): Promise<Promise<BranchInfo[]>[]> {
     try {
-        const repos = await fetchAllRepos();
-        const result = _.chain(repos)
-            .map(r => {
-                return fetchBranches(r);
-            })
-            .chunk(executorSize)
-            .map(p => {
-                Promise.all<Branch[]>(p)
-                    .then(results => {
-                        results.forEach(branchesOfProject => {
-                            const branchInfos = branchesOfProject.map(b => {
-                                const branchInfo = Object.assign({}, b, {
-                                    id: `${b.project}_${b.repo}_${b.branch}`,
-                                    branchNameLink: getBranchNameLink(settings, b.branch),
-                                    pullRequestStatus: null,
-                                    buildStatus: null,
-                                    sonarStatus: null,
-                                    sonarQubeMetrics: null
-                                } as BranchInfo);
-                                return branchInfo;
-                            });
+        const handleBranchFetch = (branchesOfProject => {
+            const branchInfos: BranchInfo[] = branchesOfProject.map(b => {
+                const branchInfo: BranchInfo = Object.assign({}, b, {
+                    id: `${b.project}_${b.repo}_${b.branch}`,
+                    branchNameLink: getBranchNameLink(settings, b.branch),
+                    pullRequestStatus: null,
+                    buildStatus: null,
+                    sonarStatus: null,
+                    sonarQubeMetrics: null
+                } as BranchInfo);
+                return branchInfo;
+            });
+            return branchInfos;
+        });
 
-                            handleProjectBranchInfos(branchInfos);
-                        });
-                    });
-                return true;
-            })
-            .value();
-        return Promise.all(result);
+        let promises = repos.map(repo => {
+            return fetchBranches(repo)
+                .then(handleBranchFetch)
+        })
+
+        return promises
+
     } catch (e) {
         console.error('parsing failed', e);
         return [];

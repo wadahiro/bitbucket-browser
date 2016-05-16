@@ -4,7 +4,7 @@ import * as _ from 'lodash';
 
 import * as B from './bulma';
 import { PullRequestCount, PullRequestStatus, BranchInfo, BuildStatus, SonarStatus,
-    isAuthenticated, loadBranchInfos, fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from './BitbucketApi';
+    isAuthenticated, fetchAllRepos, fetchBranchInfos, fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from './BitbucketApi';
 import * as SQAPI from './SonarQubeApi';
 import SearchBox from './SearchBox';
 import BitbucketTable from './BitbucketTable';
@@ -33,6 +33,8 @@ interface State {
     branchExcludes?: string;
     branchAuthorIncludes?: string;
     branchAuthorExcludes?: string;
+
+    resultsPerPage?: number;
 }
 
 class App extends React.Component<React.Props<App>, State> {
@@ -53,7 +55,9 @@ class App extends React.Component<React.Props<App>, State> {
         branchIncludes: '',
         branchExcludes: '',
         branchAuthorIncludes: '',
-        branchAuthorExcludes: ''
+        branchAuthorExcludes: '',
+
+        resultsPerPage: 5
     };
 
     componentDidMount() {
@@ -101,9 +105,7 @@ class App extends React.Component<React.Props<App>, State> {
                             branchExcludes,
                             branchAuthorExcludes
                         }, () => {
-                            if (sonarQubeAuthenticated) {
-                                this.loadBranchInfos();
-                            }
+                            this.loadBranchInfos();
                         });
                     }
                 });
@@ -157,36 +159,45 @@ class App extends React.Component<React.Props<App>, State> {
             loading: true,
             branchInfos: []
         }, async () => {
-            const { settings } = this.state;
-            
-            const loaded = await loadBranchInfos(this.state.settings, branchInfoOfSomeProjects => {
-                
+            const resolveLazyFetch = (branchInfoOfSomeProjects: BranchInfo[]) => {
                 // important! share fetch instance
                 const fetchPrCount = new B.LazyFetch<PullRequestCount>(() => {
                     return fetchPullRequests(branchInfoOfSomeProjects[0]);
                 });
 
-                const branchInfos = branchInfoOfSomeProjects.map(x => {
+                const newBranchInfos = branchInfoOfSomeProjects.map(x => {
                     x.pullRequestStatus = fetchPrCount;
                     x.sonarQubeMetrics = new B.LazyFetch<SQAPI.SonarQubeMetrics>(() => {
                         return SQAPI.fetchMetricsByKey(settings, x.repo, x.branch);
                     });
                     return x;
                 });
+                return newBranchInfos;
+            };
 
-                this.setState({
-                    branchInfos: this.state.branchInfos.concat(branchInfos)
-                })
-            }, executorSize);
+            const { settings, resultsPerPage } = this.state;
+
+            const repos = await fetchAllRepos();
+            const branchInfosPromises = await fetchBranchInfos(settings, repos);
+
+            const finished = branchInfosPromises.map(p => {
+                return p.then(branchInfos => {
+                    this.setState({
+                        branchInfos: this.state.branchInfos.concat(resolveLazyFetch(branchInfos))
+                    });
+                    return true;
+                });
+            });
+
+            const results = await Promise.all<boolean>(finished);
             this.setState({
-                loading: false,
-                branchInfosLoaded: true
+                loading: false
             });
         });
     };
 
     handlePullRequestCount = (fetch: B.LazyFetch<PullRequestCount>, branchInfo: BranchInfo) => {
-        console.log('handlePullRequestCount', branchInfo.pullRequestStatus)
+        // console.log('handlePullRequestCount', branchInfo.pullRequestStatus)
         if (branchInfo.pullRequestStatus === null) {
             return;
         }
@@ -258,7 +269,7 @@ class App extends React.Component<React.Props<App>, State> {
     };
 
     handleBuildStatus = (fetch: B.LazyFetch<BuildStatus>, branchInfo: BranchInfo) => {
-        console.log('handleBuildStatus', branchInfo.buildStatus)
+        // console.log('handleBuildStatus', branchInfo.buildStatus)
         if (branchInfo.buildStatus === null) {
             return;
         }
@@ -284,7 +295,7 @@ class App extends React.Component<React.Props<App>, State> {
     };
 
     handleSonarStatus = (fetch: B.LazyFetch<SonarStatus>, branchInfo: BranchInfo) => {
-        console.log('handleSonarStatus', branchInfo.sonarStatus)
+        // console.log('handleSonarStatus', branchInfo.sonarStatus)
         if (branchInfo.sonarStatus === null) {
             return;
         }
@@ -303,7 +314,7 @@ class App extends React.Component<React.Props<App>, State> {
         if (branchInfo.sonarStatus !== null) {
             fetch.fetch()
                 .then(sonarStatus => {
-                    console.log('handleSonarStatus end')
+                    // console.log('handleSonarStatus end')
                     updateRow(sonarStatus);
                 });
         }
@@ -312,12 +323,12 @@ class App extends React.Component<React.Props<App>, State> {
     };
 
     handleSonarQubeMetrics = (fetch: B.LazyFetch<SQAPI.SonarQubeMetrics>, branchInfo: BranchInfo) => {
-        console.log('handleSonarQubeMetrics', branchInfo.sonarQubeMetrics)
+        // console.log('handleSonarQubeMetrics', branchInfo.sonarQubeMetrics)
         if (branchInfo.sonarQubeMetrics === null) {
             return;
         }
 
-        const updateRow = (sonarQubeMetrics) => {
+        const updateRow = (sonarQubeMetrics: SQAPI.SonarQubeMetrics) => {
             const updatedRows = this.state.branchInfos.map(x => {
                 if (x.id === branchInfo.id) {
                     x.sonarQubeMetrics = sonarQubeMetrics;
@@ -328,24 +339,30 @@ class App extends React.Component<React.Props<App>, State> {
                 branchInfos: updatedRows
             });
         };
-        if (branchInfo.sonarQubeMetrics !== null) {
+
+        if (this.state.sonarQubeAuthenticated) {
             fetch.fetch()
                 .then(sonarQubeMetrics => {
-                    console.log('handleSonarQubeMetrics end')
+                    // console.log('handleSonarQubeMetrics end')
                     updateRow(sonarQubeMetrics);
                 });
-        }
+            updateRow(null);
 
-        updateRow(null);
+        } else {
+            updateRow({
+                err_code: 401,
+                err_msg: 'Unauthorized'
+            });
+        }
     };
 
     render() {
         const { settings,
-            sonarQubeAuthenticated,
             branchInfos, loading, branchInfosLoaded,
             projectIncludes, projectExcludes,
             repoIncludes, repoExcludes,
-            branchIncludes, branchExcludes, branchAuthorIncludes, branchAuthorExcludes } = this.state;
+            branchIncludes, branchExcludes, branchAuthorIncludes, branchAuthorExcludes,
+            resultsPerPage } = this.state;
 
         const filteredBranchInfos = filterBranchInfo(branchInfos,
             toArray(projectIncludes), toArray(projectExcludes),
@@ -391,47 +408,42 @@ class App extends React.Component<React.Props<App>, State> {
                     </nav>
                 </section>
 
-                { sonarQubeAuthenticated ?
-                    <B.Section>
-                        <B.Container isFluid>
-                            { branchInfos.length > 0 &&
-                                [<SearchBox
-                                    key='searchBox'
-                                    data={branchInfos}
-                                    onChange={this.onChange}
-                                    defaultProjectIncludes={projectIncludes}
-                                    defaultRepoIncludes={repoIncludes}
-                                    defaultBranchIncludes={branchIncludes}
-                                    defaultBranchAuthorIncludes={branchAuthorIncludes}
-                                    defaultProjectExcludes={projectExcludes}
-                                    defaultRepoExcludes={repoExcludes}
-                                    defaultBranchExcludes={branchExcludes}
-                                    defaultBranchAuthorExcludes={branchAuthorExcludes}
-                                    />,
-                                    <hr key='hr'/>]
-                            }
-                            {
-                                settings &&
-                                <div className='branch-table' style={{ padding: '0px 10px 0px 10px' }}>
-                                    <BitbucketTable
-                                        settings={settings}
-                                        showFilter={true}
-                                        results={filteredBranchInfos}
-                                        handlePullRequestCount={this.handlePullRequestCount}
-                                        handleBuildStatus={this.handleBuildStatus}
-                                        handleSonarStatus={this.handleSonarStatus}
-                                        handleSonarQubeMetrics={this.handleSonarQubeMetrics}
-                                        />
-                                </div>
-                            }
-                        </B.Container>
-                    </B.Section>
-                    : settings &&
-                    <SonarQubeLoginModal
-                        settings={settings}
-                        show={!sonarQubeAuthenticated}
-                        onAuthenticated={this.handleSonarQubeAuthenticated} />
-                }
+                <B.Section>
+                    <B.Container isFluid>
+                        { branchInfos.length > 0 &&
+                            [<SearchBox
+                                key='searchBox'
+                                data={branchInfos}
+                                onChange={this.onChange}
+                                defaultProjectIncludes={projectIncludes}
+                                defaultRepoIncludes={repoIncludes}
+                                defaultBranchIncludes={branchIncludes}
+                                defaultBranchAuthorIncludes={branchAuthorIncludes}
+                                defaultProjectExcludes={projectExcludes}
+                                defaultRepoExcludes={repoExcludes}
+                                defaultBranchExcludes={branchExcludes}
+                                defaultBranchAuthorExcludes={branchAuthorExcludes}
+                                />,
+                                <hr key='hr'/>]
+                        }
+                        {
+                            settings &&
+                            <div className='branch-table' style={{ padding: '0px 10px 0px 10px' }}>
+                                <BitbucketTable
+                                    settings={settings}
+                                    showFilter={true}
+                                    results={filteredBranchInfos}
+                                    resultsPerPage={resultsPerPage}
+                                    handlePullRequestCount={this.handlePullRequestCount}
+                                    handleBuildStatus={this.handleBuildStatus}
+                                    handleSonarStatus={this.handleSonarStatus}
+                                    handleSonarQubeMetrics={this.handleSonarQubeMetrics}
+                                    handleSonarQubeAuthenticated={this.handleSonarQubeAuthenticated}
+                                    />
+                            </div>
+                        }
+                    </B.Container>
+                </B.Section>
 
                 <B.Footer>
                     <p>

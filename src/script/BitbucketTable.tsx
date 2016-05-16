@@ -4,11 +4,13 @@ import * as _ from 'lodash';
 import { BehindAheadBranch, PullRequestStatus, BuildStatus, SonarStatus,
     BranchInfo, PullRequestCount,
     fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from './BitbucketApi';
-import { SonarQubeMetrics } from './SonarQubeApi'
+import { SonarQubeMetrics, hasError } from './SonarQubeApi'
 import * as B from './bulma';
 import Spinner from './Spinner';
 import { BehindAheadGraph } from './components/BehindAheadGraph';
 import { BuildStatusModal } from './components/BuildStatusModal';
+import { SonarQubeLoginModal } from './components/SonarQubeLoginModal';
+import { UnauthorizedIcon } from './components/UnauthorizedIcon';
 import { Settings, BranchNameLinkResolver } from './Settings';
 
 const LOADING = <B.Loading />;
@@ -137,7 +139,7 @@ const COLUMN_METADATA = [
 
 interface Props extends React.Props<BitbucketDataTable> {
     settings: Settings;
-    resultsPerPage?: number;
+    resultsPerPage: number;
     enableSort?: boolean;
     results: any[];
     showFilter: boolean;
@@ -145,16 +147,18 @@ interface Props extends React.Props<BitbucketDataTable> {
     handleBuildStatus: (buildStatus: B.LazyFetch<BuildStatus>, branchInfo: BranchInfo) => void;
     handleSonarStatus: (sonarStatus: B.LazyFetch<SonarStatus>, branchInfo: BranchInfo) => void;
     handleSonarQubeMetrics: (sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics>, branchInfo: BranchInfo) => void;
+    handleSonarQubeAuthenticated: () => void;
 }
 
 export default class BitbucketDataTable extends React.Component<Props, any> {
     static defaultProps = {
-        resultsPerPage: 10,
+        resultsPerPage: 5,
         enableSort: true
     };
 
     render() {
-        const { settings, results, handlePullRequestCount, handleBuildStatus, handleSonarStatus, handleSonarQubeMetrics } = this.props;
+        const { settings, results, resultsPerPage,
+            handlePullRequestCount, handleBuildStatus, handleSonarStatus, handleSonarQubeMetrics, handleSonarQubeAuthenticated } = this.props;
 
         const resolvedColumnMetadata = COLUMN_METADATA.map(colMeta => {
             const meta = resolveCustomComponent(colMeta);
@@ -179,7 +183,7 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
                 width: 300,
                 visible: true,
                 sortEnabled: false,
-                renderer: SonarQubeMetricsFormatter(settings),
+                renderer: SonarQubeMetricsFormatter(settings, handleSonarQubeAuthenticated),
                 lazyFetch: handleSonarQubeMetrics
             }
         );
@@ -201,7 +205,7 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
                         columnMetadata={resolvedColumnMetadata}
                         enableSort={true}
                         showPagination={true}
-                        resultsPerPage={5}
+                        resultsPerPage={resultsPerPage}
                         results={this.props.results}
                         rowKey='id' />
                 </B.Columns>
@@ -341,7 +345,7 @@ function BuildStatusFormatter(buildStatus: BuildStatus, values, metadata) {
     return (
         <B.ModalTriggerLink modal={<BuildStatusModal buildStatus={buildStatus} />}>
             {buildStatus.values.length} Build(s) &nbsp;
-            <B.Icon iconClassName={iconClassName} color={color} />
+            <B.Icon iconClassName={iconClassName} color={color} lineHeight={20} />
         </B.ModalTriggerLink>
     );
 }
@@ -458,40 +462,53 @@ function _toSonarDisplayValue(key: string, value: string | number): string {
 }
 
 
-function SonarQubeMetricsFormatter(settings: Settings) {
+function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => void) {
     return (metrics: SonarQubeMetrics, branchInfo: BranchInfo, metadata) => {
         if (metrics === null) {
             return LOADING;
         }
-        if (metrics.err_code === 404) {
-            return <span>-</span>;
+        if (hasError(metrics)) {
+            // Show needing authentication
+            if (metrics.err_code === 401) {
+                return (
+                    <B.ModalTriggerLink modal={<SonarQubeLoginModal settings={settings} onAuthenticated={onAuthenticated} />}>
+                        <UnauthorizedIcon type='danger' />
+                        Unauthorized.&nbsp; Please click me.
+                    </B.ModalTriggerLink>
+                );
+            }
+
+            // Not Found
+            if (metrics.err_code === 404) {
+                return <span>-</span>;
+            }
+        } else {
+            const style = {
+                fontSize: 11
+            };
+
+            return <div>
+                <h3><a href={`${settings.sonarStatusResolver.baseUrl}/dashboard/index/${metrics.id}`} target='_blank'>{metrics.name}</a></h3>
+                <table className='table is-narrow' style={style}>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        { metrics.msr.map(metric => {
+                            return (
+                                <tr key={metric.key}>
+                                    <td>{_toSonarDisplayName(metric.key) }</td>
+                                    <td>{metric.frmt_val}</td>
+                                </tr>
+                            );
+                        }) }
+                    </tbody>
+                </table>
+            </div>;
         }
-
-        const style = {
-            fontSize: 11
-        };
-
-        return <div>
-            <h3><a href={`${settings.sonarStatusResolver.baseUrl}/dashboard/index/${metrics.id}`} target='_blank'>{metrics.name}</a></h3>
-            <table className='table is-narrow' style={style}>
-                <thead>
-                    <tr>
-                        <th>Metric</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    { metrics.msr.map(metric => {
-                        return (
-                            <tr key={metric.key}>
-                                <td>{_toSonarDisplayName(metric.key) }</td>
-                                <td>{metric.frmt_val}</td>
-                            </tr>
-                        );
-                    }) }
-                </tbody>
-            </table>
-        </div>;
     }
 }
 

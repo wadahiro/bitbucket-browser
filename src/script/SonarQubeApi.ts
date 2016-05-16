@@ -4,8 +4,18 @@ export interface AuthenticationResponse {
     validate: boolean;
 }
 
-export interface SonarQubeMetrics {
-    err_code?: number;
+export type SonarQubeMetrics = SonarQubeMetricsResponse | ErrorResponse;
+
+export interface ErrorResponse {
+    err_code: number;
+    err_msg: string;
+}
+
+export function hasError(response: any): response is ErrorResponse {
+    return typeof response.err_code === 'number';
+}
+
+export interface SonarQubeMetricsResponse {
     id: number;
     key: string; // <sonar project base key>:<sonar-branch>
     name: string;
@@ -61,12 +71,13 @@ export async function authenticate(settings: Settings, login: string, password: 
 
 export async function fetchMetricsByKey(settings: Settings, repo: string, branch: string): Promise<SonarQubeMetrics> {
     const sonarBranch = branch.replace('/', '_');
-    
+
     const response = await fetch(`${settings.sonarStatusResolver.baseUrl}/api/resources?resource=${settings.sonarStatusResolver.projectBaseKey}.${repo}:${sonarBranch}&metrics=${settings.sonarStatusResolver.metrics}`, {
         credentials: 'same-origin'
     })
+
     const json = await response.json();
-    
+
     if (json.err_code) {
         return json;
     }

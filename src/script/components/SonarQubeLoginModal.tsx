@@ -4,8 +4,9 @@ import { Settings } from '../Settings';
 import * as SQAPI from '../SonarQubeApi';
 
 interface Props extends React.Props<SonarQubeLoginModal> {
-    settings: Settings;
     show?: boolean;
+    onHide?: (e: React.SyntheticEvent) => void;
+    settings: Settings;
     loginLabel?: string;
     onAuthenticated: () => void;
 }
@@ -37,6 +38,7 @@ export class SonarQubeLoginModal extends React.Component<Props, any> {
                 console.log('authenticated', authenticated);
                 if (authenticated) {
                     this.setState({
+                        show: false,
                         message: ''
                     }, () => {
                         this.props.onAuthenticated();
@@ -51,11 +53,11 @@ export class SonarQubeLoginModal extends React.Component<Props, any> {
     };
 
     render() {
-        const { show, loginLabel } = this.props;
+        const { show, onHide, loginLabel } = this.props;
         const { login, password, message } = this.state;
 
         return (
-            <B.ModalCard show={show} title='SonarQube Login' showClose={false}>
+            <B.ModalCard show={show} onHide={onHide} title='SonarQube Login'>
                 <B.Content>
                     <form>
                         <B.InputText label='Login' name='login' onChange={this.handleForm} />
