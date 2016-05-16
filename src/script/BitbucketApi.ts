@@ -488,7 +488,9 @@ export async function fetchSonarStatus(repoId: number, pullRequestIds: number[] 
     const status = await Promise.all<BitBucketSonarStatus>(promises);
 
     return status.reduce((s, x) => {
-        s.values.push(x);
+        if (x !== null) {
+            s.values.push(x);
+        }
         return s;
     }, { repoId, values: [] } as SonarStatus);
 }
@@ -497,6 +499,9 @@ export async function _fetchSonarStatus(repoId: number, pullRequestId: number): 
     const response = await fetch(`/stash/rest/sonar4stash/latest/statistics?pullRequestId=${pullRequestId}&repoId=${repoId}`, {
         credentials: 'same-origin'
     });
+    if (response.status !== 200) {
+        return null;
+    }
     const json: BitBucketSonarStatus = await response.json();
     json.pullRequestId = pullRequestId;
     return json;
