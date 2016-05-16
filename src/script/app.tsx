@@ -148,17 +148,28 @@ class App extends React.Component<React.Props<App>, State> {
         this.setState({
             sonarQubeAuthenticated: true
         }, () => {
-            this.loadBranchInfos();
+            const { settings } = this.state;
+
+            const newBranchInfos = this.state.branchInfos.map(x => {
+                x.sonarQubeMetrics = new B.LazyFetch<SQAPI.SonarQubeMetrics>(() => {
+                    return SQAPI.fetchMetricsByKey(settings, x.repo, x.branch);
+                });
+                return x;
+            });
+
+            this.setState({
+                branchInfos: newBranchInfos
+            });
         });
     };
 
     loadBranchInfos = () => {
-        const executorSize = 10;
-
         this.setState({
             loading: true,
             branchInfos: []
         }, async () => {
+            const { settings } = this.state;
+
             const resolveLazyFetch = (branchInfoOfSomeProjects: BranchInfo[]) => {
                 // important! share fetch instance
                 const fetchPrCount = new B.LazyFetch<PullRequestCount>(() => {
@@ -174,8 +185,6 @@ class App extends React.Component<React.Props<App>, State> {
                 });
                 return newBranchInfos;
             };
-
-            const { settings, resultsPerPage } = this.state;
 
             const repos = await fetchAllRepos();
             const branchInfosPromises = await fetchBranchInfos(settings, repos);
