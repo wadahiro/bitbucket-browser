@@ -1,4 +1,5 @@
 import { Settings } from './Settings';
+import { baseUrl } from './Utils';
 
 export interface AuthenticationResponse {
     validate: boolean;
@@ -39,13 +40,13 @@ export async function isAuthenticated(settings: Settings): Promise<boolean> {
     const { resolver } = settings.items.sonarQubeMetrics;
 
     // SonarQube Bug? It losts authenticated state...
-    // const response = await fetch(`${resolver.baseUrl}/api/authentication/validate`, {
+    // const response = await fetch(`${baseUrl(resolver.baseUrl)}/api/authentication/validate`, {
     //     credentials: 'same-origin'
     // });
     // const result: AuthenticationResponse = await response.json();
     // return result.validate;
 
-    const response = await fetch(`${resolver.baseUrl}/api/user_properties`, {
+    const response = await fetch(`${baseUrl(resolver.baseUrl)}/api/user_properties`, {
         credentials: 'same-origin'
     });
     if (response.status === 200) {
@@ -56,7 +57,8 @@ export async function isAuthenticated(settings: Settings): Promise<boolean> {
 }
 
 export async function authenticate(settings: Settings, login: string, password: string): Promise<boolean> {
-    const response = await fetch(`${settings.items.sonarQubeMetrics.resolver.baseUrl}/sessions/login`, {
+    const resolver = settings.items.sonarQubeMetrics.resolver;
+    const response = await fetch(`${baseUrl(resolver.baseUrl)}/sessions/login`, {
         redirect: 'manual', // for redirect ignore
         credentials: 'same-origin',
         method: 'POST',
@@ -73,7 +75,7 @@ export async function fetchMetricsByKey(settings: Settings, repo: string, branch
     const sonarBranch = branch.replace('/', '_');
     const resolver = settings.items.sonarQubeMetrics.resolver;
 
-    const response = await fetch(`${resolver.baseUrl}/api/resources?resource=${resolver.projectBaseKey}.${repo}:${sonarBranch}&metrics=${resolver.metrics}`, {
+    const response = await fetch(`${baseUrl(resolver.baseUrl)}/api/resources?resource=${resolver.projectBaseKey}.${repo}:${sonarBranch}&metrics=${resolver.metrics}`, {
         credentials: 'same-origin'
     })
 

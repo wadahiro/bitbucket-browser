@@ -20,7 +20,7 @@ module.exports = {
   target: 'web',
   entry: ['babel-polyfill', './src/script/app.tsx'],
   output: {
-    path: path.join(__dirname, 'public/js'),
+    path: path.join(__dirname, '../public/js'),
     publicPath: '/js/',
     filename: 'app.js'
   },

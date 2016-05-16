@@ -45,6 +45,11 @@ export class SidebarFilter extends React.Component<Props, any> {
                 <section className='hero is-info is-bold'>
                     <nav className='nav'>
                         <div className='container is-fluid'>
+                            <div className='nav-left'>
+                                <p className='nav-item title'>
+                                    Filters
+                                </p>
+                            </div>
                             <div className='nav-right'>
                                 <a className='nav-item title' onClick={onClose}>
                                     <B.Icon iconClassName='fa fa-angle-double-left' />

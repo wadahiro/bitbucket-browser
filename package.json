@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "watch": "webpack -w",
-    "build": "set NODE_ENV=production && useref src/index.html public/index.html --js uglify --css uglify && webpack -p",
+    "build": "set NODE_ENV=production && useref src/index.html public/index.html --js uglify --css uglify && webpack -p --config webpack/webpack.config.js",
     "style": "cp -r node_modules/font-awesome/fonts public && node-sass src/css/main.scss public/css/style.css",
     "server": "node-dev test-server.js",
     "dev": "cp src/index.html public/index.html && node-dev webpack/webpack.server.js"

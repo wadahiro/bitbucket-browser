@@ -12,6 +12,7 @@ import { BuildStatusModal } from './components/BuildStatusModal';
 import { SonarQubeLoginModal } from './components/SonarQubeLoginModal';
 import { UnauthorizedIcon } from './components/UnauthorizedIcon';
 import { Settings, BranchNameLinkResolver } from './Settings';
+import { baseUrl } from './Utils';
 
 const LOADING = <B.Loading />;
 
@@ -90,10 +91,10 @@ const COLUMN_METADATA: B.ColumnMetadata[] = [
         sortEnabled: false
     },
     {
-        name: 'sonarQubeMetrics',
-        width: 300,
+        name: 'branchNameLink',
+        width: 100,
         visible: true,
-        sortEnabled: false,
+        sortEnabled: true,
     }
     // sonarQubeMetrics column is added in 'componentDidMount'
     // branchNameLink column is added in 'componentDidMount'
@@ -206,7 +207,7 @@ function CommitLink(data, values, metadata) {
 function BranchNameLinkFormatter(resolver: BranchNameLinkResolver) {
     const transform = (data, values: BranchInfo) => {
         if (data) {
-            return `${resolver.baseUrl}${data}`;
+            return `${baseUrl(resolver.baseUrl)}/${data}`;
         }
         return '';
     };
@@ -353,7 +354,7 @@ function _toSonarDisplayName(key: string): string {
     // see http://docs.sonarqube.org/display/SONARQUBE43/Metric+definitions
     switch (key) {
         case 'lines':
-            return 'Dupl. lines';
+            return 'Lines';
 
         case 'duplicatedLines': // Sonar For Bitbucket
         case 'duplicated_lines':
@@ -441,7 +442,7 @@ function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => vo
             };
 
             return <div>
-                <h3><a href={`${settings.items.sonarQubeMetrics.resolver.baseUrl}/dashboard/index/${metrics.id}`} target='_blank'>{metrics.name}</a></h3>
+                <h3><a href={`${baseUrl(settings.items.sonarQubeMetrics.resolver.baseUrl)}/dashboard/index/${metrics.id}`} target='_blank'>{metrics.name}</a></h3>
                 <table className='table is-narrow' style={style}>
                     <thead>
                         <tr>
