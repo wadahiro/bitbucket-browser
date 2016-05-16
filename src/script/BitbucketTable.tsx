@@ -15,64 +15,48 @@ import { Settings, BranchNameLinkResolver } from './Settings';
 
 const LOADING = <B.Loading />;
 
-const COLUMN_METADATA = [
+const COLUMN_METADATA: B.ColumnMetadata[] = [
     {
         name: 'id',
-        label: 'ID',
-        order: 1,
         visible: false
     },
     {
         name: 'project',
-        label: 'Project',
-        order: 2,
         width: 100,
         visible: true,
         renderer: ProjectLink
     },
     {
         name: 'repo',
-        label: 'Repository',
-        order: 3,
         width: 150,
         visible: true,
         renderer: RepoLink
     },
     {
         name: 'branch',
-        label: 'Branch',
-        order: 4,
         width: 200,
         visible: true,
         renderer: BranchLink
     },
     {
         name: 'branchAuthor',
-        label: 'Branch Author',
-        order: 5,
         width: 120,
         visible: true
     },
     {
         name: 'branchCreated',
-        label: 'Branch Created',
-        order: 6,
         width: 120,
         visible: true
     },
     {
         name: 'latestCommitDate',
-        label: 'Updated',
-        order: 7,
         width: 120,
         visible: true,
         renderer: CommitLink
     },
     {
         name: 'behindAheadBranch',
-        label: 'Behind/Ahead Branch',
         renderer: BehindAheadGraphFormatter,
-        order: 8,
         width: 120,
         headerCenter: true,
         visible: true,
@@ -80,45 +64,13 @@ const COLUMN_METADATA = [
     },
     {
         name: 'pullRequestStatus',
-        label: 'Pull Request Status',
-        order: 9,
         width: 130,
         visible: true,
         sortEnabled: false,
         renderer: PullRequestStatusFormatter
     },
-    // {
-    //     name: 'prCountSource',
-    //     label: 'Pull Request (Source)',
-    //     order: 10,
-    //     visible: true,
-    //     renderer: PullRequestBarLink('open')
-    // },
-    // {
-    //     name: 'prCountTarget',
-    //     label: 'Pull Request (Target)',
-    //     order: 11,
-    //     visible: true,
-    //     renderer: PullRequestBarLink('open')
-    // },
-    // {
-    //     name: 'prCountMerged',
-    //     label: 'Pull Request (Merged)',
-    //     order: 12,
-    //     visible: true,
-    //     renderer: PullRequestBarLink('merged')
-    // },
-    // {
-    //     name: 'prCountDeclined',
-    //     label: 'Pull Request (Declined)',
-    //     order: 13,
-    //     visible: true,
-    //     renderer: PullRequestBarLink('declined')
-    // },
     {
         name: 'buildStatus',
-        label: 'Build Status',
-        order: 14,
         width: 130,
         visible: true,
         sortEnabled: false,
@@ -126,12 +78,22 @@ const COLUMN_METADATA = [
     },
     {
         name: 'sonarStatus',
-        label: 'Sonar for Stash Metric',
-        order: 15,
         width: 300,
         visible: true,
         sortEnabled: false,
         renderer: SonarForBitbucketMetricFormatter
+    },
+    {
+        name: 'sonarQubeMetrics',
+        width: 300,
+        visible: true,
+        sortEnabled: false
+    },
+    {
+        name: 'sonarQubeMetrics',
+        width: 300,
+        visible: true,
+        sortEnabled: false,
     }
     // sonarQubeMetrics column is added in 'componentDidMount'
     // branchNameLink column is added in 'componentDidMount'
@@ -160,42 +122,34 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
         const { settings, results, resultsPerPage,
             handlePullRequestCount, handleBuildStatus, handleSonarStatus, handleSonarQubeMetrics, handleSonarQubeAuthenticated } = this.props;
 
-        const resolvedColumnMetadata = COLUMN_METADATA.map(colMeta => {
-            const meta = resolveCustomComponent(colMeta);
-            if (meta.name === 'pullRequestStatus') {
-                meta.lazyFetch = handlePullRequestCount;
-            }
-            if (meta.name === 'buildStatus') {
-                meta.lazyFetch = handleBuildStatus;
-            }
-            if (meta.name === 'sonarStatus') {
-                meta.lazyFetch = handleSonarStatus;
-            }
-            return meta;
-        });
+        const resolvedColumnMetadata = COLUMN_METADATA.filter(x => {
+            const item = settings.items[x.name];
+            return item && item.enabled !== false;
+        })
+            .map(x => {
+                const item = settings.items[x.name];
+                x.label = item.displayName;
 
-
-        resolvedColumnMetadata.push(
-            {
-                name: 'sonarQubeMetrics',
-                label: 'SonarQube Metrics',
-                order: 16,
-                width: 300,
-                visible: true,
-                sortEnabled: false,
-                renderer: SonarQubeMetricsFormatter(settings, handleSonarQubeAuthenticated),
-                lazyFetch: handleSonarQubeMetrics
-            }
-        );
-        resolvedColumnMetadata.push(
-            {
-                name: 'branchNameLink',
-                label: settings.branchNameLinkResolver.displayName,
-                width: 100,
-                visible: true,
-                renderer: BranchNameLinkFormatter(settings.branchNameLinkResolver)
-            }
-        );
+                const meta = resolveCustomComponent(x);
+                if (meta.name === 'pullRequestStatus') {
+                    meta.lazyFetch = handlePullRequestCount;
+                }
+                if (meta.name === 'buildStatus') {
+                    meta.lazyFetch = handleBuildStatus;
+                }
+                if (meta.name === 'sonarStatus') {
+                    meta.lazyFetch = handleSonarStatus;
+                }
+                if (meta.name === 'sonarQubeMetrics') {
+                    meta.lazyFetch = handleSonarQubeMetrics;
+                    meta.renderer = SonarQubeMetricsFormatter(settings, handleSonarQubeAuthenticated);
+                }
+                if (meta.name === 'branchNameLink') {
+                    meta.lazyFetch = handleSonarStatus;
+                    meta.renderer = BranchNameLinkFormatter(item.resolver);
+                }
+                return meta;
+            });
 
         return (
             <div>
@@ -487,7 +441,7 @@ function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => vo
             };
 
             return <div>
-                <h3><a href={`${settings.sonarStatusResolver.baseUrl}/dashboard/index/${metrics.id}`} target='_blank'>{metrics.name}</a></h3>
+                <h3><a href={`${settings.items.sonarQubeMetrics.resolver.baseUrl}/dashboard/index/${metrics.id}`} target='_blank'>{metrics.name}</a></h3>
                 <table className='table is-narrow' style={style}>
                     <thead>
                         <tr>

@@ -519,7 +519,7 @@ function _savePRId(container, key, prId) {
 }
 
 function getBranchNameLink(settings: Settings, branch: string): string {
-    const matched = branch.match(settings.branchNameLinkResolver.pattern);
+    const matched = branch.match(settings.items.branchNameLink.resolver.pattern);
 
     if (matched && matched.length > 0) {
         // console.log(branch, matched[0])
