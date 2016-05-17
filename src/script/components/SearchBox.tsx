@@ -5,6 +5,11 @@ const Select = require('react-select');
 import * as B from '../bulma';
 import { BranchInfo } from '../BitbucketApi';
 
+export interface SelectOption {
+    label: string;
+    value: string;
+}
+
 interface Props extends React.Props<SearchBox> {
     defaultProjectIncludes?: string;
     defaultRepoIncludes?: string;
@@ -17,7 +22,7 @@ interface Props extends React.Props<SearchBox> {
     defaultBranchAuthorExcludes?: string;
 
     data: BranchInfo[];
-    onChange: Function;
+    onChange: (key: string, values: SelectOption[]) => void;
 }
 
 export default class SearchBox extends React.Component<Props, any> {
@@ -33,7 +38,7 @@ export default class SearchBox extends React.Component<Props, any> {
         defaultBranchAuthorExcludes: this.props.defaultBranchAuthorExcludes
     }
 
-    onChange = (key, values, current) => {
+    onChange = (key, values: SelectOption[]) => {
         this.props.onChange(key, values);
     }
 

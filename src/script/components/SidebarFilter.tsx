@@ -1,9 +1,11 @@
 import * as React from 'react';
 import * as B from '../bulma';
 import { BranchInfo } from '../BitbucketApi';
-import SearchBox from './SearchBox';
+import SearchBox, { SelectOption } from './SearchBox';
 
 const Sidebar = require('react-sidebar').default;
+
+export type SelectOption = SelectOption;
 
 interface Props extends React.Props<SidebarFilter> {
     data: BranchInfo[];
@@ -18,7 +20,7 @@ interface Props extends React.Props<SidebarFilter> {
     branchExcludes: string;
     branchAuthorExcludes: string;
 
-    onChange: Function;
+    onChange: (key: string, values: SelectOption[]) => void;
     open: boolean;
     onClose: (e: React.SyntheticEvent) => void;
 }

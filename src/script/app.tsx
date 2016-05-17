@@ -10,7 +10,7 @@ import BitbucketTable from './BitbucketTable';
 import Spinner from './Spinner';
 import { Settings } from './Settings';
 import { SonarQubeLoginModal } from './components/SonarQubeLoginModal';
-import { SidebarFilter } from './components/SidebarFilter';
+import { SidebarFilter, SelectOption } from './components/SidebarFilter';
 
 // require('babel-polyfill');
 require('whatwg-fetch');
@@ -129,9 +129,9 @@ class App extends React.Component<React.Props<App>, State> {
         return Promise.resolve(settings);
     };
 
-    onChange = (key, values) => {
+    onChange = (key: string, values: SelectOption[]) => {
         this.setState({
-            [key]: values
+            [key]: values ? values.map(x => x.value).join(',') : ''
         }, () => {
             const saveFilters = [];
             appendFilter(saveFilters, this.state, 'projectIncludes');
