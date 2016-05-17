@@ -19,12 +19,16 @@ export class Modal extends React.Component<any, any> {
             fontSize: '1rem'
         };
 
+        // wrap modal-container in a div for IE 11.
+        // see http://stackoverflow.com/questions/31354137/element-is-not-horizontally-centered-in-ie11-with-flexbox-when-parent-has-flex-f
         return (
             <div style={modalStyle} className={`modal ${show}`}>
                 <div className='modal-background'></div>
-                <div className='modal-container'>
-                    <div className='modal-content'>
-                        {this.props.children}
+                <div>
+                    <div className='modal-container'>
+                        <div className='modal-content'>
+                            {this.props.children}
+                        </div>
                     </div>
                 </div>
                 <button className='modal-close' onClick={this.close}></button>

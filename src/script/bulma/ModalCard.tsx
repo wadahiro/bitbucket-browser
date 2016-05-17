@@ -1,6 +1,14 @@
 import * as React from 'react';
 
-export class ModalCard extends React.Component<any, any> {
+interface Props extends React.Props<ModalCard> {
+    show: boolean;
+    showClose?: boolean;
+    onHide: (e: React.SyntheticEvent) => void;
+    title: string;
+    footer?: JSX.Element;
+}
+
+export class ModalCard extends React.Component<Props, any> {
     static defaultProps = {
         show: false,
         showClose: true,
@@ -21,24 +29,34 @@ export class ModalCard extends React.Component<any, any> {
         };
         const { title, showClose } = this.props;
 
+        // wrap modal-card in a div for IE 11.
+        // see http://stackoverflow.com/questions/31354137/element-is-not-horizontally-centered-in-ie11-with-flexbox-when-parent-has-flex-f
         return (
             <div style={modalStyle} className={`modal ${show}`}>
                 <div className='modal-background'></div>
-                <div className='modal-card'>
-                    <header className='modal-card-head'>
-                        <p className='modal-card-title'>{title}</p>
-                        { showClose &&
-                            <button className='delete' onClick={this.close}></button>
+                <div>
+                    <div className='modal-card'>
+                        <div>
+                            <header className='modal-card-head'>
+                                <p className='modal-card-title'>{title}</p>
+                                { showClose &&
+                                    <button className='delete' onClick={this.close}></button>
+                                }
+                            </header>
+                        </div>
+                        <div>
+                            <section className='modal-card-body'>
+                                {this.props.children}
+                            </section>
+                        </div>
+                        {this.props.footer &&
+                            <div>
+                                <footer className='modal-card-foot'>
+                                    {this.props.footer}
+                                </footer>
+                            </div>
                         }
-                    </header>
-                    <section className='modal-card-body'>
-                        {this.props.children}
-                    </section>
-                    {this.props.footer &&
-                        <footer className='modal-card-foot'>
-                            {this.props.footer}
-                        </footer>
-                    }
+                    </div>
                 </div>
             </div >
         );
