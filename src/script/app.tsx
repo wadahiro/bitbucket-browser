@@ -4,21 +4,27 @@ import * as _ from 'lodash';
 
 import * as B from './bulma';
 import { PullRequestCount, PullRequestStatus, BranchInfo, BuildStatus, SonarStatus,
-    isAuthenticated, loadBranchInfos, fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from './BitbucketApi';
-import SearchBox from './SearchBox';
+    isAuthenticated, fetchAllRepos, fetchBranchInfos, fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from './BitbucketApi';
+import * as SQAPI from './SonarQubeApi';
 import BitbucketTable from './BitbucketTable';
 import Spinner from './Spinner';
 import { Settings } from './Settings';
+import { SonarQubeLoginModal } from './components/SonarQubeLoginModal';
+import { SidebarFilter, SelectOption } from './components/SidebarFilter';
 
-// require("babel-polyfill");
+// require('babel-polyfill');
 require('whatwg-fetch');
 
 
 interface State {
     settings?: Settings;
     loading?: boolean;
+
+    sonarQubeAuthenticated?: boolean;
+
     branchInfosLoaded?: boolean;
     branchInfos?: BranchInfo[];
+
     projectIncludes?: string;
     projectExcludes?: string;
     repoIncludes?: string;
@@ -27,6 +33,9 @@ interface State {
     branchExcludes?: string;
     branchAuthorIncludes?: string;
     branchAuthorExcludes?: string;
+
+    resultsPerPage?: number;
+    sidebarFilterOpened?: boolean;
 }
 
 class App extends React.Component<React.Props<App>, State> {
@@ -34,8 +43,12 @@ class App extends React.Component<React.Props<App>, State> {
     state: State = {
         settings: null,
         loading: false,
+
+        sonarQubeAuthenticated: true,
+
         branchInfosLoaded: false,
         branchInfos: [],
+
         projectIncludes: '',
         projectExcludes: '',
         repoIncludes: '',
@@ -43,7 +56,10 @@ class App extends React.Component<React.Props<App>, State> {
         branchIncludes: '',
         branchExcludes: '',
         branchAuthorIncludes: '',
-        branchAuthorExcludes: ''
+        branchAuthorExcludes: '',
+
+        resultsPerPage: 5,
+        sidebarFilterOpened: false
     };
 
     componentDidMount() {
@@ -73,11 +89,15 @@ class App extends React.Component<React.Props<App>, State> {
                     let branchExcludes = params['branchExcludes'] ? params['branchExcludes'] : '';
                     let branchAuthorExcludes = params['branchAuthorExcludes'] ? params['branchAuthorExcludes'] : '';
 
-                    const authenticated = await isAuthenticated();
-                    if (!authenticated) {
+                    const bitbucketAuthenticated = await isAuthenticated();
+                    const sonarQubeAuthenticated = await SQAPI.isAuthenticated(x);
+
+                    if (!bitbucketAuthenticated) {
+                        // Redirect to Bitbucket Login page
                         location.href = `/stash/login?next=/stash-browser${encodeURIComponent(location.hash)}`;
                     } else {
                         this.setState({
+                            sonarQubeAuthenticated,
                             projectIncludes,
                             repoIncludes,
                             branchIncludes,
@@ -109,9 +129,9 @@ class App extends React.Component<React.Props<App>, State> {
         return Promise.resolve(settings);
     };
 
-    onChange = (key, values) => {
+    onChange = (key: string, values: SelectOption[]) => {
         this.setState({
-            [key]: values
+            [key]: values ? values.map(x => x.value).join(',') : ''
         }, () => {
             const saveFilters = [];
             appendFilter(saveFilters, this.state, 'projectIncludes');
@@ -126,37 +146,71 @@ class App extends React.Component<React.Props<App>, State> {
         });
     };
 
-    loadBranchInfos = () => {
-        const executorSize = 10;
-
+    handleSonarQubeAuthenticated = () => {
         this.setState({
-            loading: true,
-            branchInfos: []
-        }, async () => {
-            const loaded = await loadBranchInfos(this.state.settings, branchInfoOfSomeProjects => {
-                // important! share fetch instance
-                const fetch = new B.LazyFetch<PullRequestCount>(() => {
-                    return fetchPullRequests(branchInfoOfSomeProjects[0]);
-                });
+            sonarQubeAuthenticated: true
+        }, () => {
+            const { settings } = this.state;
 
-                const branchInfos = branchInfoOfSomeProjects.map(x => {
-                    x.pullRequestStatus = fetch;
-                    return x;
+            const newBranchInfos = this.state.branchInfos.map(x => {
+                x.sonarQubeMetrics = new B.LazyFetch<SQAPI.SonarQubeMetrics>(() => {
+                    return SQAPI.fetchMetricsByKey(settings, x.repo, x.branch);
                 });
+                return x;
+            });
 
-                this.setState({
-                    branchInfos: this.state.branchInfos.concat(branchInfos)
-                })
-            }, executorSize);
             this.setState({
-                loading: false,
-                branchInfosLoaded: true
+                branchInfos: newBranchInfos
             });
         });
     };
 
+    loadBranchInfos = () => {
+        this.setState({
+            loading: true,
+            branchInfos: []
+        }, async () => {
+            const { settings } = this.state;
+
+            const resolveLazyFetch = (branchInfoOfSomeProjects: BranchInfo[]) => {
+                // important! share fetch instance
+                const fetchPrCount = new B.LazyFetch<PullRequestCount>(() => {
+                    return fetchPullRequests(branchInfoOfSomeProjects[0]);
+                });
+
+                const newBranchInfos = branchInfoOfSomeProjects.map(x => {
+                    x.pullRequestStatus = fetchPrCount;
+                    x.sonarQubeMetrics = new B.LazyFetch<SQAPI.SonarQubeMetrics>(() => {
+                        return SQAPI.fetchMetricsByKey(settings, x.repo, x.branch);
+                    });
+                    return x;
+                });
+                return newBranchInfos;
+            };
+
+            const repos = await fetchAllRepos();
+            const branchInfosPromises = await fetchBranchInfos(settings, repos);
+
+            const finished = _.chunk(branchInfosPromises, 6).map(async (x) => {
+                const results = await Promise.all<BranchInfo[]>(x);
+                const branchInfos = _.flatten(results);
+                this.setState({
+                    branchInfos: this.state.branchInfos.concat(resolveLazyFetch(branchInfos))
+                });
+                return true;
+            });
+
+            Promise.all(finished)
+                .then(x => {
+                    this.setState({
+                        loading: false
+                    });
+                });
+        });
+    };
+
     handlePullRequestCount = (fetch: B.LazyFetch<PullRequestCount>, branchInfo: BranchInfo) => {
-        console.log('handlePullRequestCount', branchInfo.pullRequestStatus)
+        // console.log('handlePullRequestCount', branchInfo.pullRequestStatus)
         if (branchInfo.pullRequestStatus === null) {
             return;
         }
@@ -228,7 +282,7 @@ class App extends React.Component<React.Props<App>, State> {
     };
 
     handleBuildStatus = (fetch: B.LazyFetch<BuildStatus>, branchInfo: BranchInfo) => {
-        console.log('handleBuildStatus', branchInfo.buildStatus)
+        // console.log('handleBuildStatus', branchInfo.buildStatus)
         if (branchInfo.buildStatus === null) {
             return;
         }
@@ -254,7 +308,7 @@ class App extends React.Component<React.Props<App>, State> {
     };
 
     handleSonarStatus = (fetch: B.LazyFetch<SonarStatus>, branchInfo: BranchInfo) => {
-        console.log('handleSonarStatus', branchInfo.sonarStatus)
+        // console.log('handleSonarStatus', branchInfo.sonarStatus)
         if (branchInfo.sonarStatus === null) {
             return;
         }
@@ -263,9 +317,6 @@ class App extends React.Component<React.Props<App>, State> {
             const updatedRows = this.state.branchInfos.map(x => {
                 if (x.id === branchInfo.id) {
                     x.sonarStatus = sonarStatus;
-                    if (sonarStatus === null) {
-                        console.log("set null")
-                    }
                 }
                 return x;
             });
@@ -276,7 +327,7 @@ class App extends React.Component<React.Props<App>, State> {
         if (branchInfo.sonarStatus !== null) {
             fetch.fetch()
                 .then(sonarStatus => {
-                    console.log('handleSonarStatus end')
+                    // console.log('handleSonarStatus end')
                     updateRow(sonarStatus);
                 });
         }
@@ -284,11 +335,53 @@ class App extends React.Component<React.Props<App>, State> {
         updateRow(null);
     };
 
+    handleSonarQubeMetrics = (fetch: B.LazyFetch<SQAPI.SonarQubeMetrics>, branchInfo: BranchInfo) => {
+        // console.log('handleSonarQubeMetrics', branchInfo.sonarQubeMetrics)
+        if (branchInfo.sonarQubeMetrics === null) {
+            return;
+        }
+
+        const updateRow = (sonarQubeMetrics: SQAPI.SonarQubeMetrics) => {
+            const updatedRows = this.state.branchInfos.map(x => {
+                if (x.id === branchInfo.id) {
+                    x.sonarQubeMetrics = sonarQubeMetrics;
+                }
+                return x;
+            });
+            this.setState({
+                branchInfos: updatedRows
+            });
+        };
+
+        if (this.state.sonarQubeAuthenticated) {
+            fetch.fetch()
+                .then(sonarQubeMetrics => {
+                    // console.log('handleSonarQubeMetrics end')
+                    updateRow(sonarQubeMetrics);
+                });
+            updateRow(null);
+
+        } else {
+            updateRow({
+                err_code: 401,
+                err_msg: 'Unauthorized'
+            });
+        }
+    };
+
+    handleToggleSidebar = (e: React.SyntheticEvent) => {
+        this.setState({
+            sidebarFilterOpened: !this.state.sidebarFilterOpened
+        });
+    };
+
     render() {
-        const { settings, branchInfos, loading, branchInfosLoaded,
+        const { settings,
+            branchInfos, loading, branchInfosLoaded,
             projectIncludes, projectExcludes,
             repoIncludes, repoExcludes,
-            branchIncludes, branchExcludes, branchAuthorIncludes, branchAuthorExcludes } = this.state;
+            branchIncludes, branchExcludes, branchAuthorIncludes, branchAuthorExcludes,
+            resultsPerPage, sidebarFilterOpened } = this.state;
 
         const filteredBranchInfos = filterBranchInfo(branchInfos,
             toArray(projectIncludes), toArray(projectExcludes),
@@ -305,74 +398,84 @@ class App extends React.Component<React.Props<App>, State> {
         ];
 
         return (
-            <div>
-                <section className='hero is-info is-left is-bold'>
-                    <nav className="nav">
-                        <div className="container is-fluid">
-                            <div className="nav-left">
-                                <p className="nav-item title">
-                                    {settings && settings.title}
-                                    &nbsp;
-                                    {loading &&
-                                        <B.Loading />
+            <SidebarFilter
+                data={branchInfos}
+                onChange={this.onChange}
+                projectIncludes={projectIncludes}
+                repoIncludes={repoIncludes}
+                branchIncludes={branchIncludes}
+                branchAuthorIncludes={branchAuthorIncludes}
+                projectExcludes={projectExcludes}
+                repoExcludes={repoExcludes}
+                branchExcludes={branchExcludes}
+                branchAuthorExcludes={branchAuthorExcludes}
+                onClose={this.handleToggleSidebar}
+                open={sidebarFilterOpened}
+                >
+                <div>
+                    <section className='hero is-info is-left is-bold'>
+                        <nav className='nav'>
+                            <div className='container is-fluid'>
+                                <div className='nav-left'>
+                                    { !sidebarFilterOpened &&
+                                        <p className='nav-item'>
+                                            <a onClick={this.handleToggleSidebar}>
+                                                <B.Icon iconClassName='fa fa-angle-double-right' color={'white'} />
+                                            </a>
+                                        </p>
                                     }
-                                </p>
-                            </div>
+                                    <p className='nav-item title'>
+                                        {settings && settings.title}
+                                        &nbsp;
+                                        {loading &&
+                                            <B.Loading />
+                                        }
+                                    </p>
+                                </div>
 
-                            <span className="nav-toggle">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </span>
-
-                            <div className="nav-right nav-menu">
-                                <span className="nav-item">
-                                    <a className="button is-success" onClick={this.loadBranchInfos} disabled={loading}>Reload</a>
+                                <span className='nav-toggle'>
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
                                 </span>
-                            </div>
-                        </div>
-                    </nav>
-                </section>
 
-                <B.Section>
-                    <B.Container isFluid>
-                        { branchInfos.length > 0 &&
-                            [<SearchBox
-                                key='searchBox'
-                                data={branchInfos}
-                                onChange={this.onChange}
-                                defaultProjectIncludes={projectIncludes}
-                                defaultRepoIncludes={repoIncludes}
-                                defaultBranchIncludes={branchIncludes}
-                                defaultBranchAuthorIncludes={branchAuthorIncludes}
-                                defaultProjectExcludes={projectExcludes}
-                                defaultRepoExcludes={repoExcludes}
-                                defaultBranchExcludes={branchExcludes}
-                                defaultBranchAuthorExcludes={branchAuthorExcludes}
-                                />,
-                                <hr key='hr'/>]
-                        }
-                        {
-                            settings &&
-                            <div className='branch-table' style={{ padding: '0px 10px 0px 10px' }}>
-                                <BitbucketTable
-                                    settings={settings}
-                                    showFilter={true}
-                                    results={filteredBranchInfos}
-                                    handlePullRequestCount={this.handlePullRequestCount}
-                                    handleBuildStatus={this.handleBuildStatus}
-                                    handleSonarStatus={this.handleSonarStatus}
-                                    />
+                                <div className='nav-right nav-menu'>
+                                    <span className='nav-item'>
+                                        <a className='button is-success' onClick={this.loadBranchInfos} disabled={loading}>Reload</a>
+                                    </span>
+                                </div>
                             </div>
-                        }
-                    </B.Container>
-                </B.Section>
-                <B.Footer>
-                    <p>
-                        <strong>{settings && settings.title}</strong>.The source code is licensed <a href="http://opensource.org/licenses/mit-license.php">MIT</a>.
-                    </p>
-                </B.Footer>
-            </div >
+                        </nav>
+                    </section>
+
+                    <B.Section>
+                        <B.Container isFluid>
+                            {
+                                settings &&
+                                <div className='branch-table' style={{ padding: '0px 10px 0px 10px' }}>
+                                    <BitbucketTable
+                                        settings={settings}
+                                        showFilter={true}
+                                        results={filteredBranchInfos}
+                                        resultsPerPage={resultsPerPage}
+                                        handlePullRequestCount={this.handlePullRequestCount}
+                                        handleBuildStatus={this.handleBuildStatus}
+                                        handleSonarStatus={this.handleSonarStatus}
+                                        handleSonarQubeMetrics={this.handleSonarQubeMetrics}
+                                        handleSonarQubeAuthenticated={this.handleSonarQubeAuthenticated}
+                                        />
+                                </div>
+                            }
+                        </B.Container>
+                    </B.Section>
+
+                    <B.Footer>
+                        <p>
+                            <strong>{settings && settings.title}</strong>.The source code is licensed <a href='http://opensource.org/licenses/mit-license.php'>MIT</a>.
+                        </p>
+                    </B.Footer>
+                </div >
+            </SidebarFilter>
         );
     }
 }

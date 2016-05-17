@@ -2,14 +2,15 @@ import * as React from 'react';
 
 export class Section extends React.Component<any, any> {
     static defaultProps = {
-        className: ''
+        className: '',
+        style: {}
     };
 
     render() {
-        const { className } = this.props;
+        const { className, style } = this.props;
 
         return (
-            <section className={`section ${className}`}>
+            <section className={`section ${className}`} style={style}>
                 { this.props.children }
             </section>
         );

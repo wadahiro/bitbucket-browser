@@ -5,13 +5,14 @@ interface Props extends React.Props<Icon> {
     size?: number;
     color?: string;
     spin?: number;
+    lineHeight?: number;
 }
 
 export class Icon extends React.Component<Props, any> {
     render() {
-        const { iconClassName, size, color, spin } = this.props;
+        const { iconClassName, size, color, spin, lineHeight } = this.props;
         const iconStyle: any = {};
-        
+
         if (color) {
             iconStyle.color = color;
         }
@@ -22,9 +23,12 @@ export class Icon extends React.Component<Props, any> {
             iconStyle.animation = `spin ${spin}s infinite linear`;
             iconStyle.WebkitAnimation = `spin ${spin}s infinite linear`;
         }
+        if (lineHeight) {
+            iconStyle.lineHeight = `${lineHeight}px`;
+        }
 
         return (
-            <span className='icon'>
+            <span className={`icon`}>
                 <i className={iconClassName} style={iconStyle}>
                 </i>
             </span>

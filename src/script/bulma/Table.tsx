@@ -27,7 +27,7 @@ export interface ColumnMetadata {
     width?: number | string;
     headerCenter?: boolean;
     sortEnabled?: boolean;
-    renderer?: (value: any, values: any) => React.ReactElement<any>;
+    renderer?: (value: any, values: any, metadata?: ColumnMetadata) => React.ReactElement<any>;
     lazyFetch?: (lazyFetch: LazyFetch<any>, values: any) => void;
 }
 
@@ -215,7 +215,7 @@ export class Table extends React.Component<TableProps, any> {
 
                 // render
                 if (col.renderer) {
-                    return <TD key={col.name} style={tdStyle}>{col.renderer(value, x) }</TD>;
+                    return <TD key={col.name} style={tdStyle}>{col.renderer(value, x, col) }</TD>;
                 } else {
                     if (value === undefined) {
                         return <TD key={col.name} style={tdStyle}></TD>;

@@ -4,189 +4,162 @@ import * as _ from 'lodash';
 import { BehindAheadBranch, PullRequestStatus, BuildStatus, SonarStatus,
     BranchInfo, PullRequestCount,
     fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from './BitbucketApi';
+import { SonarQubeMetrics, hasError } from './SonarQubeApi'
 import * as B from './bulma';
 import Spinner from './Spinner';
 import { BehindAheadGraph } from './components/BehindAheadGraph';
 import { BuildStatusModal } from './components/BuildStatusModal';
+import { SonarQubeLoginModal } from './components/SonarQubeLoginModal';
+import { UnauthorizedIcon } from './components/UnauthorizedIcon';
 import { Settings, BranchNameLinkResolver } from './Settings';
+import { baseUrl } from './Utils';
 
 const LOADING = <B.Loading />;
 
-const COLUMN_METADATA = [
+const COLUMN_METADATA: B.ColumnMetadata[] = [
     {
         name: 'id',
-        label: 'ID',
-        order: 1,
         visible: false
     },
     {
         name: 'project',
-        label: 'Project',
-        order: 2,
         width: 100,
         visible: true,
         renderer: ProjectLink
     },
     {
         name: 'repo',
-        label: 'Repository',
-        order: 3,
         width: 150,
         visible: true,
         renderer: RepoLink
     },
     {
         name: 'branch',
-        label: 'Branch',
-        order: 4,
         width: 200,
         visible: true,
         renderer: BranchLink
     },
     {
         name: 'branchAuthor',
-        label: 'Branch Author',
-        order: 5,
-        width: 100,
+        width: 120,
         visible: true
     },
     {
         name: 'branchCreated',
-        label: 'Branch Created',
-        order: 6,
-        width: 100,
+        width: 120,
         visible: true
     },
     {
         name: 'latestCommitDate',
-        label: 'Updated',
-        order: 7,
-        width: 100,
+        width: 120,
         visible: true,
         renderer: CommitLink
     },
     {
         name: 'behindAheadBranch',
-        label: 'Behind/Ahead Branch',
         renderer: BehindAheadGraphFormatter,
-        order: 8,
-        width: 200,
+        width: 120,
         headerCenter: true,
         visible: true,
         sortEnabled: false
     },
     {
         name: 'pullRequestStatus',
-        label: 'Pull Request Status',
-        order: 9,
-        width: 120,
+        width: 130,
         visible: true,
         sortEnabled: false,
         renderer: PullRequestStatusFormatter
     },
-    // {
-    //     name: 'prCountSource',
-    //     label: 'Pull Request (Source)',
-    //     order: 10,
-    //     visible: true,
-    //     renderer: PullRequestBarLink('open')
-    // },
-    // {
-    //     name: 'prCountTarget',
-    //     label: 'Pull Request (Target)',
-    //     order: 11,
-    //     visible: true,
-    //     renderer: PullRequestBarLink('open')
-    // },
-    // {
-    //     name: 'prCountMerged',
-    //     label: 'Pull Request (Merged)',
-    //     order: 12,
-    //     visible: true,
-    //     renderer: PullRequestBarLink('merged')
-    // },
-    // {
-    //     name: 'prCountDeclined',
-    //     label: 'Pull Request (Declined)',
-    //     order: 13,
-    //     visible: true,
-    //     renderer: PullRequestBarLink('declined')
-    // },
     {
         name: 'buildStatus',
-        label: 'Build Status',
-        order: 14,
-        width: 200,
+        width: 130,
         visible: true,
         sortEnabled: false,
         renderer: BuildStatusFormatter
     },
     {
         name: 'sonarStatus',
-        label: 'Sonar Status',
-        order: 15,
         width: 300,
         visible: true,
         sortEnabled: false,
-        renderer: SonarStatusFormatter
+        renderer: SonarForBitbucketMetricFormatter
+    },
+    {
+        name: 'sonarQubeMetrics',
+        width: 300,
+        visible: true,
+        sortEnabled: false
+    },
+    {
+        name: 'branchNameLink',
+        width: 100,
+        visible: true,
+        sortEnabled: true,
     }
-    // branchNameLink column is added in 'componentDidMount' because of
+    // sonarQubeMetrics column is added in 'componentDidMount'
+    // branchNameLink column is added in 'componentDidMount'
 ];
 
 interface Props extends React.Props<BitbucketDataTable> {
     settings: Settings;
-    resultsPerPage?: number;
+    resultsPerPage: number;
     enableSort?: boolean;
     results: any[];
     showFilter: boolean;
     handlePullRequestCount: (prCount: B.LazyFetch<PullRequestCount>, branchInfo: BranchInfo) => void;
     handleBuildStatus: (buildStatus: B.LazyFetch<BuildStatus>, branchInfo: BranchInfo) => void;
     handleSonarStatus: (sonarStatus: B.LazyFetch<SonarStatus>, branchInfo: BranchInfo) => void;
+    handleSonarQubeMetrics: (sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics>, branchInfo: BranchInfo) => void;
+    handleSonarQubeAuthenticated: () => void;
 }
 
 export default class BitbucketDataTable extends React.Component<Props, any> {
     static defaultProps = {
-        resultsPerPage: 10,
+        resultsPerPage: 5,
         enableSort: true
     };
 
     render() {
-        const { settings, results, handlePullRequestCount, handleBuildStatus, handleSonarStatus } = this.props;
+        const { settings, results, resultsPerPage,
+            handlePullRequestCount, handleBuildStatus, handleSonarStatus, handleSonarQubeMetrics, handleSonarQubeAuthenticated } = this.props;
 
-        const resolvedColumnMetadata = COLUMN_METADATA.map(colMeta => {
-            const meta = resolveCustomComponent(colMeta);
-            if (meta.name === 'pullRequestStatus') {
-                meta.lazyFetch = handlePullRequestCount;
-            }
-            if (meta.name === 'buildStatus') {
-                meta.lazyFetch = handleBuildStatus;
-            }
-            if (meta.name === 'sonarStatus') {
-                meta.lazyFetch = handleSonarStatus;
-            }
-            return meta;
-        });
+        const resolvedColumnMetadata = COLUMN_METADATA.filter(x => {
+            const item = settings.items[x.name];
+            return item && item.enabled !== false;
+        })
+            .map(x => {
+                const item = settings.items[x.name];
+                x.label = item.displayName;
 
-        resolvedColumnMetadata.push(
-            {
-                name: 'branchNameLink',
-                label: settings.branchNameLinkResolver.displayName,
-                order: 100,
-                width: 100,
-                visible: true,
-                renderer: BranchNameLinkFormatter(settings.branchNameLinkResolver)
-            }
-        );
+                const meta = resolveCustomComponent(x);
+                if (meta.name === 'pullRequestStatus') {
+                    meta.lazyFetch = handlePullRequestCount;
+                }
+                if (meta.name === 'buildStatus') {
+                    meta.lazyFetch = handleBuildStatus;
+                }
+                if (meta.name === 'sonarStatus') {
+                    meta.lazyFetch = handleSonarStatus;
+                }
+                if (meta.name === 'sonarQubeMetrics') {
+                    meta.lazyFetch = handleSonarQubeMetrics;
+                    meta.renderer = SonarQubeMetricsFormatter(settings, handleSonarQubeAuthenticated);
+                }
+                if (meta.name === 'branchNameLink') {
+                    meta.lazyFetch = handleSonarStatus;
+                    meta.renderer = BranchNameLinkFormatter(item.resolver);
+                }
+                return meta;
+            });
 
         return (
             <div>
                 <B.Columns>
                     <B.Table
-                        fixed={true}
                         columnMetadata={resolvedColumnMetadata}
                         enableSort={true}
                         showPagination={true}
-                        resultsPerPage={5}
+                        resultsPerPage={resultsPerPage}
                         results={this.props.results}
                         rowKey='id' />
                 </B.Columns>
@@ -234,7 +207,7 @@ function CommitLink(data, values, metadata) {
 function BranchNameLinkFormatter(resolver: BranchNameLinkResolver) {
     const transform = (data, values: BranchInfo) => {
         if (data) {
-            return `${resolver.baseUrl}${data}`;
+            return `${baseUrl(resolver.baseUrl)}/${data}`;
         }
         return '';
     };
@@ -326,12 +299,12 @@ function BuildStatusFormatter(buildStatus: BuildStatus, values, metadata) {
     return (
         <B.ModalTriggerLink modal={<BuildStatusModal buildStatus={buildStatus} />}>
             {buildStatus.values.length} Build(s) &nbsp;
-            <B.Icon iconClassName={iconClassName} color={color} />
+            <B.Icon iconClassName={iconClassName} color={color} lineHeight={20} />
         </B.ModalTriggerLink>
     );
 }
 
-function SonarStatusFormatter(sonarStatus: SonarStatus, branchInfo: BranchInfo, metadata) {
+function SonarForBitbucketMetricFormatter(sonarStatus: SonarStatus, branchInfo: BranchInfo, metadata) {
     if (sonarStatus === null) {
         return LOADING;
     }
@@ -378,15 +351,36 @@ function SonarStatusFormatter(sonarStatus: SonarStatus, branchInfo: BranchInfo, 
 }
 
 function _toSonarDisplayName(key: string): string {
+    // see http://docs.sonarqube.org/display/SONARQUBE43/Metric+definitions
     switch (key) {
-        case 'duplicatedLines':
+        case 'lines':
+            return 'Lines';
+
+        case 'duplicatedLines': // Sonar For Bitbucket
+        case 'duplicated_lines':
             return 'Dupl. lines';
-        case 'coverage':
+
+        case 'coverage': // Sonar For Bitbucket
             return 'Coverage';
-        case 'violations':
+
+        case 'violations': // Sonar For Bitbucket
             return 'All issues';
-        case 'technicalDebt':
+
+        case 'blocker_violations':
+            return 'Blocker issues';
+        case 'critical_violations':
+            return 'Critical issues';
+        case 'mejor_violations':
+            return 'Major issues';
+        case 'minor_violations':
+            return 'Minor issues';
+        case 'info_violations':
+            return 'Info issues';
+
+        case 'technicalDebt': // Sonar For Bitbucket
+        case 'sqale_index':
             return 'Tech. dept';
+
         default:
             return key;
     }
@@ -421,6 +415,56 @@ function _toSonarDisplayValue(key: string, value: string | number): string {
     }
 }
 
+
+function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => void) {
+    return (metrics: SonarQubeMetrics, branchInfo: BranchInfo, metadata) => {
+        if (metrics === null) {
+            return LOADING;
+        }
+        if (hasError(metrics)) {
+            // Show needing authentication
+            if (metrics.err_code === 401) {
+                return (
+                    <B.ModalTriggerLink modal={<SonarQubeLoginModal settings={settings} onAuthenticated={onAuthenticated} />}>
+                        <UnauthorizedIcon type='danger' />
+                        Unauthorized.&nbsp; Please click me.
+                    </B.ModalTriggerLink>
+                );
+            }
+
+            // Not Found
+            if (metrics.err_code === 404) {
+                return <span>-</span>;
+            }
+        } else {
+            const style = {
+                fontSize: 11
+            };
+
+            return <div>
+                <h3><a href={`${baseUrl(settings.items.sonarQubeMetrics.resolver.baseUrl)}/dashboard/index/${metrics.id}`} target='_blank'>{metrics.name}</a></h3>
+                <table className='table is-narrow' style={style}>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        { metrics.msr.map(metric => {
+                            return (
+                                <tr key={metric.key}>
+                                    <td>{_toSonarDisplayName(metric.key) }</td>
+                                    <td>{metric.frmt_val}</td>
+                                </tr>
+                            );
+                        }) }
+                    </tbody>
+                </table>
+            </div>;
+        }
+    }
+}
 
 // transformer
 function projectLink(data, values: BranchInfo) {

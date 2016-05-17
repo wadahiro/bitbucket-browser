@@ -1,5 +1,6 @@
 import { Settings } from './Settings';
 import * as B from './bulma';
+import { SonarQubeMetrics } from './SonarQubeApi';
 
 // bitbucket rest api models
 interface BitBucketPage {
@@ -246,6 +247,7 @@ export interface BranchInfo extends Branch {
     pullRequestStatus: B.LazyFetch<PullRequestCount> | PullRequestStatus
     buildStatus: B.LazyFetch<BuildStatus> | BuildStatus;
     sonarStatus: B.LazyFetch<SonarStatus> | SonarStatus;
+    sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics> | SonarQubeMetrics;
 }
 export interface BehindAheadBranch {
     aheadBranch: number;
@@ -277,36 +279,30 @@ export async function isAuthenticated(): Promise<boolean> {
     return true;
 }
 
-export async function loadBranchInfos(settings: Settings, handleProjectBranchInfos: (rows: BranchInfo[]) => void, executorSize = 5): Promise<boolean[]> {
+export async function fetchBranchInfos(settings: Settings, repos: Repo[]): Promise<Promise<BranchInfo[]>[]> {
     try {
-        const repos = await fetchAllRepos();
-        const result = _.chain(repos)
-            .map(r => {
-                return fetchBranches(r);
-            })
-            .chunk(executorSize)
-            .map(p => {
-                Promise.all<Branch[]>(p)
-                    .then(results => {
-                        results.forEach(branchesOfProject => {
-                            const branchInfos = branchesOfProject.map(b => {
-                                const branchInfo = Object.assign({}, b, {
-                                    id: `${b.project}_${b.repo}_${b.branch}`,
-                                    branchNameLink: getBranchNameLink(settings, b.branch),
-                                    pullRequestStatus: null,
-                                    buildStatus: null,
-                                    sonarStatus: null
-                                } as BranchInfo);
-                                return branchInfo;
-                            });
+        const handleBranchFetch = (branchesOfProject => {
+            const branchInfos: BranchInfo[] = branchesOfProject.map(b => {
+                const branchInfo: BranchInfo = Object.assign({}, b, {
+                    id: `${b.project}_${b.repo}_${b.branch}`,
+                    branchNameLink: getBranchNameLink(settings, b.branch),
+                    pullRequestStatus: null,
+                    buildStatus: null,
+                    sonarStatus: null,
+                    sonarQubeMetrics: null
+                } as BranchInfo);
+                return branchInfo;
+            });
+            return branchInfos;
+        });
 
-                            handleProjectBranchInfos(branchInfos);
-                        });
-                    });
-                return true;
-            })
-            .value();
-        return Promise.all(result);
+        let promises = repos.map(repo => {
+            return fetchBranches(repo)
+                .then(handleBranchFetch)
+        })
+
+        return promises
+
     } catch (e) {
         console.error('parsing failed', e);
         return [];
@@ -485,7 +481,9 @@ export async function fetchSonarStatus(repoId: number, pullRequestIds: number[] 
     const status = await Promise.all<BitBucketSonarStatus>(promises);
 
     return status.reduce((s, x) => {
-        s.values.push(x);
+        if (x !== null) {
+            s.values.push(x);
+        }
         return s;
     }, { repoId, values: [] } as SonarStatus);
 }
@@ -494,6 +492,9 @@ export async function _fetchSonarStatus(repoId: number, pullRequestId: number): 
     const response = await fetch(`/stash/rest/sonar4stash/latest/statistics?pullRequestId=${pullRequestId}&repoId=${repoId}`, {
         credentials: 'same-origin'
     });
+    if (response.status !== 200) {
+        return null;
+    }
     const json: BitBucketSonarStatus = await response.json();
     json.pullRequestId = pullRequestId;
     return json;
@@ -518,7 +519,7 @@ function _savePRId(container, key, prId) {
 }
 
 function getBranchNameLink(settings: Settings, branch: string): string {
-    const matched = branch.match(settings.branchNameLinkResolver.pattern);
+    const matched = branch.match(settings.items.branchNameLink.resolver.pattern);
 
     if (matched && matched.length > 0) {
         // console.log(branch, matched[0])

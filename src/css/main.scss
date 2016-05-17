@@ -7,6 +7,13 @@ $green: #3b7fc4;
 @import '../../node_modules/react-select/dist/react-select';
 @import '../../node_modules/font-awesome/scss/font-awesome';
 
+
+@media screen and (min-width: 980px) {
+    .section {
+        padding: 20px 0;
+    }
+}
+
 // @FIXME
 .branch-table > div > div > div > table > thead > tr > th > span {
     color: #222324;
@@ -33,17 +40,17 @@ $green: #3b7fc4;
     color: #707070;
     font-size: 12px;
     margin: 0 auto;
-    width: 200px;
+    width: 120px;
     text-align: center;
     
-    .count-graph {        
+    .count-graph {
         -webkit-box-sizing: border-box;
         -moz-box-sizing: border-box;
         box-sizing: border-box;
         display: inline-block;
         padding: 5px 5px 0;
         position: relative;
-        width: 100px;
+        width: 60px;
         vertical-align: text-bottom;
         
         .count-bar {
