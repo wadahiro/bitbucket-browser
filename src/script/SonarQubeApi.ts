@@ -46,7 +46,7 @@ export async function isAuthenticated(settings: Settings): Promise<boolean> {
     // const result: AuthenticationResponse = await response.json();
     // return result.validate;
 
-    const response = await fetch(`${baseUrl(resolver.baseUrl)}/api/user_properties`, {
+    const response = await fetch(`${baseUrl(resolver.baseUrl)}/api/user_properties?format=json`, {
         credentials: 'same-origin'
     });
     if (response.status === 200) {
@@ -75,7 +75,7 @@ export async function fetchMetricsByKey(settings: Settings, repo: string, branch
     const sonarBranch = branch.replace('/', '_');
     const resolver = settings.items.sonarQubeMetrics.resolver;
 
-    const response = await fetch(`${baseUrl(resolver.baseUrl)}/api/resources?resource=${resolver.projectBaseKey}.${repo}:${sonarBranch}&metrics=${resolver.metrics}`, {
+    const response = await fetch(`${baseUrl(resolver.baseUrl)}/api/resources?resource=${resolver.projectBaseKey}.${repo}:${sonarBranch}&metrics=${resolver.metrics}&format=json`, {
         credentials: 'same-origin'
     })
 
