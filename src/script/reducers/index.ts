@@ -16,20 +16,11 @@ export interface AppState {
     branchInfosLoaded?: boolean;
     branchInfos?: BranchInfo[];
 
-    projectIncludes?: string;
-    projectExcludes?: string;
-    repoIncludes?: string;
-    repoExcludes?: string;
-    branchIncludes?: string;
-    branchExcludes?: string;
-    branchAuthorIncludes?: string;
-    branchAuthorExcludes?: string;
-
     resultsPerPage?: number;
     sidebarFilterOpened?: boolean;
 }
 
-const initialState: AppState = {
+const initialAppState: AppState = {
     settings: null,
     loading: false,
 
@@ -38,6 +29,22 @@ const initialState: AppState = {
     branchInfosLoaded: false,
     branchInfos: [],
 
+    resultsPerPage: 5,
+    sidebarFilterOpened: false
+};
+
+export interface FilterState {
+    projectIncludes?: string;
+    projectExcludes?: string;
+    repoIncludes?: string;
+    repoExcludes?: string;
+    branchIncludes?: string;
+    branchExcludes?: string;
+    branchAuthorIncludes?: string;
+    branchAuthorExcludes?: string;
+}
+
+const initialFilterState: FilterState = {
     projectIncludes: '',
     projectExcludes: '',
     repoIncludes: '',
@@ -46,62 +53,72 @@ const initialState: AppState = {
     branchExcludes: '',
     branchAuthorIncludes: '',
     branchAuthorExcludes: '',
-
-    resultsPerPage: 5,
-    sidebarFilterOpened: false
 };
 
+export const filterStateReducer = (state: FilterState, action: Actions.Action) => {
+    if (Actions.isType(action, Actions.CHANGE_FILTER)) {
+        const payload = action.payload;
 
-export const bApp = (state: AppState = initialState, action: Actions.Action) => {
-    let payload;
-
-    switch (action.type) {
-        case Actions.INIT_APP_SUCCEEDED:
-            payload = action.payload;
-
-            return Object.assign({}, state, payload);
-
-        case Actions.FETCH_SETTINGS_SUCCEEDED:
-            payload = action.payload;
-
-            return Object.assign({}, state, payload);
-
-        case Actions.LOAD_BRANCH_INFOS_SUCCEED:
-            payload = action.payload;
-
-            return Object.assign({}, state, {
-                branchInfos: state.branchInfos.concat(payload.branchInfos)
-            });
-
-        case Actions.CHANGE_FILTER:
-            const saveFilters = [];
-            appendFilter(saveFilters, this.state, 'projectIncludes');
-            appendFilter(saveFilters, this.state, 'projectExcludes');
-            appendFilter(saveFilters, this.state, 'repoIncludes');
-            appendFilter(saveFilters, this.state, 'repoExcludes');
-            appendFilter(saveFilters, this.state, 'branchIncludes');
-            appendFilter(saveFilters, this.state, 'branchExcludes');
-            appendFilter(saveFilters, this.state, 'branchAuthorIncludes');
-            appendFilter(saveFilters, this.state, 'branchAuthorExcludes');
-            window.location.hash = saveFilters.join('&');
-            return Object.assign({}, state, payload);
-
-        case Actions.SONARQUBE_AUTHENTICATED:
-            const newBranchInfos = this.state.branchInfos.map(x => {
-                x.sonarQubeMetrics = new B.LazyFetch<SQAPI.SonarQubeMetrics>(() => {
-                    return SQAPI.fetchMetricsByKey(state.settings, x.repo, x.branch);
-                });
-                return x;
-            });
-
-            return Object.assign({}, state, {
-                sonarQubeAuthenticated: true,
-                branchInfos: newBranchInfos
-            });
-
-        default:
-            break;
+        return Object.assign({}, state, payload);
     }
+    return state;
+}
+
+
+export const appStateReducer = (state: AppState = initialAppState, action: Actions.Action) => {
+
+    if (Actions.isType(action, Actions.INIT_APP_SUCCEEDED)) {
+        const payload = action.payload;
+
+        return Object.assign({}, state, payload);
+    }
+
+    if (Actions.isType(action, Actions.FETCH_SETTINGS_SUCCEEDED)) {
+        const payload = action.payload;
+
+        return Object.assign({}, state, payload);
+    }
+
+    if (Actions.isType(action, Actions.LOAD_BRANCH_INFOS_SUCCEED)) {
+        const payload = action.payload;
+
+        return Object.assign({}, state, {
+            branchInfos: state.branchInfos.concat(payload.branchInfos)
+        });
+    }
+
+    if (Actions.isType(action, Actions.CHANGE_FILTER)) {
+        const payload = action.payload;
+
+        const saveFilters = [];
+        appendFilter(saveFilters, state, 'projectIncludes');
+        appendFilter(saveFilters, state, 'projectExcludes');
+        appendFilter(saveFilters, state, 'repoIncludes');
+        appendFilter(saveFilters, state, 'repoExcludes');
+        appendFilter(saveFilters, state, 'branchIncludes');
+        appendFilter(saveFilters, state, 'branchExcludes');
+        appendFilter(saveFilters, state, 'branchAuthorIncludes');
+        appendFilter(saveFilters, state, 'branchAuthorExcludes');
+        window.location.hash = saveFilters.join('&');
+        return Object.assign({}, state, payload);
+    }
+
+    if (Actions.isType(action, Actions.SONARQUBE_AUTHENTICATED)) {
+        const payload = action.payload;
+
+        const newBranchInfos = state.branchInfos.map(x => {
+            x.sonarQubeMetrics = new B.LazyFetch<SQAPI.SonarQubeMetrics>(() => {
+                return SQAPI.fetchMetricsByKey(state.settings, x.repo, x.branch);
+            });
+            return x;
+        });
+
+        return Object.assign({}, state, {
+            sonarQubeAuthenticated: true,
+            branchInfos: newBranchInfos
+        });
+    }
+
     return state;
 };
 
@@ -112,9 +129,11 @@ function appendFilter(strArray, state, key) {
 }
 
 export default combineReducers({
-    app: bApp
+    app: appStateReducer,
+    filter: filterStateReducer
 });
 
 export interface CombinedState {
-    app: AppState
+    app: AppState;
+    filter: FilterState;
 }

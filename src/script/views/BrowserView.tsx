@@ -13,7 +13,7 @@ import Spinner from '../Spinner';
 import { Settings } from '../Settings';
 import { SonarQubeLoginModal } from '../components/SonarQubeLoginModal';
 import { SidebarFilter, SelectOption } from '../components/SidebarFilter';
-import { AppState, CombinedState } from '../reducers';
+import { AppState, FilterState, CombinedState } from '../reducers';
 
 import * as Actions from '../actions';
 
@@ -29,14 +29,7 @@ interface Props extends React.Props<any> {
     branchInfosLoaded?: boolean;
     branchInfos?: BranchInfo[];
 
-    projectIncludes?: string;
-    projectExcludes?: string;
-    repoIncludes?: string;
-    repoExcludes?: string;
-    branchIncludes?: string;
-    branchExcludes?: string;
-    branchAuthorIncludes?: string;
-    branchAuthorExcludes?: string;
+    filter?: FilterState;
 
     resultsPerPage?: number;
     sidebarFilterOpened?: boolean;
@@ -52,14 +45,7 @@ function mapStateToProps(state: CombinedState, props: Props): Props {
         branchInfosLoaded: state.app.branchInfosLoaded,
         branchInfos: state.app.branchInfos,
 
-        projectIncludes: state.app.projectIncludes,
-        projectExcludes: state.app.projectExcludes,
-        repoIncludes: state.app.repoIncludes,
-        repoExcludes: state.app.repoExcludes,
-        branchIncludes: state.app.branchIncludes,
-        branchExcludes: state.app.branchExcludes,
-        branchAuthorIncludes: state.app.branchAuthorIncludes,
-        branchAuthorExcludes: state.app.branchAuthorExcludes,
+        filter: state.filter,
 
         resultsPerPage: state.app.resultsPerPage,
         sidebarFilterOpened: state.app.sidebarFilterOpened
@@ -258,16 +244,10 @@ class BrowserView extends React.Component<Props, void> {
     render() {
         const { settings,
             branchInfos, loading, branchInfosLoaded,
-            projectIncludes, projectExcludes,
-            repoIncludes, repoExcludes,
-            branchIncludes, branchExcludes, branchAuthorIncludes, branchAuthorExcludes,
+            filter,
             resultsPerPage, sidebarFilterOpened } = this.props;
 
-        const filteredBranchInfos = filterBranchInfo(branchInfos,
-            toArray(projectIncludes), toArray(projectExcludes),
-            toArray(repoIncludes), toArray(repoExcludes),
-            toArray(branchIncludes), toArray(branchExcludes),
-            toArray(branchAuthorIncludes), toArray(branchAuthorExcludes));
+        const filteredBranchInfos = filterBranchInfo(branchInfos, filter);
 
         const leftNav = [
             {
@@ -285,14 +265,7 @@ class BrowserView extends React.Component<Props, void> {
             <SidebarFilter
                 data={branchInfos}
                 onChange={this.onChange}
-                projectIncludes={projectIncludes}
-                repoIncludes={repoIncludes}
-                branchIncludes={branchIncludes}
-                branchAuthorIncludes={branchAuthorIncludes}
-                projectExcludes={projectExcludes}
-                repoExcludes={repoExcludes}
-                branchExcludes={branchExcludes}
-                branchAuthorExcludes={branchAuthorExcludes}
+                filter={filter}
                 onClose={this.handleToggleSidebar}
                 open={sidebarFilterOpened}
                 >
@@ -377,11 +350,18 @@ function appendFilter(strArray, state, key) {
     }
 }
 
-function filterBranchInfo(data: BranchInfo[],
-    projectIncludes: string[], projectExcludes: string[],
-    repoIncludes: string[], repoExcludes: string[],
-    branchIncludes: string[], branchExcludes: string[],
-    branchAuthorIncludes: string[], branchAuthorExcludes: string[]) {
+function filterBranchInfo(data: BranchInfo[], filter: FilterState) {
+    const projectIncludes = toArray(filter.projectIncludes);
+    const projectExcludes = toArray(filter.projectExcludes);
+
+    const repoIncludes = toArray(filter.repoIncludes);
+    const repoExcludes = toArray(filter.repoExcludes);
+
+    const branchIncludes = toArray(filter.branchIncludes);
+    const branchExcludes = toArray(filter.branchExcludes);
+
+    const branchAuthorIncludes = toArray(filter.branchAuthorIncludes);
+    const branchAuthorExcludes = toArray(filter.branchAuthorExcludes)
 
     let chain = _.chain(data);
 
