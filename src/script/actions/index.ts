@@ -6,6 +6,7 @@ import { PullRequestCount, PullRequestStatus, BranchInfo, BuildStatus, SonarStat
     isAuthenticated, fetchAllRepos, fetchBranchInfos, fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from '../BitbucketApi';
 import * as SQAPI from '../SonarQubeApi';
 import { Settings } from '../Settings';
+import { FilterState } from '../reducers';
 
 interface ActionType<TAction> extends String { }
 
@@ -37,54 +38,14 @@ export interface FetchSettingsScceededAction extends Action {
 export const INIT_APP: ActionType<InitAppAction> = 'INIT_APP';
 export const INIT_APP_SUCCEEDED: ActionType<InitAppAction> = 'INIT_APP_SUCCEEDED';
 export interface InitAppAction extends Action {
-    payload: {
-        projectIncludes: string
-        repoIncludes: string
-        branchIncludes: string
-        branchAuthorIncludes: string
-        projectExcludes: string
-        repoExcludes: string
-        branchExcludes: string
-        branchAuthorExcludes: string
-    };
 }
 export function initApp(): InitAppAction {
-    let params: any = {};
-    if (window.location.hash) {
-        const param = decodeURIComponent(window.location.hash);
-        params = param.substring(1).split('&');
-        params = _.reduce<string, {}>(params, (s, p) => {
-            const pair = p.split('=');
-            s[pair[0]] = pair[1];
-            return s;
-        }, {});
-    }
-    let projectIncludes = params['projectIncludes'] ? params['projectIncludes'] : '';
-    let repoIncludes = params['repoIncludes'] ? params['repoIncludes'] : '';
-    let branchIncludes = params['branchIncludes'] ? params['branchIncludes'] : '';
-    let branchAuthorIncludes = params['branchAuthorIncludes'] ? params['branchAuthorIncludes'] : '';
-
-    let projectExcludes = params['projectExcludes'] ? params['projectExcludes'] : '';
-    let repoExcludes = params['repoExcludes'] ? params['repoExcludes'] : '';
-    let branchExcludes = params['branchExcludes'] ? params['branchExcludes'] : '';
-    let branchAuthorExcludes = params['branchAuthorExcludes'] ? params['branchAuthorExcludes'] : '';
-
     return {
-        type: INIT_APP,
-        payload: {
-            projectIncludes,
-            repoIncludes,
-            branchIncludes,
-            branchAuthorIncludes,
-            projectExcludes,
-            repoExcludes,
-            branchExcludes,
-            branchAuthorExcludes
-        }
+        type: INIT_APP
     };
 }
 
-export const TOGGLE_FILTER: ActionType<ChangeFilterAction> = 'TOGGLE_FILTER';
+export const TOGGLE_FILTER: ActionType<ToggleFilterAction> = 'TOGGLE_FILTER';
 interface ToggleFilterAction extends Action {
 }
 export function toggleFilter(): ToggleFilterAction {
@@ -96,13 +57,15 @@ export function toggleFilter(): ToggleFilterAction {
 export const CHANGE_FILTER: ActionType<ChangeFilterAction> = 'CHANGE_FILTER';
 interface ChangeFilterAction extends Action {
     payload: {
-        [index: string]: string;
+        filter: FilterState;
     };
 }
-export function changeFilter(filter): ChangeFilterAction {
+export function changeFilter(filter: FilterState): ChangeFilterAction {
     return {
         type: CHANGE_FILTER,
-        payload: filter
+        payload: {
+            filter
+        }
     };
 }
 

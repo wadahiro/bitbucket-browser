@@ -56,11 +56,8 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.initApp());
     }
 
-    onChange = (key: string, values: SelectOption[]) => {
-        const newFilter = {
-            [key]: values ? values.map(x => x.value).join(',') : ''
-        };
-        this.props.dispatch(Actions.changeFilter(newFilter));
+    onChange = (key: string, filter: FilterState) => {
+        this.props.dispatch(Actions.changeFilter(filter));
     };
 
     handleSonarQubeAuthenticated = () => {
@@ -333,13 +330,6 @@ class BrowserView extends React.Component<Props, void> {
     }
 }
 
-function toArray(str: string): string[] {
-    if (!str || str === '') {
-        return [];
-    }
-    return str.split(',');
-}
-
 function appendFilter(strArray, state, key) {
     if (state[key] !== '') {
         strArray.push(`${key}=${state[key]}`);
@@ -347,17 +337,17 @@ function appendFilter(strArray, state, key) {
 }
 
 function filterBranchInfo(data: BranchInfo[], filter: FilterState) {
-    const projectIncludes = toArray(filter.projectIncludes);
-    const projectExcludes = toArray(filter.projectExcludes);
+    const projectIncludes = filter.projectIncludes;
+    const projectExcludes = filter.projectExcludes;
 
-    const repoIncludes = toArray(filter.repoIncludes);
-    const repoExcludes = toArray(filter.repoExcludes);
+    const repoIncludes = filter.repoIncludes;
+    const repoExcludes = filter.repoExcludes;
 
-    const branchIncludes = toArray(filter.branchIncludes);
-    const branchExcludes = toArray(filter.branchExcludes);
+    const branchIncludes = filter.branchIncludes;
+    const branchExcludes = filter.branchExcludes;
 
-    const branchAuthorIncludes = toArray(filter.branchAuthorIncludes);
-    const branchAuthorExcludes = toArray(filter.branchAuthorExcludes)
+    const branchAuthorIncludes = filter.branchAuthorIncludes;
+    const branchAuthorExcludes = filter.branchAuthorExcludes;
 
     let chain = _.chain(data);
 

@@ -14,14 +14,17 @@ export interface SelectOption {
 interface Props extends React.Props<SearchBox> {
     filter: FilterState;
     data: BranchInfo[];
-    onChange: (key: string, values: SelectOption[]) => void;
+    onChange: (key: string, filer: FilterState) => void;
 }
 
 export default class SearchBox extends React.Component<Props, void> {
 
     onChange = (key, values: SelectOption[]) => {
-        this.props.onChange(key, values);
-    }
+        const filter = Object.assign({}, this.props.filter, {
+            [key]: values ? values.map(x => x.value) : []
+        });
+        this.props.onChange(key, filter);
+    };
 
     render() {
         const { data } = this.props;

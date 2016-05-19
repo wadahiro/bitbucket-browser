@@ -13,7 +13,7 @@ interface Props extends React.Props<SidebarFilter> {
 
     filter: FilterState;
 
-    onChange: (key: string, values: SelectOption[]) => void;
+    onChange: (key: string, filter: FilterState) => void;
     open: boolean;
     onClose: (e: React.SyntheticEvent) => void;
 }

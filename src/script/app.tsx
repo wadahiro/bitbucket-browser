@@ -32,65 +32,6 @@ sagaMiddleware.run(rootSaga);
 
 
 class App extends React.Component<any, any> {
-
-    componentDidMount() {
-        // this.loadSettings()
-        //     .then(x => {
-        //         this.setState({
-        //             settings: x
-        //         });
-        // this.setState({
-        //     settings: x
-        // }, async () => {
-
-        //     let params: any = {};
-        //     if (window.location.hash) {
-        //         const param = decodeURIComponent(window.location.hash);
-        //         params = param.substring(1).split('&');
-        //         params = _.reduce<string, {}>(params, (s, p) => {
-        //             const pair = p.split('=');
-        //             s[pair[0]] = pair[1];
-        //             return s;
-        //         }, {});
-        //     }
-        //     let projectIncludes = params['projectIncludes'] ? params['projectIncludes'] : '';
-        //     let repoIncludes = params['repoIncludes'] ? params['repoIncludes'] : '';
-        //     let branchIncludes = params['branchIncludes'] ? params['branchIncludes'] : '';
-        //     let branchAuthorIncludes = params['branchAuthorIncludes'] ? params['branchAuthorIncludes'] : '';
-
-        //     let projectExcludes = params['projectExcludes'] ? params['projectExcludes'] : '';
-        //     let repoExcludes = params['repoExcludes'] ? params['repoExcludes'] : '';
-        //     let branchExcludes = params['branchExcludes'] ? params['branchExcludes'] : '';
-        //     let branchAuthorExcludes = params['branchAuthorExcludes'] ? params['branchAuthorExcludes'] : '';
-
-        //     const bitbucketAuthenticated = await isAuthenticated();
-        //     const sonarQubeAuthenticated = await SQAPI.isAuthenticated(x);
-
-        //     if (!bitbucketAuthenticated) {
-        //         // Redirect to Bitbucket Login page
-        //         location.href = `/stash/login?next=/stash-browser${encodeURIComponent(location.hash)}`;
-        //     } else {
-        //         this.setState({
-        //             sonarQubeAuthenticated,
-        //             projectIncludes,
-        //             repoIncludes,
-        //             branchIncludes,
-        //             branchAuthorIncludes,
-        //             projectExcludes,
-        //             repoExcludes,
-        //             branchExcludes,
-        //             branchAuthorExcludes
-        //         }, () => {
-        //             // this.loadBranchInfos();
-        //         });
-        //     }
-        // });
-        // })
-        // .catch(e => {
-        //     console.error('initialize error.', e.stack);
-        // });
-    }
-
     render() {
         return <BrowserView  />;
     }

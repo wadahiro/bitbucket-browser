@@ -8,41 +8,59 @@ import { Settings } from '../Settings';
 import * as Actions from '../actions';
 
 export interface FilterState {
-    projectIncludes?: string;
-    projectExcludes?: string;
-    repoIncludes?: string;
-    repoExcludes?: string;
-    branchIncludes?: string;
-    branchExcludes?: string;
-    branchAuthorIncludes?: string;
-    branchAuthorExcludes?: string;
+    projectIncludes?: string[];
+    projectExcludes?: string[];
+    repoIncludes?: string[];
+    repoExcludes?: string[];
+    branchIncludes?: string[];
+    branchExcludes?: string[];
+    branchAuthorIncludes?: string[];
+    branchAuthorExcludes?: string[];
 
     sidebarFilterOpened?: boolean;
 }
 
-const initialFilterState: FilterState = {
-    projectIncludes: '',
-    projectExcludes: '',
-    repoIncludes: '',
-    repoExcludes: '',
-    branchIncludes: '',
-    branchExcludes: '',
-    branchAuthorIncludes: '',
-    branchAuthorExcludes: '',
+function initFilterState(): FilterState {
+    const filterState: FilterState = {
+        projectIncludes: [],
+        projectExcludes: [],
+        repoIncludes: [],
+        repoExcludes: [],
+        branchIncludes: [],
+        branchExcludes: [],
+        branchAuthorIncludes: [],
+        branchAuthorExcludes: [],
 
-    sidebarFilterOpened: false
-};
+        sidebarFilterOpened: false
+    };
 
-export const filterReducer = (state: FilterState = initialFilterState, action: Actions.Action) => {
+    // Restore from URL
+    if (window.location.hash) {
+        const query = decodeURIComponent(window.location.hash);
+        const queryParams = query.substring(1).split('&').reduce((s, x) => {
+            const pair = x.split('=');
+            s[pair[0]] = pair[1];
+            return s;
+        }, {});
+        const restoredFilterState = Object.keys(filterState).reduce((s, x) => {
+            if (queryParams[x]) {
+                if (x === 'sidebarFilterOpened') {
+                    s[x] = queryParams[x].toLowerCase() === 'true';
+                } else {
+                    s[x] = queryParams[x].split(',');
+                }
+            }
+            return s;
+        }, <FilterState>filterState);
+    }
+
+    return filterState;
+}
+
+export const filterReducer = (state: FilterState = initFilterState(), action: Actions.Action) => {
     if (Actions.isType(action, Actions.CHANGE_FILTER)) {
-        const payload = action.payload;
-
-        const saveFilters = Object.keys(state).map(x => {
-            return `${x}=${state[x]}`
-        });
-        window.location.hash = saveFilters.join('&');
-
-        return Object.assign<FilterState, FilterState, FilterState>({}, state, payload);
+        const filter = action.payload.filter;
+        return Object.assign<FilterState, FilterState, FilterState>({}, state, filter);
     }
 
     if (Actions.isType(action, Actions.TOGGLE_FILTER)) {

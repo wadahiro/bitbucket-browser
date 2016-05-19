@@ -3,10 +3,12 @@ import { take, put, call, fork, select, Effect } from 'redux-saga/effects'
 import * as B from '../bulma';
 
 import * as actions from '../actions'
+import { RootState }from '../reducers'
 import { PullRequestCount, PullRequestStatus, BranchInfo, BuildStatus, SonarStatus,
     isAuthenticated, fetchAllRepos, fetchBranchInfos, fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from '../BitbucketApi';
 import * as SQAPI from '../SonarQubeApi';
 import { Settings } from '../Settings';
+
 
 async function fetchSettings(): Promise<Settings> {
     const response = await fetch('./settings.json', {
@@ -120,12 +122,27 @@ function* watchAndLog() {
     })
 }
 
+function* handleSaveFilter() {
+    while (true) {
+        const action = yield take([actions.CHANGE_FILTER, actions.TOGGLE_FILTER]);
+
+        const filterState = yield select((state: RootState) => state.filter);
+
+        // Save to URL
+        const saveFilters = Object.keys(filterState).map(x => {
+            return `${x}=${filterState[x]}`
+        });
+        window.location.hash = saveFilters.join('&');
+    }
+}
+
 export default function* root(): Iterable<Effect> {
     yield fork(watchAndLog)
     yield fork(handleFetchSettings)
     yield fork(initApp)
     yield fork(loadBranchInfos)
     yield fork(handleFetchBranchInfos)
+    yield fork(handleSaveFilter)
 }
 
 function resolveLazyFetch(settings: Settings, branchInfoOfSomeProjects: BranchInfo[]) {
