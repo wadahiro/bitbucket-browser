@@ -84,6 +84,15 @@ export function initApp(): InitAppAction {
     };
 }
 
+export const TOGGLE_FILTER: ActionType<ChangeFilterAction> = 'TOGGLE_FILTER';
+interface ToggleFilterAction extends Action {
+}
+export function toggleFilter(): ToggleFilterAction {
+    return {
+        type: TOGGLE_FILTER
+    };
+}
+
 export const CHANGE_FILTER: ActionType<ChangeFilterAction> = 'CHANGE_FILTER';
 interface ChangeFilterAction extends Action {
     payload: {

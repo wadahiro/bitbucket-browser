@@ -13,7 +13,7 @@ import Spinner from '../Spinner';
 import { Settings } from '../Settings';
 import { SonarQubeLoginModal } from '../components/SonarQubeLoginModal';
 import { SidebarFilter, SelectOption } from '../components/SidebarFilter';
-import { AppState, FilterState, CombinedState } from '../reducers';
+import { AppState, FilterState, RootState } from '../reducers';
 
 import * as Actions from '../actions';
 
@@ -32,10 +32,9 @@ interface Props extends React.Props<any> {
     filter?: FilterState;
 
     resultsPerPage?: number;
-    sidebarFilterOpened?: boolean;
 }
 
-function mapStateToProps(state: CombinedState, props: Props): Props {
+function mapStateToProps(state: RootState, props: Props): Props {
     return {
         settings: state.app.settings,
         loading: state.app.loading,
@@ -48,7 +47,6 @@ function mapStateToProps(state: CombinedState, props: Props): Props {
         filter: state.filter,
 
         resultsPerPage: state.app.resultsPerPage,
-        sidebarFilterOpened: state.app.sidebarFilterOpened
     };
 }
 
@@ -236,16 +234,14 @@ class BrowserView extends React.Component<Props, void> {
     };
 
     handleToggleSidebar = (e: React.SyntheticEvent) => {
-        // this.setState({
-        //     sidebarFilterOpened: !this.state.sidebarFilterOpened
-        // });
+        this.props.dispatch(Actions.toggleFilter());
     };
 
     render() {
         const { settings,
             branchInfos, loading, branchInfosLoaded,
             filter,
-            resultsPerPage, sidebarFilterOpened } = this.props;
+            resultsPerPage } = this.props;
 
         const filteredBranchInfos = filterBranchInfo(branchInfos, filter);
 
@@ -267,14 +263,14 @@ class BrowserView extends React.Component<Props, void> {
                 onChange={this.onChange}
                 filter={filter}
                 onClose={this.handleToggleSidebar}
-                open={sidebarFilterOpened}
+                open={filter.sidebarFilterOpened}
                 >
                 <div>
                     <section className='hero is-info is-left is-bold'>
                         <nav className='nav'>
                             <div className='container is-fluid'>
                                 <div className='nav-left'>
-                                    { !sidebarFilterOpened &&
+                                    { !filter.sidebarFilterOpened &&
                                         <p className='nav-item'>
                                             <a onClick={this.handleToggleSidebar}>
                                                 <B.Icon iconClassName='fa fa-angle-double-right' color={'white'} />
