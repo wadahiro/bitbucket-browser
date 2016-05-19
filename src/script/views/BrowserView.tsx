@@ -66,106 +66,17 @@ class BrowserView extends React.Component<Props, void> {
 
     loadBranchInfos = () => {
         const { settings } = this.props;
-
         this.props.dispatch(Actions.loadBranchInfos(settings));
     };
 
     handlePullRequestCount = (fetch: B.LazyFetch<PullRequestCount>, branchInfo: BranchInfo) => {
-        console.log('handlePullRequestCount', branchInfo.pullRequestStatus)
-        // if (branchInfo.pullRequestStatus === null) {
-        //     return;
-        // }
-
-        // fetch.fetch()
-        //     .then(prCount => {
-        //         const { pullRequestIds, from, to, merged, declined } = prCount;
-
-        //         const updatedRows = this.state.branchInfos.map(targetBranchInfo => {
-        //             if (targetBranchInfo.id === branchInfo.id) {
-
-        //                 // Update pull request count against branchInfos of args
-        //                 targetBranchInfo.pullRequestStatus = {
-        //                     prCountSource: from[targetBranchInfo.ref] ? from[targetBranchInfo.ref] : 0,
-        //                     prCountTarget: to[targetBranchInfo.ref] ? to[targetBranchInfo.ref] : 0,
-        //                     prCountMerged: merged[targetBranchInfo.ref] ? merged[targetBranchInfo.ref] : 0,
-        //                     prCountDeclined: declined[targetBranchInfo.ref] ? declined[targetBranchInfo.ref] : 0,
-        //                     prIds: pullRequestIds[targetBranchInfo.ref] ? pullRequestIds[targetBranchInfo.ref] : []
-        //                 };
-
-        //                 // lazy fetch dependents
-        //                 if (!targetBranchInfo.buildStatus) {
-        //                     let buildStatus;
-        //                     if (targetBranchInfo.latestCommitHash === '') {
-        //                         targetBranchInfo.buildStatus = {
-        //                             commitHash: '',
-        //                             values: []
-        //                         };
-        //                     } else {
-        //                         const fetch = new B.LazyFetch<BuildStatus>(() => {
-        //                             return fetchBuildStatus(targetBranchInfo.latestCommitHash);
-        //                         });
-        //                         targetBranchInfo.buildStatus = fetch;
-        //                     }
-        //                 }
-        //                 if (!targetBranchInfo.sonarStatus) {
-        //                     let sonarStatus;
-        //                     const pullRequestStatus = targetBranchInfo.pullRequestStatus as PullRequestStatus;
-        //                     if (pullRequestStatus.prIds.length === 0) {
-        //                         targetBranchInfo.sonarStatus = {
-        //                             repoId: branchInfo.repoId,
-        //                             values: []
-        //                         };
-        //                     } else {
-        //                         const fetch = new B.LazyFetch<SonarStatus>(() => {
-        //                             return fetchSonarStatus(targetBranchInfo.repoId, pullRequestStatus.prIds);
-        //                         });
-        //                         targetBranchInfo.sonarStatus = fetch;
-        //                     }
-        //                 }
-        //             }
-        //             return targetBranchInfo;
-        //         });
-
-        //         this.setState({
-        //             branchInfos: updatedRows
-        //         });
-        //     });
-
-        // const updatedRows = this.state.branchInfos.map(x => {
-        //     if (x.id === branchInfo.id) {
-        //         x.pullRequestStatus = null;
-        //     }
-        //     return x;
-        // });
-        // this.setState({
-        //     branchInfos: updatedRows
-        // });
+        // console.log('handlePullRequestCount', branchInfo.pullRequestStatus)
+        this.props.dispatch(Actions.fetchPullRequestCount(fetch, branchInfo));
     };
 
     handleBuildStatus = (fetch: B.LazyFetch<BuildStatus>, branchInfo: BranchInfo) => {
         // console.log('handleBuildStatus', branchInfo.buildStatus)
-        // if (branchInfo.buildStatus === null) {
-        //     return;
-        // }
-
-        // const updateRow = (buildStatus) => {
-        //     const updatedRows = this.state.branchInfos.map(x => {
-        //         if (x.id === branchInfo.id) {
-        //             x.buildStatus = buildStatus;
-        //         }
-        //         return x;
-        //     });
-        //     this.setState({
-        //         branchInfos: updatedRows
-        //     });
-        // };
-
-        // fetch.fetch()
-        //     .then(buildStatus => {
-        //         updateRow(buildStatus);
-        //     });
-
-        // updateRow(null);
+        this.props.dispatch(Actions.fetchBuildStatus(fetch, branchInfo));
     };
 
     handleSonarStatus = (fetch: B.LazyFetch<SonarStatus>, branchInfo: BranchInfo) => {

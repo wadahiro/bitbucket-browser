@@ -101,11 +101,106 @@ function* handleFetchBranchInfos(): Iterable<Effect> {
         console.log(branchInfos)
 
         yield put({
-            type: actions.LOAD_BRANCH_INFOS_SUCCEED,
+            type: actions.APPEND_BRANCH_INFOS,
             payload: {
                 branchInfos
             }
         })
+    }
+}
+
+function* handleFetchPullRequestCount(): Iterable<Effect> {
+    while (true) {
+        const action: actions.FetchPullRequestCountAction = yield take(actions.FETCH_PULL_REQUEST_COUNT);
+        console.log(action)
+
+        const { fetch, branchInfo } = action.payload;
+
+        const prCount: PullRequestCount = yield fetch.fetch();
+        const branchInfos: BranchInfo[] = yield select((state: RootState) => state.app.branchInfos);
+
+        console.log(prCount)
+        console.log(branchInfos)
+
+        const { pullRequestIds, from, to, merged, declined } = prCount;
+
+        const updatedRows = branchInfos.map(targetBranchInfo => {
+            if (targetBranchInfo.id === branchInfo.id) {
+
+                // Update pull request count against branchInfos of args
+                targetBranchInfo.pullRequestStatus = {
+                    prCountSource: from[targetBranchInfo.ref] ? from[targetBranchInfo.ref] : 0,
+                    prCountTarget: to[targetBranchInfo.ref] ? to[targetBranchInfo.ref] : 0,
+                    prCountMerged: merged[targetBranchInfo.ref] ? merged[targetBranchInfo.ref] : 0,
+                    prCountDeclined: declined[targetBranchInfo.ref] ? declined[targetBranchInfo.ref] : 0,
+                    prIds: pullRequestIds[targetBranchInfo.ref] ? pullRequestIds[targetBranchInfo.ref] : []
+                };
+
+                // lazy fetch dependents
+                if (!targetBranchInfo.buildStatus) {
+                    let buildStatus;
+                    if (targetBranchInfo.latestCommitHash === '') {
+                        targetBranchInfo.buildStatus = {
+                            commitHash: '',
+                            values: []
+                        };
+                    } else {
+                        const fetch = new B.LazyFetch<BuildStatus>(() => {
+                            return fetchBuildStatus(targetBranchInfo.latestCommitHash);
+                        });
+                        targetBranchInfo.buildStatus = fetch;
+                    }
+                }
+                if (!targetBranchInfo.sonarStatus) {
+                    let sonarStatus;
+                    const pullRequestStatus = targetBranchInfo.pullRequestStatus as PullRequestStatus;
+                    if (pullRequestStatus.prIds.length === 0) {
+                        targetBranchInfo.sonarStatus = {
+                            repoId: branchInfo.repoId,
+                            values: []
+                        };
+                    } else {
+                        const fetch = new B.LazyFetch<SonarStatus>(() => {
+                            return fetchSonarStatus(targetBranchInfo.repoId, pullRequestStatus.prIds);
+                        });
+                        targetBranchInfo.sonarStatus = fetch;
+                    }
+                }
+            }
+            return targetBranchInfo;
+        });
+
+        yield put({
+            type: actions.UPDATE_BRANCH_INFOS,
+            payload: {
+                branchInfos: updatedRows
+            }
+        });
+    }
+}
+
+function* handleBuildStatus(): Iterable<Effect> {
+    while (true) {
+        const action: actions.FetchBuildStatusAction = yield take(actions.FETCH_BUILD_STATUS);
+
+        const { fetch, branchInfo } = action.payload;
+
+        const buildStatus: BuildStatus = yield fetch.fetch();
+        const branchInfos: BranchInfo[] = yield select((state: RootState) => state.app.branchInfos);
+
+        const updatedRows = branchInfos.map(x => {
+            if (x.id === branchInfo.id) {
+                x.buildStatus = buildStatus;
+            }
+            return x;
+        });
+        
+        yield put({
+            type: actions.UPDATE_BRANCH_INFOS,
+            payload: {
+                branchInfos: updatedRows
+            }
+        });
     }
 }
 
@@ -142,6 +237,8 @@ export default function* root(): Iterable<Effect> {
     yield fork(initApp)
     yield fork(loadBranchInfos)
     yield fork(handleFetchBranchInfos)
+    yield fork(handleFetchPullRequestCount)
+    yield fork(handleBuildStatus)
     yield fork(handleSaveFilter)
 }
 

@@ -111,11 +111,19 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
         return Object.assign({}, state, payload);
     }
 
-    if (Actions.isType(action, Actions.LOAD_BRANCH_INFOS_SUCCEED)) {
+    if (Actions.isType(action, Actions.APPEND_BRANCH_INFOS)) {
         const payload = action.payload;
 
         return Object.assign({}, state, {
             branchInfos: state.branchInfos.concat(payload.branchInfos)
+        });
+    }
+
+    if (Actions.isType(action, Actions.UPDATE_BRANCH_INFOS)) {
+        const payload = action.payload;
+
+        return Object.assign({}, state, {
+            branchInfos: payload.branchInfos
         });
     }
 

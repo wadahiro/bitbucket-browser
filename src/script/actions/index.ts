@@ -2,8 +2,7 @@ import { takeEvery, takeLatest } from 'redux-saga';
 import { fork, call, put } from 'redux-saga/effects';
 import * as B from '../bulma';
 
-import { PullRequestCount, PullRequestStatus, BranchInfo, BuildStatus, SonarStatus,
-    isAuthenticated, fetchAllRepos, fetchBranchInfos, fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from '../BitbucketApi';
+import { PullRequestCount, PullRequestStatus, BranchInfo, BuildStatus, SonarStatus } from '../BitbucketApi';
 import * as SQAPI from '../SonarQubeApi';
 import { Settings } from '../Settings';
 import { FilterState } from '../reducers';
@@ -86,7 +85,6 @@ export interface LoadBranchInfosRequestedAction extends Action {
 }
 
 export function loadBranchInfos(settings: Settings): LoadBranchInfosRequestedAction {
-
     return {
         type: LOAD_BRANCH_INFOS_REQUESTED,
         payload: {
@@ -95,10 +93,50 @@ export function loadBranchInfos(settings: Settings): LoadBranchInfosRequestedAct
     };
 }
 
-export const LOAD_BRANCH_INFOS_SUCCEED: ActionType<LoadBranchInfosSucceedAction> = 'LOAD_BRANCH_INFOS_SUCCEED';
-export interface LoadBranchInfosSucceedAction extends Action {
+export const APPEND_BRANCH_INFOS: ActionType<BranchInfosAction> = 'APPEND_BRANCH_INFOS';
+export const UPDATE_BRANCH_INFOS: ActionType<BranchInfosAction> = 'UPDATE_BRANCH_INFOS';
+export interface BranchInfosAction extends Action {
     payload: {
         branchInfos: BranchInfo[];
     }
 }
 
+export const FETCH_PULL_REQUEST_COUNT: ActionType<FetchPullRequestCountAction> = 'FETCH_PULL_REQUEST_COUNT';
+export interface FetchPullRequestCountAction extends Action {
+    payload: {
+        fetch: B.LazyFetch<PullRequestCount>,
+        branchInfo: BranchInfo
+    }
+}
+export function fetchPullRequestCount(fetch: B.LazyFetch<PullRequestCount>, branchInfo: BranchInfo): FetchPullRequestCountAction {
+    if (branchInfo.pullRequestStatus === null) {
+        return;
+    }
+    return {
+        type: FETCH_PULL_REQUEST_COUNT,
+        payload: {
+            fetch,
+            branchInfo
+        }
+    };
+}
+
+export const FETCH_BUILD_STATUS: ActionType<FetchBuildStatusAction> = 'FETCH_BUILD_STATUS';
+export interface FetchBuildStatusAction extends Action {
+    payload: {
+        fetch: B.LazyFetch<BuildStatus>,
+        branchInfo: BranchInfo
+    }
+}
+export function fetchBuildStatus(fetch: B.LazyFetch<BuildStatus>, branchInfo: BranchInfo): FetchBuildStatusAction {
+    if (branchInfo.buildStatus === null) {
+        return;
+    }
+    return {
+        type: FETCH_BUILD_STATUS,
+        payload: {
+            fetch,
+            branchInfo
+        }
+    };
+}
