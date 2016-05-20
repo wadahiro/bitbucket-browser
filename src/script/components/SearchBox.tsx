@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 const Select = require('react-select');
 
 import * as B from '../bulma';
-import { BranchInfo } from '../BitbucketApi';
+import { BranchInfo } from '../webapis/BitbucketApi';
 import { FilterState } from '../reducers';
 
 export interface SelectOption {

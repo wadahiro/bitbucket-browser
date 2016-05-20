@@ -1,9 +1,8 @@
 import { combineReducers } from 'redux';
 import * as B from '../bulma';
 
-import * as SQAPI from '../SonarQubeApi';
-import { PullRequestCount, PullRequestStatus, BranchInfo, BuildStatus, SonarStatus,
-    isAuthenticated, fetchAllRepos, fetchBranchInfos, fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from '../BitbucketApi';
+import * as BAPI from '../webapis/BitbucketApi';
+import * as SQAPI from '../webapis/SonarQubeApi';
 import { Settings } from '../Settings';
 import * as Actions from '../actions';
 
@@ -80,7 +79,7 @@ export interface AppState {
     sonarQubeAuthenticated?: boolean;
 
     branchInfosLoaded?: boolean;
-    branchInfos?: BranchInfo[];
+    branchInfos?: BAPI.BranchInfo[];
 
     resultsPerPage?: number;
 }
@@ -119,11 +118,22 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
         });
     }
 
-    if (Actions.isType(action, Actions.UPDATE_BRANCH_INFOS)) {
-        const payload = action.payload;
+    if (Actions.isType(action, Actions.RELOAD_BRANCH_INFOS)) {
+        return Object.assign({}, state, {
+            branchInfos: []
+        });
+    }
+
+    if (Actions.isType(action, Actions.UPDATE_BRANCH_INFO)) {
+        const { branchInfo } = action.payload;
 
         return Object.assign({}, state, {
-            branchInfos: payload.branchInfos
+            branchInfos: state.branchInfos.map(x => {
+                if (x.id === branchInfo.id) {
+                    return Object.assign({}, x, branchInfo);
+                }
+                return x;
+            })
         });
     }
 

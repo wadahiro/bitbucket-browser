@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as B from '../bulma';
-import { BuildStatus } from '../BitBucketApi';
+import { BuildStatus } from '../webapis/BitBucketApi';
 
 interface Props extends React.Props<BuildStatusModal> {
     show?: boolean;

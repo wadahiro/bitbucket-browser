@@ -3,10 +3,9 @@ import { take, put, call, fork, select, Effect } from 'redux-saga/effects'
 import * as B from '../bulma';
 
 import * as actions from '../actions'
-import { RootState }from '../reducers'
-import { PullRequestCount, PullRequestStatus, BranchInfo, BuildStatus, SonarStatus,
-    isAuthenticated, fetchAllRepos, fetchBranchInfos, fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from '../BitbucketApi';
-import * as SQAPI from '../SonarQubeApi';
+import { RootState, AppState }from '../reducers'
+import * as BAPI from '../webapis/BitbucketApi';
+import * as SQAPI from '../webapis/SonarQubeApi';
 import { Settings } from '../Settings';
 
 
@@ -23,16 +22,12 @@ async function fetchSettings(): Promise<Settings> {
 }
 
 function* handleFetchSettings(): Iterable<Effect> {
-    const action = yield take('INIT_APP');
+    const action: actions.InitAppAction = yield take(actions.INIT_APP);
 
-    console.log('handleFetchSettings1', action)
+    const settings: Settings = yield call(fetchSettings);
 
-    const settings = yield call(fetchSettings);
-
-    console.log('handleFetchSettings2', settings)
-
-    yield put({
-        type: 'FETCH_SETTINGS_SUCCEEDED',
+    yield put(<actions.FetchSettingsScceededAction>{
+        type: actions.FETCH_SETTINGS_SUCCEEDED,
         payload: {
             settings
         }
@@ -40,41 +35,43 @@ function* handleFetchSettings(): Iterable<Effect> {
 }
 
 function* initApp(): Iterable<Effect> {
-    let action = yield take('INIT_APP');
+    yield take(actions.INIT_APP);
 
-    console.log('initApp1', action)
+    const action: actions.FetchSettingsScceededAction = yield take(actions.FETCH_SETTINGS_SUCCEEDED);
+    const { settings } = action.payload;
 
-    action = yield take('FETCH_SETTINGS_SUCCEEDED');
-
-    console.log('initApp2', action)
-
-    const bitbucketAuthenticated = yield call(isAuthenticated);
-    const sonarQubeAuthenticated = yield call(SQAPI.isAuthenticated, action.payload.settings);
-    console.log(bitbucketAuthenticated)
-
+    const bitbucketAuthenticated = yield call(BAPI.isAuthenticated);
 
     if (!bitbucketAuthenticated) {
         // Redirect to Bitbucket Login page
         location.href = `/stash/login?next=/stash-browser${encodeURIComponent(location.hash)}`;
     } else {
-        yield put({
+        const sonarQubeAuthenticated = yield call(SQAPI.isAuthenticated, settings);
+
+        yield put(<actions.InitAppAction>{
             type: actions.INIT_APP_SUCCEEDED,
-            payload: Object.assign({}, action.payload, {
+            payload: {
                 sonarQubeAuthenticated
-            })
+            }
+        });
+        yield put(<actions.FetchBranchInfosAction>{
+            type: actions.FETCH_BRANCH_INFOS_REQUESTED,
+            payload: {
+                settings
+            }
         });
     }
 }
 
-function* loadBranchInfos(action: actions.LoadBranchInfosRequestedAction): Iterable<Effect> {
+function* fetchBranchInfos(action: actions.FetchBranchInfosAction): Iterable<Effect> {
     while (true) {
-        const action = yield take('INIT_APP_SUCCEEDED');
+        const action = yield take(actions.FETCH_BRANCH_INFOS_REQUESTED);
         const { settings } = action.payload;
 
-        const repos = yield call(fetchAllRepos);
+        const repos = yield call(BAPI.fetchAllRepos);
 
-        yield put({
-            type: 'FETCH_REPOS_OK',
+        yield put(<actions.FetchReposAction>{
+            type: actions.FETCH_REPOS_SUCCEEDED,
             payload: {
                 settings,
                 repos
@@ -83,14 +80,27 @@ function* loadBranchInfos(action: actions.LoadBranchInfosRequestedAction): Itera
     }
 }
 
+function* reloadBranchInfos(action: actions.ReloadBranchInfosAction): Iterable<Effect> {
+    while (true) {
+        const action = yield take(actions.RELOAD_BRANCH_INFOS);
+        const { settings } = action.payload;
+
+        yield put(<actions.FetchBranchInfosAction>{
+            type: actions.FETCH_BRANCH_INFOS_REQUESTED,
+            payload: {
+                settings
+            }
+        });
+    }
+}
+
 function* handleFetchBranchInfos(): Iterable<Effect> {
     while (true) {
-        const action = yield take('FETCH_REPOS_OK');
-        console.log(action)
+        const action = yield take(actions.FETCH_REPOS_SUCCEEDED);
 
         const { settings, repos } = action.payload;
 
-        const branchInfosPromises: Promise<BranchInfo[]>[] = yield call(fetchBranchInfos, settings, repos);
+        const branchInfosPromises: Promise<BAPI.BranchInfo[]>[] = yield call(BAPI.fetchBranchInfos, settings, repos);
 
         console.log(branchInfosPromises)
 
@@ -100,7 +110,7 @@ function* handleFetchBranchInfos(): Iterable<Effect> {
 
         console.log(branchInfos)
 
-        yield put({
+        yield put(<actions.AppendBranchInfosAction>{
             type: actions.APPEND_BRANCH_INFOS,
             payload: {
                 branchInfos
@@ -112,68 +122,55 @@ function* handleFetchBranchInfos(): Iterable<Effect> {
 function* handleFetchPullRequestCount(): Iterable<Effect> {
     while (true) {
         const action: actions.FetchPullRequestCountAction = yield take(actions.FETCH_PULL_REQUEST_COUNT);
-        console.log(action)
 
         const { fetch, branchInfo } = action.payload;
+        const { id, ref } = branchInfo;
 
-        const prCount: PullRequestCount = yield fetch.fetch();
-        const branchInfos: BranchInfo[] = yield select((state: RootState) => state.app.branchInfos);
-
-        console.log(prCount)
-        console.log(branchInfos)
+        const prCount: BAPI.PullRequestCount = yield fetch.fetch();
 
         const { pullRequestIds, from, to, merged, declined } = prCount;
 
-        const updatedRows = branchInfos.map(targetBranchInfo => {
-            if (targetBranchInfo.id === branchInfo.id) {
+        const pullRequestStatus = {
+            prCountSource: from[ref] ? from[ref] : 0,
+            prCountTarget: to[ref] ? to[ref] : 0,
+            prCountMerged: merged[ref] ? merged[ref] : 0,
+            prCountDeclined: declined[ref] ? declined[ref] : 0,
+            prIds: pullRequestIds[ref] ? pullRequestIds[ref] : []
+        };
 
-                // Update pull request count against branchInfos of args
-                targetBranchInfo.pullRequestStatus = {
-                    prCountSource: from[targetBranchInfo.ref] ? from[targetBranchInfo.ref] : 0,
-                    prCountTarget: to[targetBranchInfo.ref] ? to[targetBranchInfo.ref] : 0,
-                    prCountMerged: merged[targetBranchInfo.ref] ? merged[targetBranchInfo.ref] : 0,
-                    prCountDeclined: declined[targetBranchInfo.ref] ? declined[targetBranchInfo.ref] : 0,
-                    prIds: pullRequestIds[targetBranchInfo.ref] ? pullRequestIds[targetBranchInfo.ref] : []
-                };
+        let buildStatus;
+        if (branchInfo.latestCommitHash === '') {
+            buildStatus = {
+                commitHash: '',
+                values: []
+            };
+        } else {
+            buildStatus = new B.LazyFetch<BAPI.BuildStatus>(() => {
+                return BAPI.fetchBuildStatus(branchInfo.latestCommitHash);
+            });
+        }
 
-                // lazy fetch dependents
-                if (!targetBranchInfo.buildStatus) {
-                    let buildStatus;
-                    if (targetBranchInfo.latestCommitHash === '') {
-                        targetBranchInfo.buildStatus = {
-                            commitHash: '',
-                            values: []
-                        };
-                    } else {
-                        const fetch = new B.LazyFetch<BuildStatus>(() => {
-                            return fetchBuildStatus(targetBranchInfo.latestCommitHash);
-                        });
-                        targetBranchInfo.buildStatus = fetch;
-                    }
-                }
-                if (!targetBranchInfo.sonarStatus) {
-                    let sonarStatus;
-                    const pullRequestStatus = targetBranchInfo.pullRequestStatus as PullRequestStatus;
-                    if (pullRequestStatus.prIds.length === 0) {
-                        targetBranchInfo.sonarStatus = {
-                            repoId: branchInfo.repoId,
-                            values: []
-                        };
-                    } else {
-                        const fetch = new B.LazyFetch<SonarStatus>(() => {
-                            return fetchSonarStatus(targetBranchInfo.repoId, pullRequestStatus.prIds);
-                        });
-                        targetBranchInfo.sonarStatus = fetch;
-                    }
-                }
-            }
-            return targetBranchInfo;
-        });
+        let sonarForBitbucketStatus;
+        if (pullRequestStatus.prIds.length === 0) {
+            sonarForBitbucketStatus = {
+                repoId: branchInfo.repoId,
+                values: []
+            };
+        } else {
+            sonarForBitbucketStatus = new B.LazyFetch<BAPI.SonarForBitbucketStatus>(() => {
+                return BAPI.fetchSonarForBitbucketStatus(branchInfo.repoId, pullRequestStatus.prIds);
+            });
+        }
 
-        yield put({
-            type: actions.UPDATE_BRANCH_INFOS,
+        yield put(<actions.UpdateBranchInfoAction>{
+            type: actions.UPDATE_BRANCH_INFO,
             payload: {
-                branchInfos: updatedRows
+                branchInfo: {
+                    id,
+                    pullRequestStatus,
+                    buildStatus,
+                    sonarForBitbucketStatus
+                }
             }
         });
     }
@@ -184,27 +181,84 @@ function* handleBuildStatus(): Iterable<Effect> {
         const action: actions.FetchBuildStatusAction = yield take(actions.FETCH_BUILD_STATUS);
 
         const { fetch, branchInfo } = action.payload;
+        const { id } = branchInfo;
 
-        const buildStatus: BuildStatus = yield fetch.fetch();
-        const branchInfos: BranchInfo[] = yield select((state: RootState) => state.app.branchInfos);
+        const buildStatus: BAPI.BuildStatus = yield fetch.fetch();
 
-        const updatedRows = branchInfos.map(x => {
-            if (x.id === branchInfo.id) {
-                x.buildStatus = buildStatus;
-            }
-            return x;
-        });
-        
-        yield put({
-            type: actions.UPDATE_BRANCH_INFOS,
+        yield put(<actions.UpdateBranchInfoAction>{
+            type: actions.UPDATE_BRANCH_INFO,
             payload: {
-                branchInfos: updatedRows
+                branchInfo: {
+                    id,
+                    buildStatus
+                }
             }
         });
     }
 }
 
-async function fetchBranchInfo(settings, branchInfoPromise: Promise<BranchInfo[]>): Promise<BranchInfo[]> {
+function* handleSonarForBitbucketStatus(): Iterable<Effect> {
+    while (true) {
+        const action: actions.FetchSonarForBitbucketStatusAction = yield take(actions.FETCH_SONAR_FOR_BITBUCKET_STATUS);
+
+        const { fetch, branchInfo } = action.payload;
+        const { id } = branchInfo;
+
+        const sonarForBitbucketStatus: BAPI.SonarForBitbucketStatus = yield fetch.fetch();
+
+        yield put(<actions.UpdateBranchInfoAction>{
+            type: actions.UPDATE_BRANCH_INFO,
+            payload: {
+                branchInfo: {
+                    id,
+                    sonarForBitbucketStatus
+                }
+            }
+        });
+    }
+}
+
+function* handleSonarQubeMetrics(): Iterable<Effect> {
+    while (true) {
+        const action: actions.FetchSonarQubeMetricsAction = yield take(actions.FETCH_SONAR_QUBE_METRICS);
+
+        const { fetch, branchInfo } = action.payload;
+        const { id } = branchInfo;
+
+        const sonarQubeAuthenticated: boolean = yield select((state: RootState) => state.app.sonarQubeAuthenticated);
+
+        if (sonarQubeAuthenticated) {
+            const sonarQubeMetrics: SQAPI.SonarQubeMetrics = yield fetch.fetch();
+
+            yield put(<actions.UpdateBranchInfoAction>{
+                type: actions.UPDATE_BRANCH_INFO,
+                payload: {
+                    branchInfo: {
+                        id,
+                        sonarQubeMetrics
+                    }
+                }
+            });
+        } else {
+            const sonarQubeMetrics = {
+                err_code: 401,
+                err_msg: 'Unauthorized'
+            };
+
+            yield put(<actions.UpdateBranchInfoAction>{
+                type: actions.UPDATE_BRANCH_INFO,
+                payload: {
+                    branchInfo: {
+                        id,
+                        sonarQubeMetrics
+                    }
+                }
+            });
+        }
+    }
+}
+
+async function fetchBranchInfo(settings, branchInfoPromise: Promise<BAPI.BranchInfo[]>): Promise<BAPI.BranchInfo[]> {
     const branchInfos = await branchInfoPromise;
     return resolveLazyFetch(settings, branchInfos);
 }
@@ -235,17 +289,20 @@ export default function* root(): Iterable<Effect> {
     yield fork(watchAndLog)
     yield fork(handleFetchSettings)
     yield fork(initApp)
-    yield fork(loadBranchInfos)
+    yield fork(fetchBranchInfos)
+    yield fork(reloadBranchInfos)
     yield fork(handleFetchBranchInfos)
     yield fork(handleFetchPullRequestCount)
     yield fork(handleBuildStatus)
+    yield fork(handleSonarForBitbucketStatus)
+    yield fork(handleSonarQubeMetrics)
     yield fork(handleSaveFilter)
 }
 
-function resolveLazyFetch(settings: Settings, branchInfoOfSomeProjects: BranchInfo[]) {
+function resolveLazyFetch(settings: Settings, branchInfoOfSomeProjects: BAPI.BranchInfo[]) {
     // important! share fetch instance
-    const fetchPrCount = new B.LazyFetch<PullRequestCount>(() => {
-        return fetchPullRequests(branchInfoOfSomeProjects[0]);
+    const fetchPrCount = new B.LazyFetch<BAPI.PullRequestCount>(() => {
+        return BAPI.fetchPullRequests(branchInfoOfSomeProjects[0]);
     });
 
     const newBranchInfos = branchInfoOfSomeProjects.map(x => {

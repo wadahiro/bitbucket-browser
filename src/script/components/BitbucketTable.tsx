@@ -1,18 +1,16 @@
 import * as React from 'react';
 import * as _ from 'lodash';
 
-import { BehindAheadBranch, PullRequestStatus, BuildStatus, SonarStatus,
-    BranchInfo, PullRequestCount,
-    fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from './BitbucketApi';
-import { SonarQubeMetrics, hasError } from './SonarQubeApi'
-import * as B from './bulma';
+import * as BAPI from '../webapis/BitbucketApi';
+import { SonarQubeMetrics, hasError } from '../webapis/SonarQubeApi'
+import * as B from '../bulma';
 import Spinner from './Spinner';
-import { BehindAheadGraph } from './components/BehindAheadGraph';
-import { BuildStatusModal } from './components/BuildStatusModal';
-import { SonarQubeLoginModal } from './components/SonarQubeLoginModal';
-import { UnauthorizedIcon } from './components/UnauthorizedIcon';
-import { Settings, BranchNameLinkResolver } from './Settings';
-import { baseUrl } from './Utils';
+import { BehindAheadGraph } from './BehindAheadGraph';
+import { BuildStatusModal } from './BuildStatusModal';
+import { SonarQubeLoginModal } from './SonarQubeLoginModal';
+import { UnauthorizedIcon } from './UnauthorizedIcon';
+import { Settings, BranchNameLinkResolver } from '../Settings';
+import { baseUrl } from '../Utils';
 
 const LOADING = <B.Loading />;
 
@@ -78,11 +76,11 @@ const COLUMN_METADATA: B.ColumnMetadata[] = [
         renderer: BuildStatusFormatter
     },
     {
-        name: 'sonarStatus',
+        name: 'sonarForBitbucketStatus',
         width: 300,
         visible: true,
         sortEnabled: false,
-        renderer: SonarForBitbucketMetricFormatter
+        renderer: SonarQubeStatusFormatter
     },
     {
         name: 'sonarQubeMetrics',
@@ -106,10 +104,10 @@ interface Props extends React.Props<BitbucketDataTable> {
     enableSort?: boolean;
     results: any[];
     showFilter: boolean;
-    handlePullRequestCount: (prCount: B.LazyFetch<PullRequestCount>, branchInfo: BranchInfo) => void;
-    handleBuildStatus: (buildStatus: B.LazyFetch<BuildStatus>, branchInfo: BranchInfo) => void;
-    handleSonarStatus: (sonarStatus: B.LazyFetch<SonarStatus>, branchInfo: BranchInfo) => void;
-    handleSonarQubeMetrics: (sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics>, branchInfo: BranchInfo) => void;
+    handlePullRequestCount: (prCount: B.LazyFetch<BAPI.PullRequestCount>, branchInfo: BAPI.BranchInfo) => void;
+    handleBuildStatus: (buildStatus: B.LazyFetch<BAPI.BuildStatus>, branchInfo: BAPI.BranchInfo) => void;
+    handleSonarForBitbucketStatus: (sonarForBitbucketStatus: B.LazyFetch<BAPI.SonarForBitbucketStatus>, branchInfo: BAPI.BranchInfo) => void;
+    handleSonarQubeMetrics: (sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics>, branchInfo: BAPI.BranchInfo) => void;
     handleSonarQubeAuthenticated: () => void;
 }
 
@@ -121,7 +119,7 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
 
     render() {
         const { settings, results, resultsPerPage,
-            handlePullRequestCount, handleBuildStatus, handleSonarStatus, handleSonarQubeMetrics, handleSonarQubeAuthenticated } = this.props;
+            handlePullRequestCount, handleBuildStatus, handleSonarForBitbucketStatus, handleSonarQubeMetrics, handleSonarQubeAuthenticated } = this.props;
 
         const resolvedColumnMetadata = COLUMN_METADATA.filter(x => {
             const item = settings.items[x.name];
@@ -138,15 +136,14 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
                 if (meta.name === 'buildStatus') {
                     meta.lazyFetch = handleBuildStatus;
                 }
-                if (meta.name === 'sonarStatus') {
-                    meta.lazyFetch = handleSonarStatus;
+                if (meta.name === 'sonarForBitbucketStatus') {
+                    meta.lazyFetch = handleSonarForBitbucketStatus;
                 }
                 if (meta.name === 'sonarQubeMetrics') {
                     meta.lazyFetch = handleSonarQubeMetrics;
                     meta.renderer = SonarQubeMetricsFormatter(settings, handleSonarQubeAuthenticated);
                 }
                 if (meta.name === 'branchNameLink') {
-                    meta.lazyFetch = handleSonarStatus;
                     meta.renderer = BranchNameLinkFormatter(item.resolver);
                 }
                 return meta;
@@ -205,7 +202,7 @@ function CommitLink(data, values, metadata) {
 }
 
 function BranchNameLinkFormatter(resolver: BranchNameLinkResolver) {
-    const transform = (data, values: BranchInfo) => {
+    const transform = (data, values: BAPI.BranchInfo) => {
         if (data) {
             return `${baseUrl(resolver.baseUrl)}/${data}`;
         }
@@ -237,7 +234,7 @@ function ProgressBarLink(now, values, metadata, transform) {
     }
 }
 
-function BehindAheadGraphFormatter(data: BehindAheadBranch, values, metadata) {
+function BehindAheadGraphFormatter(data: BAPI.BehindAheadBranch, values, metadata) {
     if (data === null) {
         return LOADING;
     }
@@ -245,7 +242,7 @@ function BehindAheadGraphFormatter(data: BehindAheadBranch, values, metadata) {
     return <BehindAheadGraph behind={data.behindBranch} ahead={data.aheadBranch} />;
 }
 
-function PullRequestStatusFormatter(data: PullRequestStatus, values: BranchInfo, metadata) {
+function PullRequestStatusFormatter(data: BAPI.PullRequestStatus, values: BAPI.BranchInfo, metadata) {
     if (data === null) {
         return LOADING;
     }
@@ -272,7 +269,7 @@ function PullRequestBarLink(state: string) {
     };
 }
 
-function BuildStatusFormatter(buildStatus: BuildStatus, values, metadata) {
+function BuildStatusFormatter(buildStatus: BAPI.BuildStatus, values, metadata) {
     if (buildStatus === null) {
         return LOADING;
     }
@@ -304,12 +301,12 @@ function BuildStatusFormatter(buildStatus: BuildStatus, values, metadata) {
     );
 }
 
-function SonarForBitbucketMetricFormatter(sonarStatus: SonarStatus, branchInfo: BranchInfo, metadata) {
-    if (sonarStatus === null) {
+function SonarQubeStatusFormatter(sonarForBitbucketStatus: BAPI.SonarForBitbucketStatus, branchInfo: BAPI.BranchInfo, metadata) {
+    if (sonarForBitbucketStatus === null) {
         return LOADING;
     }
 
-    const items = sonarStatus.values.map(x => {
+    const items = sonarForBitbucketStatus.values.map(x => {
         const fromKeys = Object.keys(x.from.statistics);
         const toKeys = Object.keys(x.to.statistics);
         const keys = _.union(fromKeys, toKeys).filter(x => x !== 'componentId');
@@ -417,7 +414,7 @@ function _toSonarDisplayValue(key: string, value: string | number): string {
 
 
 function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => void) {
-    return (metrics: SonarQubeMetrics, branchInfo: BranchInfo, metadata) => {
+    return (metrics: SonarQubeMetrics, branchInfo: BAPI.BranchInfo, metadata) => {
         if (metrics === null) {
             return LOADING;
         }
@@ -467,19 +464,19 @@ function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => vo
 }
 
 // transformer
-function projectLink(data, values: BranchInfo) {
+function projectLink(data, values: BAPI.BranchInfo) {
     return `/stash/projects/${values.project}`;
 }
 
-function repoLink(data, values: BranchInfo) {
+function repoLink(data, values: BAPI.BranchInfo) {
     return `/stash/projects/${values.project}/repos/${values.repo}`;
 }
 
-function branchLink(data, values: BranchInfo) {
+function branchLink(data, values: BAPI.BranchInfo) {
     return `/stash/projects/${values.project}/repos/${values.repo}/browse?at=${values.branch}`;
 }
 
-function commitLink(data, values: BranchInfo) {
+function commitLink(data, values: BAPI.BranchInfo) {
     return `/stash/projects/${values.project}/repos/${values.repo}/commits/${values.latestCommitHash}`;
 }
 

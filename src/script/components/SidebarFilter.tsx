@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as B from '../bulma';
-import { BranchInfo } from '../BitbucketApi';
+import { BranchInfo } from '../webapis/BitbucketApi';
 import SearchBox, { SelectOption } from './SearchBox';
 import { FilterState } from '../reducers';
 

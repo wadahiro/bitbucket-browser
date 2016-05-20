@@ -1,5 +1,5 @@
-import { Settings } from './Settings';
-import * as B from './bulma';
+import { Settings } from '../Settings';
+import * as B from '../bulma';
 import { SonarQubeMetrics } from './SonarQubeApi';
 
 // bitbucket rest api models
@@ -162,7 +162,7 @@ interface BitbucketBuildStatus {
     description: string;
     dateAdded: number | string; //Epock milliseconds
 }
-interface BitBucketSonarStatus {
+interface BitbucketSonarStatus {
     sonarServer: string; // server url
     from: {
         name: string; // branch name
@@ -193,7 +193,7 @@ interface Project {
     project: string;
 }
 
-interface Repo extends Project {
+export interface Repo extends Project {
     repo: string;
     repoId: number;
 }
@@ -246,7 +246,7 @@ export interface BranchInfo extends Branch {
     branchNameLink: string;
     pullRequestStatus: B.LazyFetch<PullRequestCount> | PullRequestStatus
     buildStatus: B.LazyFetch<BuildStatus> | BuildStatus;
-    sonarStatus: B.LazyFetch<SonarStatus> | SonarStatus;
+    sonarForBitbucketStatus: B.LazyFetch<SonarForBitbucketStatus> | SonarForBitbucketStatus;
     sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics> | SonarQubeMetrics;
 }
 export interface BehindAheadBranch {
@@ -264,9 +264,9 @@ export interface BuildStatus {
     commitHash: string;
     values: BitbucketBuildStatus[];
 }
-export interface SonarStatus {
+export interface SonarForBitbucketStatus {
     repoId: number;
-    values: BitBucketSonarStatus[];
+    values: BitbucketSonarStatus[];
 }
 
 // exported Functions
@@ -283,14 +283,14 @@ export async function fetchBranchInfos(settings: Settings, repos: Repo[]): Promi
     try {
         const handleBranchFetch = (branchesOfProject => {
             const branchInfos: BranchInfo[] = branchesOfProject.map(b => {
-                const branchInfo: BranchInfo = Object.assign({}, b, {
+                const branchInfo: BranchInfo = Object.assign({}, b, <BranchInfo>{
                     id: `${b.project}_${b.repo}_${b.branch}`,
                     branchNameLink: getBranchNameLink(settings, b.branch),
                     pullRequestStatus: null,
                     buildStatus: null,
-                    sonarStatus: null,
+                    sonarForBitbucketStatus: null,
                     sonarQubeMetrics: null
-                } as BranchInfo);
+                });
                 return branchInfo;
             });
             return branchInfos;
@@ -399,7 +399,7 @@ export async function fetchBranches(repo: Repo): Promise<Branch[]> {
                 }
             }
 
-            return {
+            return <Branch>{
                 project: repo.project,
                 repo: repo.repo,
                 repoId: repo.repoId,
@@ -410,7 +410,7 @@ export async function fetchBranches(repo: Repo): Promise<Branch[]> {
                 branchCreated,
                 latestCommitDate,
                 latestCommitHash
-            } as Branch
+            }
         });
     } else {
         return [];
@@ -474,28 +474,28 @@ export async function fetchBuildStatus(commitHash: string): Promise<BuildStatus>
     return buildStatus;
 }
 
-export async function fetchSonarStatus(repoId: number, pullRequestIds: number[] = []): Promise<SonarStatus> {
+export async function fetchSonarForBitbucketStatus(repoId: number, pullRequestIds: number[] = []): Promise<SonarForBitbucketStatus> {
     const promises = pullRequestIds.map(x => {
-        return _fetchSonarStatus(repoId, x);
+        return _fetchSonarForBitbucketStatus(repoId, x);
     });
-    const status = await Promise.all<BitBucketSonarStatus>(promises);
+    const status = await Promise.all<BitbucketSonarStatus>(promises);
 
     return status.reduce((s, x) => {
         if (x !== null) {
             s.values.push(x);
         }
         return s;
-    }, { repoId, values: [] } as SonarStatus);
+    }, <SonarForBitbucketStatus>{ repoId, values: [] });
 }
 
-export async function _fetchSonarStatus(repoId: number, pullRequestId: number): Promise<BitBucketSonarStatus> {
+export async function _fetchSonarForBitbucketStatus(repoId: number, pullRequestId: number): Promise<BitbucketSonarStatus> {
     const response = await fetch(`/stash/rest/sonar4stash/latest/statistics?pullRequestId=${pullRequestId}&repoId=${repoId}`, {
         credentials: 'same-origin'
     });
     if (response.status !== 200) {
         return null;
     }
-    const json: BitBucketSonarStatus = await response.json();
+    const json: BitbucketSonarStatus = await response.json();
     json.pullRequestId = pullRequestId;
     return json;
 }

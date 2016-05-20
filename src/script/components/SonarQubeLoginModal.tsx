@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as B from '../bulma';
 import { Settings } from '../Settings';
-import * as SQAPI from '../SonarQubeApi';
+import * as SQAPI from '../webapis/SonarQubeApi';
 
 interface Props extends React.Props<SonarQubeLoginModal> {
     show?: boolean;

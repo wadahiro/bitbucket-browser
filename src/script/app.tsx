@@ -10,14 +10,6 @@ import reducers from './reducers'
 import rootSaga from './sagas'
 
 import * as B from './bulma';
-import { PullRequestCount, PullRequestStatus, BranchInfo, BuildStatus, SonarStatus,
-    isAuthenticated, fetchAllRepos, fetchBranchInfos, fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from './BitbucketApi';
-import * as SQAPI from './SonarQubeApi';
-import BitbucketTable from './BitbucketTable';
-import Spinner from './Spinner';
-import { Settings } from './Settings';
-import { SonarQubeLoginModal } from './components/SonarQubeLoginModal';
-import { SidebarFilter, SelectOption } from './components/SidebarFilter';
 import BrowserView from './views/BrowserView';
 
 // require('babel-polyfill');

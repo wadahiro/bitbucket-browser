@@ -1,5 +1,5 @@
-import { Settings } from './Settings';
-import { baseUrl } from './Utils';
+import { Settings } from '../Settings';
+import { baseUrl } from '../Utils';
 
 export interface AuthenticationResponse {
     validate: boolean;
@@ -49,11 +49,16 @@ export async function isAuthenticated(settings: Settings): Promise<boolean> {
     const response = await fetch(`${baseUrl(resolver.baseUrl)}/api/user_properties?format=json`, {
         credentials: 'same-origin'
     });
-    if (response.status === 200) {
-        return true;
-    } else {
-        return false;
+
+    try {
+        if (response.status === 200) {
+            await response.json();
+            return true;
+        }
+    } catch (e) {
+        console.warn('Sonar access error.', e);
     }
+    return false;
 }
 
 export async function authenticate(settings: Settings, login: string, password: string): Promise<boolean> {

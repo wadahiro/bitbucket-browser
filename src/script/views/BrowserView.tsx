@@ -5,11 +5,9 @@ import { connect } from 'react-redux'
 import * as _ from 'lodash';
 
 import * as B from '../bulma';
-import { PullRequestCount, PullRequestStatus, BranchInfo, BuildStatus, SonarStatus,
-    isAuthenticated, fetchAllRepos, fetchBranchInfos, fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from '../BitbucketApi';
-import * as SQAPI from '../SonarQubeApi';
-import BitbucketTable from '../BitbucketTable';
-import Spinner from '../Spinner';
+import * as BAPI from '../webapis/BitbucketApi';
+import * as SQAPI from '../webapis/SonarQubeApi';
+import BitbucketTable from '../components/BitbucketTable';
 import { Settings } from '../Settings';
 import { SonarQubeLoginModal } from '../components/SonarQubeLoginModal';
 import { SidebarFilter, SelectOption } from '../components/SidebarFilter';
@@ -27,7 +25,7 @@ interface Props extends React.Props<any> {
     sonarQubeAuthenticated?: boolean;
 
     branchInfosLoaded?: boolean;
-    branchInfos?: BranchInfo[];
+    branchInfos?: BAPI.BranchInfo[];
 
     filter?: FilterState;
 
@@ -64,81 +62,25 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.sonarQubeAuthenticated());
     };
 
-    loadBranchInfos = () => {
+    reloadBranchInfos = () => {
         const { settings } = this.props;
-        this.props.dispatch(Actions.loadBranchInfos(settings));
+        this.props.dispatch(Actions.reloadBranchInfos(settings));
     };
 
-    handlePullRequestCount = (fetch: B.LazyFetch<PullRequestCount>, branchInfo: BranchInfo) => {
-        // console.log('handlePullRequestCount', branchInfo.pullRequestStatus)
+    handlePullRequestCount = (fetch: B.LazyFetch<BAPI.PullRequestCount>, branchInfo: BAPI.BranchInfo) => {
         this.props.dispatch(Actions.fetchPullRequestCount(fetch, branchInfo));
     };
 
-    handleBuildStatus = (fetch: B.LazyFetch<BuildStatus>, branchInfo: BranchInfo) => {
-        // console.log('handleBuildStatus', branchInfo.buildStatus)
+    handleBuildStatus = (fetch: B.LazyFetch<BAPI.BuildStatus>, branchInfo: BAPI.BranchInfo) => {
         this.props.dispatch(Actions.fetchBuildStatus(fetch, branchInfo));
     };
 
-    handleSonarStatus = (fetch: B.LazyFetch<SonarStatus>, branchInfo: BranchInfo) => {
-        // console.log('handleSonarStatus', branchInfo.sonarStatus)
-        // if (branchInfo.sonarStatus === null) {
-        //     return;
-        // }
-
-        // const updateRow = (sonarStatus) => {
-        //     const updatedRows = this.state.branchInfos.map(x => {
-        //         if (x.id === branchInfo.id) {
-        //             x.sonarStatus = sonarStatus;
-        //         }
-        //         return x;
-        //     });
-        //     this.setState({
-        //         branchInfos: updatedRows
-        //     });
-        // };
-        // if (branchInfo.sonarStatus !== null) {
-        //     fetch.fetch()
-        //         .then(sonarStatus => {
-        //             // console.log('handleSonarStatus end')
-        //             updateRow(sonarStatus);
-        //         });
-        // }
-
-        // updateRow(null);
+    handleSonarForBitbucketStatus = (fetch: B.LazyFetch<BAPI.SonarForBitbucketStatus>, branchInfo: BAPI.BranchInfo) => {
+        this.props.dispatch(Actions.fetchSonarForBitbucketStatus(fetch, branchInfo));
     };
 
-    handleSonarQubeMetrics = (fetch: B.LazyFetch<SQAPI.SonarQubeMetrics>, branchInfo: BranchInfo) => {
-        // console.log('handleSonarQubeMetrics', branchInfo.sonarQubeMetrics)
-        // if (branchInfo.sonarQubeMetrics === null) {
-        //     return;
-        // }
-
-        // const updateRow = (sonarQubeMetrics: SQAPI.SonarQubeMetrics) => {
-        //     const updatedRows = this.state.branchInfos.map(x => {
-        //         if (x.id === branchInfo.id) {
-        //             x.sonarQubeMetrics = sonarQubeMetrics;
-        //         }
-        //         return x;
-        //     });
-        //     this.setState({
-        //         branchInfos: updatedRows
-        //     });
-        // };
-
-        // if (this.state.sonarQubeAuthenticated) {
-        //     fetch.fetch()
-        //         .then(sonarQubeMetrics => {
-        //             // console.log('handleSonarQubeMetrics end')
-        //             updateRow(sonarQubeMetrics);
-        //         });
-        //     updateRow(null);
-
-        // } else {
-        //     updateRow({
-        //         err_code: 401,
-        //         err_msg: 'Unauthorized'
-        //     });
-        // }
+    handleSonarQubeMetrics = (fetch: B.LazyFetch<SQAPI.SonarQubeMetrics>, branchInfo: BAPI.BranchInfo) => {
+        this.props.dispatch(Actions.fetchSonarQubeMetrics(fetch, branchInfo));
     };
 
     handleToggleSidebar = (e: React.SyntheticEvent) => {
@@ -202,7 +144,7 @@ class BrowserView extends React.Component<Props, void> {
 
                                 <div className='nav-right nav-menu'>
                                     <span className='nav-item'>
-                                        <a className='button is-success' onClick={this.loadBranchInfos} disabled={loading}>Reload</a>
+                                        <a className='button is-success' onClick={this.reloadBranchInfos} disabled={loading}>Reload</a>
                                     </span>
                                 </div>
                             </div>
@@ -221,7 +163,7 @@ class BrowserView extends React.Component<Props, void> {
                                         resultsPerPage={resultsPerPage}
                                         handlePullRequestCount={this.handlePullRequestCount}
                                         handleBuildStatus={this.handleBuildStatus}
-                                        handleSonarStatus={this.handleSonarStatus}
+                                        handleSonarForBitbucketStatus={this.handleSonarForBitbucketStatus}
                                         handleSonarQubeMetrics={this.handleSonarQubeMetrics}
                                         handleSonarQubeAuthenticated={this.handleSonarQubeAuthenticated}
                                         />
@@ -247,7 +189,7 @@ function appendFilter(strArray, state, key) {
     }
 }
 
-function filterBranchInfo(data: BranchInfo[], filter: FilterState) {
+function filterBranchInfo(data: BAPI.BranchInfo[], filter: FilterState) {
     const projectIncludes = filter.projectIncludes;
     const projectExcludes = filter.projectExcludes;
 
