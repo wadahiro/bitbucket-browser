@@ -380,7 +380,9 @@ app.get('/stash/rest/api/1.0/projects/PRJ2/repos/test-service/branches', functio
 app.get('/stash/rest/api/1.0/projects/PRJ2/repos/test-utils/branches', function (req, res) {
     res.setHeader('Cache-Control', 'no-cache');
     res.json(
-        {}
+        {
+            values: []
+        }
     );
 });
 
@@ -557,7 +559,9 @@ app.get('/stash/rest/api/1.0/projects/PRJ2/repos/test-service/pull-requests', fu
 app.get('/stash/rest/api/1.0/projects/PRJ2/repos/test-utils/pull-requests', function (req, res) {
     res.setHeader('Cache-Control', 'no-cache');
     res.json(
-        {}
+        {
+            values: []
+        }
     );
 });
 

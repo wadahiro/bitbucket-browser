@@ -5,8 +5,6 @@ import * as B from '../bulma';
 import * as actions from '../actions'
 import { RootState, AppState }from '../reducers'
 import * as API from '../webapis';
-import * as BAPI from '../webapis/BitbucketApi';
-import * as SQAPI from '../webapis/SonarQubeApi';
 import { Settings } from '../Settings';
 
 
@@ -41,7 +39,7 @@ function* initApp(): Iterable<Effect> {
     const action: actions.FetchSettingsScceededAction = yield take(actions.FETCH_SETTINGS_SUCCEEDED);
     const { settings } = action.payload;
 
-    const bitbucketAuthenticated = yield call(BAPI.isAuthenticated);
+    const bitbucketAuthenticated = yield call(API.isAuthenticatedBitbucket);
 
     if (!bitbucketAuthenticated) {
         // Redirect to Bitbucket Login page
@@ -229,7 +227,7 @@ function* handleSonarQubeMetrics(): Iterable<Effect> {
         const sonarQubeAuthenticated: boolean = yield select((state: RootState) => state.app.sonarQubeAuthenticated);
 
         if (sonarQubeAuthenticated) {
-            const sonarQubeMetrics: SQAPI.SonarQubeMetrics = yield fetch.fetch();
+            const sonarQubeMetrics: API.SonarQubeMetrics = yield fetch.fetch();
 
             yield put(<actions.UpdateBranchInfoAction>{
                 type: actions.UPDATE_BRANCH_INFO,
@@ -308,7 +306,7 @@ function resolveLazyFetch(settings: Settings, branchInfoOfSomeProjects: API.Bran
 
     const newBranchInfos = branchInfoOfSomeProjects.map(x => {
         x.pullRequestStatus = fetchPrCount;
-        x.sonarQubeMetrics = new B.LazyFetch<SQAPI.SonarQubeMetrics>(() => {
+        x.sonarQubeMetrics = new B.LazyFetch<API.SonarQubeMetrics>(() => {
             return API.fetchSonarQubeMetricsByKey(settings, x.repo, x.branch);
         });
         return x;

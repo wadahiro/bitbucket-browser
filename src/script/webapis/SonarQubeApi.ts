@@ -4,14 +4,12 @@ export interface AuthenticationResponse {
     validate: boolean;
 }
 
-export type SonarQubeMetrics = SonarQubeMetricsResponse | ErrorResponse;
-
 export interface ErrorResponse {
     err_code: number;
     err_msg: string;
 }
 
-export function hasError(response: any): response is ErrorResponse {
+export function isErrorResponse(response: any): response is ErrorResponse {
     return typeof response.err_code === 'number';
 }
 
@@ -72,16 +70,16 @@ export async function authenticate(baseUrl: string, loginId: string, password: s
     return await isAuthenticated(baseUrl);
 }
 
-export async function fetchMetricsByKey(baseUrl: string, projectKey: string, sonarBranch: string, metrics: string): Promise<SonarQubeMetrics> {
+export async function fetchMetricsByKey(baseUrl: string, projectKey: string, sonarBranch: string, metrics: string): Promise<SonarQubeMetricsResponse> {
     const response = await fetch(`${baseUrl}/api/resources?resource=${projectKey}:${sonarBranch}&metrics=${metrics}&format=json`, {
         credentials: 'same-origin'
     })
 
-    const json = await response.json();
+    const json: SonarQubeMetricsResponse | ErrorResponse = await response.json();
 
     // return 404 if the project isn't be found
-    if (json.err_code) {
-        return json;
+    if (isErrorResponse(json)) {
+        throw json;
     }
 
     return json[0];

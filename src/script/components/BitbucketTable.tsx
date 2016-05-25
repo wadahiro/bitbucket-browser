@@ -2,7 +2,6 @@ import * as React from 'react';
 import * as _ from 'lodash';
 
 import * as API from '../webapis';
-import { SonarQubeMetrics, hasError } from '../webapis/SonarQubeApi'
 import * as B from '../bulma';
 import Spinner from './Spinner';
 import { BehindAheadGraph } from './BehindAheadGraph';
@@ -107,7 +106,7 @@ interface Props extends React.Props<BitbucketDataTable> {
     handlePullRequestCount: (prCount: B.LazyFetch<API.PullRequestCount>, branchInfo: API.BranchInfo) => void;
     handleBuildStatus: (buildStatus: B.LazyFetch<API.BuildStatus>, branchInfo: API.BranchInfo) => void;
     handleSonarForBitbucketStatus: (sonarForBitbucketStatus: B.LazyFetch<API.SonarForBitbucketStatus>, branchInfo: API.BranchInfo) => void;
-    handleSonarQubeMetrics: (sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics>, branchInfo: API.BranchInfo) => void;
+    handleSonarQubeMetrics: (sonarQubeMetrics: B.LazyFetch<API.SonarQubeMetrics>, branchInfo: API.BranchInfo) => void;
     handleSonarQubeAuthenticated: () => void;
 }
 
@@ -414,11 +413,11 @@ function _toSonarDisplayValue(key: string, value: string | number): string {
 
 
 function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => void) {
-    return (metrics: SonarQubeMetrics, branchInfo: API.BranchInfo, metadata) => {
+    return (metrics: API.SonarQubeMetrics, branchInfo: API.BranchInfo, metadata) => {
         if (metrics === null) {
             return LOADING;
         }
-        if (hasError(metrics)) {
+        if (API.isSonarQubeError(metrics)) {
             // Show needing authentication
             if (metrics.err_code === 401) {
                 return (

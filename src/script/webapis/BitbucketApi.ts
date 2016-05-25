@@ -1,5 +1,4 @@
 import * as B from '../bulma';
-import { SonarQubeMetrics } from './SonarQubeApi';
 
 // bitbucket rest api models
 export interface BitBucketPage {

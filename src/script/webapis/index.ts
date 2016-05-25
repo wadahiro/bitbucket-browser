@@ -55,6 +55,7 @@ export interface PullRequestCount {
         [index: string]: number;
     };
 }
+
 export interface BehindAheadBranch {
     aheadBranch: number;
     behindBranch: number;
@@ -69,7 +70,7 @@ export interface BranchInfo extends Branch {
     pullRequestStatus: B.LazyFetch<PullRequestCount> | PullRequestStatus
     buildStatus: B.LazyFetch<BuildStatus> | BuildStatus;
     sonarForBitbucketStatus: B.LazyFetch<SonarForBitbucketStatus> | SonarForBitbucketStatus;
-    sonarQubeMetrics: B.LazyFetch<SQAPI.SonarQubeMetrics> | SQAPI.SonarQubeMetrics;
+    sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics> | SonarQubeMetrics;
 }
 
 export interface PullRequestStatus {
@@ -84,9 +85,19 @@ export interface BuildStatus {
     commitHash: string;
     values: BAPI.BitbucketBuildStatus[];
 }
+
 export interface SonarForBitbucketStatus {
     repoId: number;
     values: BAPI.BitbucketSonarStatus[];
+}
+
+export type SonarQubeMetrics = SQAPI.SonarQubeMetricsResponse | SQAPI.ErrorResponse;
+export function isSonarQubeError(response: any): response is SQAPI.ErrorResponse {
+    return SQAPI.isErrorResponse(response);
+}
+
+export async function isAuthenticatedBitbucket(): Promise<boolean> {
+    return await BAPI.isAuthenticated();
 }
 
 export async function fetchBranchInfos(settings: Settings, repos: Repo[]): Promise<Promise<BranchInfo[]>[]> {
@@ -271,17 +282,21 @@ export async function authenticateSoarQube(settings: Settings, login: string, pa
     return authenticated;
 }
 
-export async function fetchSonarQubeMetricsByKey(settings: Settings, repo: string, branch: string): Promise<SQAPI.SonarQubeMetrics> {
+export async function fetchSonarQubeMetricsByKey(settings: Settings, repo: string, branch: string): Promise<SonarQubeMetrics> {
     const sonarBranch = branch.replace('/', '_');
     const resolver = settings.items.sonarQubeMetrics.resolver;
 
     const url = baseUrl(resolver.baseUrl);
     const sonarProjectKey = `${resolver.projectBaseKey}.${repo}`;
 
-    const metrics = await SQAPI.fetchMetricsByKey(url, sonarProjectKey, sonarBranch, resolver.metrics);
-
-    // TODO convert own type
-    return metrics;
+    try {
+        const metrics = await SQAPI.fetchMetricsByKey(url, sonarProjectKey, sonarBranch, resolver.metrics);
+        return metrics;
+    } catch (e) {
+        if (SQAPI.isErrorResponse(e)) {
+            return e;
+        }
+    }
 }
 
 function _count(container, key) {

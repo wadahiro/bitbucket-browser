@@ -6,7 +6,6 @@ import * as _ from 'lodash';
 
 import * as B from '../bulma';
 import * as API from '../webapis';
-import * as SQAPI from '../webapis/SonarQubeApi';
 import BitbucketTable from '../components/BitbucketTable';
 import { Settings } from '../Settings';
 import { SonarQubeLoginModal } from '../components/SonarQubeLoginModal';
@@ -79,7 +78,7 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.fetchSonarForBitbucketStatus(fetch, branchInfo));
     };
 
-    handleSonarQubeMetrics = (fetch: B.LazyFetch<SQAPI.SonarQubeMetrics>, branchInfo: API.BranchInfo) => {
+    handleSonarQubeMetrics = (fetch: B.LazyFetch<API.SonarQubeMetrics>, branchInfo: API.BranchInfo) => {
         this.props.dispatch(Actions.fetchSonarQubeMetrics(fetch, branchInfo));
     };
 

@@ -2,7 +2,6 @@ import { combineReducers } from 'redux';
 import * as B from '../bulma';
 
 import * as API from '../webapis';
-import * as SQAPI from '../webapis/SonarQubeApi';
 import { Settings } from '../Settings';
 import * as Actions from '../actions';
 
@@ -141,7 +140,7 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
         const payload = action.payload;
 
         const newBranchInfos = state.branchInfos.map(x => {
-            x.sonarQubeMetrics = new B.LazyFetch<SQAPI.SonarQubeMetrics>(() => {
+            x.sonarQubeMetrics = new B.LazyFetch<API.SonarQubeMetrics>(() => {
                 return API.fetchSonarQubeMetricsByKey(state.settings, x.repo, x.branch);
             });
             return x;

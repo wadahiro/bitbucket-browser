@@ -3,7 +3,6 @@ import { fork, call, put } from 'redux-saga/effects';
 import * as B from '../bulma';
 
 import * as API from '../webapis';
-import * as SQAPI from '../webapis/SonarQubeApi';
 import { Settings } from '../Settings';
 import { FilterState } from '../reducers';
 
@@ -199,11 +198,11 @@ export function fetchSonarForBitbucketStatus(fetch: B.LazyFetch<API.SonarForBitb
 export const FETCH_SONAR_QUBE_METRICS: ActionType<FetchSonarQubeMetricsAction> = 'FETCH_SONAR_QUBE_METRICS';
 export interface FetchSonarQubeMetricsAction extends Action {
     payload: {
-        fetch: B.LazyFetch<SQAPI.SonarQubeMetrics>,
+        fetch: B.LazyFetch<API.SonarQubeMetrics>,
         branchInfo: API.BranchInfo
     }
 }
-export function fetchSonarQubeMetrics(fetch: B.LazyFetch<SQAPI.SonarQubeMetrics>, branchInfo: API.BranchInfo): FetchSonarQubeMetricsAction {
+export function fetchSonarQubeMetrics(fetch: B.LazyFetch<API.SonarQubeMetrics>, branchInfo: API.BranchInfo): FetchSonarQubeMetricsAction {
     if (branchInfo.sonarQubeMetrics === null) {
         return;
     }
