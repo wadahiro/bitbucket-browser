@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as B from '../bulma';
 import { Settings } from '../Settings';
-import * as SQAPI from '../webapis/SonarQubeApi';
+import * as API from '../webapis';
 
 interface Props extends React.Props<SonarQubeLoginModal> {
     show?: boolean;
@@ -33,9 +33,9 @@ export class SonarQubeLoginModal extends React.Component<Props, any> {
 
         const { login, password } = this.state;
 
-        SQAPI.authenticate(this.props.settings, login, password)
+        API.authenticateSoarQube(this.props.settings, login, password)
             .then(authenticated => {
-                console.log('authenticated', authenticated);
+                console.log('authenticated sonar?', authenticated);
                 if (authenticated) {
                     this.setState({
                         show: false,

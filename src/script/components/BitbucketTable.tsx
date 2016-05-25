@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as _ from 'lodash';
 
-import * as BAPI from '../webapis/BitbucketApi';
+import * as API from '../webapis';
 import { SonarQubeMetrics, hasError } from '../webapis/SonarQubeApi'
 import * as B from '../bulma';
 import Spinner from './Spinner';
@@ -104,10 +104,10 @@ interface Props extends React.Props<BitbucketDataTable> {
     enableSort?: boolean;
     results: any[];
     showFilter: boolean;
-    handlePullRequestCount: (prCount: B.LazyFetch<BAPI.PullRequestCount>, branchInfo: BAPI.BranchInfo) => void;
-    handleBuildStatus: (buildStatus: B.LazyFetch<BAPI.BuildStatus>, branchInfo: BAPI.BranchInfo) => void;
-    handleSonarForBitbucketStatus: (sonarForBitbucketStatus: B.LazyFetch<BAPI.SonarForBitbucketStatus>, branchInfo: BAPI.BranchInfo) => void;
-    handleSonarQubeMetrics: (sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics>, branchInfo: BAPI.BranchInfo) => void;
+    handlePullRequestCount: (prCount: B.LazyFetch<API.PullRequestCount>, branchInfo: API.BranchInfo) => void;
+    handleBuildStatus: (buildStatus: B.LazyFetch<API.BuildStatus>, branchInfo: API.BranchInfo) => void;
+    handleSonarForBitbucketStatus: (sonarForBitbucketStatus: B.LazyFetch<API.SonarForBitbucketStatus>, branchInfo: API.BranchInfo) => void;
+    handleSonarQubeMetrics: (sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics>, branchInfo: API.BranchInfo) => void;
     handleSonarQubeAuthenticated: () => void;
 }
 
@@ -202,7 +202,7 @@ function CommitLink(data, values, metadata) {
 }
 
 function BranchNameLinkFormatter(resolver: BranchNameLinkResolver) {
-    const transform = (data, values: BAPI.BranchInfo) => {
+    const transform = (data, values: API.BranchInfo) => {
         if (data) {
             return `${baseUrl(resolver.baseUrl)}/${data}`;
         }
@@ -234,7 +234,7 @@ function ProgressBarLink(now, values, metadata, transform) {
     }
 }
 
-function BehindAheadGraphFormatter(data: BAPI.BehindAheadBranch, values, metadata) {
+function BehindAheadGraphFormatter(data: API.BehindAheadBranch, values, metadata) {
     if (data === null) {
         return LOADING;
     }
@@ -242,7 +242,7 @@ function BehindAheadGraphFormatter(data: BAPI.BehindAheadBranch, values, metadat
     return <BehindAheadGraph behind={data.behindBranch} ahead={data.aheadBranch} />;
 }
 
-function PullRequestStatusFormatter(data: BAPI.PullRequestStatus, values: BAPI.BranchInfo, metadata) {
+function PullRequestStatusFormatter(data: API.PullRequestStatus, values: API.BranchInfo, metadata) {
     if (data === null) {
         return LOADING;
     }
@@ -269,7 +269,7 @@ function PullRequestBarLink(state: string) {
     };
 }
 
-function BuildStatusFormatter(buildStatus: BAPI.BuildStatus, values, metadata) {
+function BuildStatusFormatter(buildStatus: API.BuildStatus, values, metadata) {
     if (buildStatus === null) {
         return LOADING;
     }
@@ -301,7 +301,7 @@ function BuildStatusFormatter(buildStatus: BAPI.BuildStatus, values, metadata) {
     );
 }
 
-function SonarQubeStatusFormatter(sonarForBitbucketStatus: BAPI.SonarForBitbucketStatus, branchInfo: BAPI.BranchInfo, metadata) {
+function SonarQubeStatusFormatter(sonarForBitbucketStatus: API.SonarForBitbucketStatus, branchInfo: API.BranchInfo, metadata) {
     if (sonarForBitbucketStatus === null) {
         return LOADING;
     }
@@ -414,7 +414,7 @@ function _toSonarDisplayValue(key: string, value: string | number): string {
 
 
 function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => void) {
-    return (metrics: SonarQubeMetrics, branchInfo: BAPI.BranchInfo, metadata) => {
+    return (metrics: SonarQubeMetrics, branchInfo: API.BranchInfo, metadata) => {
         if (metrics === null) {
             return LOADING;
         }
@@ -464,19 +464,19 @@ function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => vo
 }
 
 // transformer
-function projectLink(data, values: BAPI.BranchInfo) {
+function projectLink(data, values: API.BranchInfo) {
     return `/stash/projects/${values.project}`;
 }
 
-function repoLink(data, values: BAPI.BranchInfo) {
+function repoLink(data, values: API.BranchInfo) {
     return `/stash/projects/${values.project}/repos/${values.repo}`;
 }
 
-function branchLink(data, values: BAPI.BranchInfo) {
+function branchLink(data, values: API.BranchInfo) {
     return `/stash/projects/${values.project}/repos/${values.repo}/browse?at=${values.branch}`;
 }
 
-function commitLink(data, values: BAPI.BranchInfo) {
+function commitLink(data, values: API.BranchInfo) {
     return `/stash/projects/${values.project}/repos/${values.repo}/commits/${values.latestCommitHash}`;
 }
 

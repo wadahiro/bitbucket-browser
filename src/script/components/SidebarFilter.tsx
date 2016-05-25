@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as B from '../bulma';
-import { BranchInfo } from '../webapis/BitbucketApi';
+import * as API from '../webapis';
 import SearchBox, { SelectOption } from './SearchBox';
 import { FilterState } from '../reducers';
 
@@ -9,7 +9,7 @@ const Sidebar = require('react-sidebar').default;
 export type SelectOption = SelectOption;
 
 interface Props extends React.Props<SidebarFilter> {
-    data: BranchInfo[];
+    data: API.BranchInfo[];
 
     filter: FilterState;
 

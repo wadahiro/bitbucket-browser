@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 const Select = require('react-select');
 
 import * as B from '../bulma';
-import { BranchInfo } from '../webapis/BitbucketApi';
+import * as API from '../webapis';
 import { FilterState } from '../reducers';
 
 export interface SelectOption {
@@ -13,7 +13,7 @@ export interface SelectOption {
 
 interface Props extends React.Props<SearchBox> {
     filter: FilterState;
-    data: BranchInfo[];
+    data: API.BranchInfo[];
     onChange: (key: string, filer: FilterState) => void;
 }
 

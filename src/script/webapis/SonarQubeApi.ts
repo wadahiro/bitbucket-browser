@@ -1,5 +1,4 @@
 import { Settings } from '../Settings';
-import { baseUrl } from '../Utils';
 
 export interface AuthenticationResponse {
     validate: boolean;
@@ -36,9 +35,7 @@ export interface Metric {
     frmt_val: string;
 }
 
-export async function isAuthenticated(settings: Settings): Promise<boolean> {
-    const { resolver } = settings.items.sonarQubeMetrics;
-
+export async function isAuthenticated(baseUrl: string): Promise<boolean> {
     // SonarQube Bug? It losts authenticated state...
     // const response = await fetch(`${baseUrl(resolver.baseUrl)}/api/authentication/validate`, {
     //     credentials: 'same-origin'
@@ -46,7 +43,7 @@ export async function isAuthenticated(settings: Settings): Promise<boolean> {
     // const result: AuthenticationResponse = await response.json();
     // return result.validate;
 
-    const response = await fetch(`${baseUrl(resolver.baseUrl)}/api/user_properties?format=json`, {
+    const response = await fetch(`${baseUrl}/api/user_properties?format=json`, {
         credentials: 'same-origin'
     });
 
@@ -61,31 +58,28 @@ export async function isAuthenticated(settings: Settings): Promise<boolean> {
     return false;
 }
 
-export async function authenticate(settings: Settings, login: string, password: string): Promise<boolean> {
-    const resolver = settings.items.sonarQubeMetrics.resolver;
-    const response = await fetch(`${baseUrl(resolver.baseUrl)}/sessions/login`, {
+export async function authenticate(baseUrl: string, loginId: string, password: string): Promise<boolean> {
+    const response = await fetch(`${baseUrl}/sessions/login`, {
         redirect: 'manual', // for redirect ignore
         credentials: 'same-origin',
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
         },
-        body: `login=${encodeURIComponent(login)}&password=${encodeURIComponent(password)}&commit=Log+in`
+        body: `login=${encodeURIComponent(loginId)}&password=${encodeURIComponent(password)}&commit=Log+in`
     })
 
-    return await isAuthenticated(settings);
+    return await isAuthenticated(baseUrl);
 }
 
-export async function fetchMetricsByKey(settings: Settings, repo: string, branch: string): Promise<SonarQubeMetrics> {
-    const sonarBranch = branch.replace('/', '_');
-    const resolver = settings.items.sonarQubeMetrics.resolver;
-
-    const response = await fetch(`${baseUrl(resolver.baseUrl)}/api/resources?resource=${resolver.projectBaseKey}.${repo}:${sonarBranch}&metrics=${resolver.metrics}&format=json`, {
+export async function fetchMetricsByKey(baseUrl: string, projectKey: string, sonarBranch: string, metrics: string): Promise<SonarQubeMetrics> {
+    const response = await fetch(`${baseUrl}/api/resources?resource=${projectKey}:${sonarBranch}&metrics=${metrics}&format=json`, {
         credentials: 'same-origin'
     })
 
     const json = await response.json();
 
+    // return 404 if the project isn't be found
     if (json.err_code) {
         return json;
     }

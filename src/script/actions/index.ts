@@ -2,7 +2,7 @@ import { takeEvery, takeLatest } from 'redux-saga';
 import { fork, call, put } from 'redux-saga/effects';
 import * as B from '../bulma';
 
-import * as BAPI from '../webapis/BitbucketApi';
+import * as API from '../webapis';
 import * as SQAPI from '../webapis/SonarQubeApi';
 import { Settings } from '../Settings';
 import { FilterState } from '../reducers';
@@ -87,7 +87,7 @@ export const FETCH_REPOS_SUCCEEDED: ActionType<FetchReposAction> = 'FETCH_REPOS_
 export interface FetchReposAction extends Action {
     payload: {
         settings: Settings;
-        repos: BAPI.Repo[]
+        repos: API.Repo[]
     }
 }
 
@@ -125,25 +125,25 @@ export function fetchBranchInfos(settings: Settings): FetchBranchInfosAction {
 export const APPEND_BRANCH_INFOS: ActionType<AppendBranchInfosAction> = 'APPEND_BRANCH_INFOS';
 export interface AppendBranchInfosAction extends Action {
     payload: {
-        branchInfos: BAPI.BranchInfo[];
+        branchInfos: API.BranchInfo[];
     }
 }
 
 export const UPDATE_BRANCH_INFO: ActionType<UpdateBranchInfoAction> = 'UPDATE_BRANCH_INFO';
 export interface UpdateBranchInfoAction extends Action {
     payload: {
-        branchInfo: BAPI.BranchInfo;
+        branchInfo: API.BranchInfo;
     }
 }
 
 export const FETCH_PULL_REQUEST_COUNT: ActionType<FetchPullRequestCountAction> = 'FETCH_PULL_REQUEST_COUNT';
 export interface FetchPullRequestCountAction extends Action {
     payload: {
-        fetch: B.LazyFetch<BAPI.PullRequestCount>,
-        branchInfo: BAPI.BranchInfo
+        fetch: B.LazyFetch<API.PullRequestCount>,
+        branchInfo: API.BranchInfo
     }
 }
-export function fetchPullRequestCount(fetch: B.LazyFetch<BAPI.PullRequestCount>, branchInfo: BAPI.BranchInfo): FetchPullRequestCountAction {
+export function fetchPullRequestCount(fetch: B.LazyFetch<API.PullRequestCount>, branchInfo: API.BranchInfo): FetchPullRequestCountAction {
     if (branchInfo.pullRequestStatus === null) {
         return;
     }
@@ -159,11 +159,11 @@ export function fetchPullRequestCount(fetch: B.LazyFetch<BAPI.PullRequestCount>,
 export const FETCH_BUILD_STATUS: ActionType<FetchBuildStatusAction> = 'FETCH_BUILD_STATUS';
 export interface FetchBuildStatusAction extends Action {
     payload: {
-        fetch: B.LazyFetch<BAPI.BuildStatus>,
-        branchInfo: BAPI.BranchInfo
+        fetch: B.LazyFetch<API.BuildStatus>,
+        branchInfo: API.BranchInfo
     }
 }
-export function fetchBuildStatus(fetch: B.LazyFetch<BAPI.BuildStatus>, branchInfo: BAPI.BranchInfo): FetchBuildStatusAction {
+export function fetchBuildStatus(fetch: B.LazyFetch<API.BuildStatus>, branchInfo: API.BranchInfo): FetchBuildStatusAction {
     if (branchInfo.buildStatus === null) {
         return;
     }
@@ -179,11 +179,11 @@ export function fetchBuildStatus(fetch: B.LazyFetch<BAPI.BuildStatus>, branchInf
 export const FETCH_SONAR_FOR_BITBUCKET_STATUS: ActionType<FetchSonarForBitbucketStatusAction> = 'FETCH_SONAR_FOR_BITBUCKET_STATUS';
 export interface FetchSonarForBitbucketStatusAction extends Action {
     payload: {
-        fetch: B.LazyFetch<BAPI.SonarForBitbucketStatus>,
-        branchInfo: BAPI.BranchInfo
+        fetch: B.LazyFetch<API.SonarForBitbucketStatus>,
+        branchInfo: API.BranchInfo
     }
 }
-export function fetchSonarForBitbucketStatus(fetch: B.LazyFetch<BAPI.SonarForBitbucketStatus>, branchInfo: BAPI.BranchInfo): FetchSonarForBitbucketStatusAction {
+export function fetchSonarForBitbucketStatus(fetch: B.LazyFetch<API.SonarForBitbucketStatus>, branchInfo: API.BranchInfo): FetchSonarForBitbucketStatusAction {
     if (branchInfo.sonarForBitbucketStatus === null) {
         return;
     }
@@ -200,10 +200,10 @@ export const FETCH_SONAR_QUBE_METRICS: ActionType<FetchSonarQubeMetricsAction> =
 export interface FetchSonarQubeMetricsAction extends Action {
     payload: {
         fetch: B.LazyFetch<SQAPI.SonarQubeMetrics>,
-        branchInfo: BAPI.BranchInfo
+        branchInfo: API.BranchInfo
     }
 }
-export function fetchSonarQubeMetrics(fetch: B.LazyFetch<SQAPI.SonarQubeMetrics>, branchInfo: BAPI.BranchInfo): FetchSonarQubeMetricsAction {
+export function fetchSonarQubeMetrics(fetch: B.LazyFetch<SQAPI.SonarQubeMetrics>, branchInfo: API.BranchInfo): FetchSonarQubeMetricsAction {
     if (branchInfo.sonarQubeMetrics === null) {
         return;
     }

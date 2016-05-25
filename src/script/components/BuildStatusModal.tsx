@@ -1,11 +1,12 @@
 import * as React from 'react';
 import * as B from '../bulma';
-import { BuildStatus } from '../webapis/BitBucketApi';
+
+import * as API from '../webapis';
 
 interface Props extends React.Props<BuildStatusModal> {
     show?: boolean;
     onHide?: (e: React.SyntheticEvent) => void;
-    buildStatus: BuildStatus;
+    buildStatus: API.BuildStatus;
     cancelLabel?: string;
 }
 

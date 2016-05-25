@@ -1,7 +1,7 @@
 import { combineReducers } from 'redux';
 import * as B from '../bulma';
 
-import * as BAPI from '../webapis/BitbucketApi';
+import * as API from '../webapis';
 import * as SQAPI from '../webapis/SonarQubeApi';
 import { Settings } from '../Settings';
 import * as Actions from '../actions';
@@ -79,7 +79,7 @@ export interface AppState {
     sonarQubeAuthenticated?: boolean;
 
     branchInfosLoaded?: boolean;
-    branchInfos?: BAPI.BranchInfo[];
+    branchInfos?: API.BranchInfo[];
 
     resultsPerPage?: number;
 }
@@ -142,7 +142,7 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
 
         const newBranchInfos = state.branchInfos.map(x => {
             x.sonarQubeMetrics = new B.LazyFetch<SQAPI.SonarQubeMetrics>(() => {
-                return SQAPI.fetchMetricsByKey(state.settings, x.repo, x.branch);
+                return API.fetchSonarQubeMetricsByKey(state.settings, x.repo, x.branch);
             });
             return x;
         });

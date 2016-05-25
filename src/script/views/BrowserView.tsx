@@ -5,7 +5,7 @@ import { connect } from 'react-redux'
 import * as _ from 'lodash';
 
 import * as B from '../bulma';
-import * as BAPI from '../webapis/BitbucketApi';
+import * as API from '../webapis';
 import * as SQAPI from '../webapis/SonarQubeApi';
 import BitbucketTable from '../components/BitbucketTable';
 import { Settings } from '../Settings';
@@ -25,7 +25,7 @@ interface Props extends React.Props<any> {
     sonarQubeAuthenticated?: boolean;
 
     branchInfosLoaded?: boolean;
-    branchInfos?: BAPI.BranchInfo[];
+    branchInfos?: API.BranchInfo[];
 
     filter?: FilterState;
 
@@ -67,19 +67,19 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.reloadBranchInfos(settings));
     };
 
-    handlePullRequestCount = (fetch: B.LazyFetch<BAPI.PullRequestCount>, branchInfo: BAPI.BranchInfo) => {
+    handlePullRequestCount = (fetch: B.LazyFetch<API.PullRequestCount>, branchInfo: API.BranchInfo) => {
         this.props.dispatch(Actions.fetchPullRequestCount(fetch, branchInfo));
     };
 
-    handleBuildStatus = (fetch: B.LazyFetch<BAPI.BuildStatus>, branchInfo: BAPI.BranchInfo) => {
+    handleBuildStatus = (fetch: B.LazyFetch<API.BuildStatus>, branchInfo: API.BranchInfo) => {
         this.props.dispatch(Actions.fetchBuildStatus(fetch, branchInfo));
     };
 
-    handleSonarForBitbucketStatus = (fetch: B.LazyFetch<BAPI.SonarForBitbucketStatus>, branchInfo: BAPI.BranchInfo) => {
+    handleSonarForBitbucketStatus = (fetch: B.LazyFetch<API.SonarForBitbucketStatus>, branchInfo: API.BranchInfo) => {
         this.props.dispatch(Actions.fetchSonarForBitbucketStatus(fetch, branchInfo));
     };
 
-    handleSonarQubeMetrics = (fetch: B.LazyFetch<SQAPI.SonarQubeMetrics>, branchInfo: BAPI.BranchInfo) => {
+    handleSonarQubeMetrics = (fetch: B.LazyFetch<SQAPI.SonarQubeMetrics>, branchInfo: API.BranchInfo) => {
         this.props.dispatch(Actions.fetchSonarQubeMetrics(fetch, branchInfo));
     };
 
@@ -189,7 +189,7 @@ function appendFilter(strArray, state, key) {
     }
 }
 
-function filterBranchInfo(data: BAPI.BranchInfo[], filter: FilterState) {
+function filterBranchInfo(data: API.BranchInfo[], filter: FilterState) {
     const projectIncludes = filter.projectIncludes;
     const projectExcludes = filter.projectExcludes;
 
