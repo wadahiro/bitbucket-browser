@@ -9,7 +9,6 @@ import { BuildStatusModal } from './BuildStatusModal';
 import { SonarQubeLoginModal } from './SonarQubeLoginModal';
 import { UnauthorizedIcon } from './UnauthorizedIcon';
 import { Settings, BranchNameLinkResolver } from '../Settings';
-import { baseUrl } from '../Utils';
 
 const LOADING = <B.Loading />;
 
@@ -99,6 +98,7 @@ const COLUMN_METADATA: B.ColumnMetadata[] = [
 
 interface Props extends React.Props<BitbucketDataTable> {
     settings: Settings;
+    api: API.API;
     resultsPerPage: number;
     enableSort?: boolean;
     results: any[];
@@ -117,7 +117,7 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
     };
 
     render() {
-        const { settings, results, resultsPerPage,
+        const { settings, api, results, resultsPerPage,
             handlePullRequestCount, handleBuildStatus, handleSonarForBitbucketStatus, handleSonarQubeMetrics, handleSonarQubeAuthenticated } = this.props;
 
         const resolvedColumnMetadata = COLUMN_METADATA.filter(x => {
@@ -140,7 +140,7 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
                 }
                 if (meta.name === 'sonarQubeMetrics') {
                     meta.lazyFetch = handleSonarQubeMetrics;
-                    meta.renderer = SonarQubeMetricsFormatter(settings, handleSonarQubeAuthenticated);
+                    meta.renderer = SonarQubeMetricsFormatter(api, handleSonarQubeAuthenticated);
                 }
                 if (meta.name === 'branchNameLink') {
                     meta.renderer = BranchNameLinkFormatter(item.resolver);
@@ -203,7 +203,7 @@ function CommitLink(data, values, metadata) {
 function BranchNameLinkFormatter(resolver: BranchNameLinkResolver) {
     const transform = (data, values: API.BranchInfo) => {
         if (data) {
-            return `${baseUrl(resolver.baseUrl)}/${data}`;
+            return `${resolver.baseUrl}/${data}`;
         }
         return '';
     };
@@ -412,7 +412,7 @@ function _toSonarDisplayValue(key: string, value: string | number): string {
 }
 
 
-function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => void) {
+function SonarQubeMetricsFormatter(api: API.API, onAuthenticated: () => void) {
     return (metrics: API.SonarQubeMetrics, branchInfo: API.BranchInfo, metadata) => {
         if (metrics === null) {
             return LOADING;
@@ -421,7 +421,7 @@ function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => vo
             // Show needing authentication
             if (metrics.err_code === 401) {
                 return (
-                    <B.ModalTriggerLink modal={<SonarQubeLoginModal settings={settings} onAuthenticated={onAuthenticated} />}>
+                    <B.ModalTriggerLink modal={<SonarQubeLoginModal api={api} onAuthenticated={onAuthenticated} />}>
                         <UnauthorizedIcon type='danger' />
                         Unauthorized.&nbsp; Please click me.
                     </B.ModalTriggerLink>
@@ -438,7 +438,7 @@ function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => vo
             };
 
             return <div>
-                <h3><a href={`${baseUrl(settings.items.sonarQubeMetrics.resolver.baseUrl)}/dashboard/index/${metrics.id}`} target='_blank'>{metrics.name}</a></h3>
+                <h3><a href={api.createSonarQubeDashboardUrl(metrics.id) } target='_blank'>{metrics.name}</a></h3>
                 <table className='table is-narrow' style={style}>
                     <thead>
                         <tr>

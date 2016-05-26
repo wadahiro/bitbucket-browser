@@ -6,9 +6,9 @@ import * as API from '../webapis';
 interface Props extends React.Props<SonarQubeLoginModal> {
     show?: boolean;
     onHide?: (e: React.SyntheticEvent) => void;
-    settings: Settings;
     loginLabel?: string;
     onAuthenticated: () => void;
+    api: API.API;
 }
 
 export class SonarQubeLoginModal extends React.Component<Props, any> {
@@ -31,9 +31,10 @@ export class SonarQubeLoginModal extends React.Component<Props, any> {
     login = (e: React.SyntheticEvent) => {
         e.preventDefault();
 
+        const { api } = this.props;
         const { login, password } = this.state;
 
-        API.authenticateSoarQube(this.props.settings, login, password)
+        api.authenticateSoarQube(login, password)
             .then(authenticated => {
                 console.log('authenticated sonar?', authenticated);
                 if (authenticated) {

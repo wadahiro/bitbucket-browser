@@ -33,54 +33,74 @@ export interface Metric {
     frmt_val: string;
 }
 
-export async function isAuthenticated(baseUrl: string): Promise<boolean> {
-    // SonarQube Bug? It losts authenticated state...
-    // const response = await fetch(`${baseUrl(resolver.baseUrl)}/api/authentication/validate`, {
-    //     credentials: 'same-origin'
-    // });
-    // const result: AuthenticationResponse = await response.json();
-    // return result.validate;
+interface SonarQubeApiOptions {
+    baseUrl: string;
+}
 
-    const response = await fetch(`${baseUrl}/api/user_properties?format=json`, {
-        credentials: 'same-origin'
-    });
+export class SonarQubeApi {
+    baseUrl: string;
+    
+    constructor(options) {
+        this.baseUrl = trimSlash(options.baseUrl);
+    }
 
-    try {
-        if (response.status === 200) {
-            await response.json();
-            return true;
+    async isAuthenticated(): Promise<boolean> {
+        // SonarQube Bug? It losts authenticated state...
+        // const response = await fetch(`${baseUrl(resolver.baseUrl)}/api/authentication/validate`, {
+        //     credentials: 'same-origin'
+        // });
+        // const result: AuthenticationResponse = await response.json();
+        // return result.validate;
+
+        const response = await fetch(`${this.baseUrl}/api/user_properties?format=json`, {
+            credentials: 'same-origin'
+        });
+
+        try {
+            if (response.status === 200) {
+                await response.json();
+                return true;
+            }
+        } catch (e) {
+            console.warn('Sonar access error.', e);
         }
-    } catch (e) {
-        console.warn('Sonar access error.', e);
-    }
-    return false;
-}
-
-export async function authenticate(baseUrl: string, loginId: string, password: string): Promise<boolean> {
-    const response = await fetch(`${baseUrl}/sessions/login`, {
-        redirect: 'manual', // for redirect ignore
-        credentials: 'same-origin',
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `login=${encodeURIComponent(loginId)}&password=${encodeURIComponent(password)}&commit=Log+in`
-    })
-
-    return await isAuthenticated(baseUrl);
-}
-
-export async function fetchMetricsByKey(baseUrl: string, projectKey: string, sonarBranch: string, metrics: string): Promise<SonarQubeMetricsResponse> {
-    const response = await fetch(`${baseUrl}/api/resources?resource=${projectKey}:${sonarBranch}&metrics=${metrics}&format=json`, {
-        credentials: 'same-origin'
-    })
-
-    const json: SonarQubeMetricsResponse | ErrorResponse = await response.json();
-
-    // return 404 if the project isn't be found
-    if (isErrorResponse(json)) {
-        throw json;
+        return false;
     }
 
-    return json[0];
+    async authenticate(loginId: string, password: string): Promise<boolean> {
+        const response = await fetch(`${this.baseUrl}/sessions/login`, {
+            redirect: 'manual', // for redirect ignore
+            credentials: 'same-origin',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `login=${encodeURIComponent(loginId)}&password=${encodeURIComponent(password)}&commit=Log+in`
+        });
+
+        return await this.isAuthenticated();
+    }
+
+    async fetchMetricsByKey(projectKey: string, sonarBranch: string, metrics: string): Promise<SonarQubeMetricsResponse> {
+        const response = await fetch(`${this.baseUrl}/api/resources?resource=${projectKey}:${sonarBranch}&metrics=${metrics}&format=json`, {
+            credentials: 'same-origin'
+        })
+
+        const json: SonarQubeMetricsResponse | ErrorResponse = await response.json();
+
+        // return 404 if the project isn't be found
+        if (isErrorResponse(json)) {
+            throw json;
+        }
+
+        return json[0];
+    }
+}
+
+function trimSlash(url: string) {
+    const last = url.substring(url.length - 1);
+    if (last === '/') {
+        return url.substring(0, url.length - 1)
+    }
+    return url;
 }

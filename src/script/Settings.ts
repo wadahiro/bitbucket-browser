@@ -1,6 +1,7 @@
 export interface Settings {
-    title: string;
-    items: Items;
+    title?: string;
+    baseUrl?: string;
+    items?: Items;
 }
 
 export interface Items {

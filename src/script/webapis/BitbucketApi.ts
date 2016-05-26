@@ -1,5 +1,3 @@
-import * as B from '../bulma';
-
 // bitbucket rest api models
 export interface BitBucketPage {
     isLastPage: boolean;
@@ -192,76 +190,92 @@ export interface BitbucketSonarStatus {
     pullRequestId: number;
 }
 
+interface BitbucketApiOptions {
+    baseUrl: string;
+}
 
-// exported Functions
-export async function isAuthenticated(): Promise<boolean> {
-    const projects = await fetchProjects();
+export class BitbucketApi {
+    baseUrl: string;
 
-    if (projects.values.length === 0) {
-        return false;
+    constructor(options: BitbucketApiOptions) {
+        this.baseUrl = trimSlash(options.baseUrl);
     }
-    return true;
-}
 
-export async function fetchProjects(): Promise<BitBucketProjects> {
-    const response = await fetch('/stash/rest/api/1.0/projects', {
-        credentials: 'same-origin'
-    });
-    const json: BitBucketProjects = await response.json();
-    return json;
-}
+    async isAuthenticated(): Promise<boolean> {
+        const projects = await this.fetchProjects();
 
-export async function fetchRepos(project): Promise<BitBucketRepos> {
-    const response = await fetch(`/stash/rest/api/1.0/projects/${project}/repos`, {
-        credentials: 'same-origin'
-    });
-    const json: BitBucketRepos = await response.json();
-    return json;
-}
-
-export async function fetchAllRepos(): Promise<BitBucketRepos> {
-    const response = await fetch(`/stash/rest/api/1.0/repos?limit=2000`, {
-        credentials: 'same-origin'
-    });
-    const json: BitBucketRepos = await response.json();
-    return json;
-}
-
-export async function fetchBranches(project: string, repo: string): Promise<BitbucketBranches> {
-    const response = await fetch(`/stash/rest/api/1.0/projects/${project}/repos/${repo}/branches?details=true`, {
-        credentials: 'same-origin'
-    });
-    const json: BitbucketBranches = await response.json();
-    return json;
-}
-
-export async function fetchPullRequests(project: string, repo: string): Promise<BitbucketPullRequests> {
-    const response = await fetch(`/stash/rest/api/1.0/projects/${project}/repos/${repo}/pull-requests?state=ALL&withProperties=false&withAttributes=false`, {
-        credentials: 'same-origin'
-    });
-    const json: BitbucketPullRequests = await response.json();
-    return json;
-}
-
-export async function fetchBuildStatus(commitHash: string): Promise<BitbucketBuildStatuses> {
-    const response = await fetch(`/stash/rest/build-status/1.0/commits/${commitHash}`, {
-        credentials: 'same-origin'
-    });
-    const json: BitbucketBuildStatuses = await response.json();
-    return json;
-}
-
-export async function fetchSonarForBitbucketStatus(repoId: number, pullRequestId: number): Promise<BitbucketSonarStatus> {
-    const response = await fetch(`/stash/rest/sonar4stash/latest/statistics?pullRequestId=${pullRequestId}&repoId=${repoId}`, {
-        credentials: 'same-origin'
-    });
-    // Need checking status code because Sonar For Bitbucke returns 404 if the pull request does'n have the SonarQube metrics
-    if (response.status !== 200) {
-        return null;
+        if (projects.values.length === 0) {
+            return false;
+        }
+        return true;
     }
-    const json: BitbucketSonarStatus = await response.json();
-    json.pullRequestId = pullRequestId;
-    return json;
+
+    async fetchProjects(): Promise<BitBucketProjects> {
+        const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects`, {
+            credentials: 'same-origin'
+        });
+        const json: BitBucketProjects = await response.json();
+        return json;
+    }
+
+    async fetchRepos(project): Promise<BitBucketRepos> {
+        const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects/${project}/repos`, {
+            credentials: 'same-origin'
+        });
+        const json: BitBucketRepos = await response.json();
+        return json;
+    }
+
+    async fetchAllRepos(): Promise<BitBucketRepos> {
+        const response = await fetch(`${this.baseUrl}/rest/api/1.0/repos?limit=2000`, {
+            credentials: 'same-origin'
+        });
+        const json: BitBucketRepos = await response.json();
+        return json;
+    }
+
+    async fetchBranches(project: string, repo: string): Promise<BitbucketBranches> {
+        const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects/${project}/repos/${repo}/branches?details=true`, {
+            credentials: 'same-origin'
+        });
+        const json: BitbucketBranches = await response.json();
+        return json;
+    }
+
+    async fetchPullRequests(project: string, repo: string): Promise<BitbucketPullRequests> {
+        const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects/${project}/repos/${repo}/pull-requests?state=ALL&withProperties=false&withAttributes=false`, {
+            credentials: 'same-origin'
+        });
+        const json: BitbucketPullRequests = await response.json();
+        return json;
+    }
+
+    async fetchBuildStatus(commitHash: string): Promise<BitbucketBuildStatuses> {
+        const response = await fetch(`${this.baseUrl}/rest/build-status/1.0/commits/${commitHash}`, {
+            credentials: 'same-origin'
+        });
+        const json: BitbucketBuildStatuses = await response.json();
+        return json;
+    }
+
+    async fetchSonarForBitbucketStatus(repoId: number, pullRequestId: number): Promise<BitbucketSonarStatus> {
+        const response = await fetch(`${this.baseUrl}/rest/sonar4stash/latest/statistics?pullRequestId=${pullRequestId}&repoId=${repoId}`, {
+            credentials: 'same-origin'
+        });
+        // Need checking status code because Sonar For Bitbucke returns 404 if the pull request does'n have the SonarQube metrics
+        if (response.status !== 200) {
+            return null;
+        }
+        const json: BitbucketSonarStatus = await response.json();
+        json.pullRequestId = pullRequestId;
+        return json;
+    }
 }
 
-
+function trimSlash(url: string) {
+    const last = url.substring(url.length - 1);
+    if (last === '/') {
+        return url.substring(0, url.length - 1)
+    }
+    return url;
+}

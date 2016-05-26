@@ -19,6 +19,7 @@ interface Props extends React.Props<any> {
     dispatch?: Dispatch
 
     settings?: Settings;
+    api?: API.API;
     loading?: boolean;
 
     sonarQubeAuthenticated?: boolean;
@@ -34,6 +35,7 @@ interface Props extends React.Props<any> {
 function mapStateToProps(state: RootState, props: Props): Props {
     return {
         settings: state.app.settings,
+        api: state.app.api,
         loading: state.app.loading,
 
         sonarQubeAuthenticated: state.app.sonarQubeAuthenticated,
@@ -87,7 +89,7 @@ class BrowserView extends React.Component<Props, void> {
     };
 
     render() {
-        const { settings,
+        const { settings, api,
             branchInfos, loading, branchInfosLoaded,
             filter,
             resultsPerPage } = this.props;
@@ -157,6 +159,7 @@ class BrowserView extends React.Component<Props, void> {
                                 <div className='branch-table' style={{ padding: '0px 10px 0px 10px' }}>
                                     <BitbucketTable
                                         settings={settings}
+                                        api={api}
                                         showFilter={true}
                                         results={filteredBranchInfos}
                                         resultsPerPage={resultsPerPage}

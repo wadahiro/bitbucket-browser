@@ -3,6 +3,7 @@ import * as B from '../bulma';
 
 import * as API from '../webapis';
 import { Settings } from '../Settings';
+import { trimSlash } from '../Utils';
 import * as Actions from '../actions';
 
 export interface FilterState {
@@ -73,6 +74,7 @@ export const filterReducer = (state: FilterState = initFilterState(), action: Ac
 
 export interface AppState {
     settings?: Settings;
+    api?: API.API;
     loading?: boolean;
 
     sonarQubeAuthenticated?: boolean;
@@ -85,6 +87,7 @@ export interface AppState {
 
 const initialAppState: AppState = {
     settings: null,
+    api: null,
     loading: false,
 
     sonarQubeAuthenticated: true,
@@ -104,9 +107,16 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
     }
 
     if (Actions.isType(action, Actions.FETCH_SETTINGS_SUCCEEDED)) {
-        const payload = action.payload;
+        const { settings } = action.payload;
 
-        return Object.assign({}, state, payload);
+        const resolvedSettings = resolveSettings(settings);
+
+        const api = new API.API(resolvedSettings);
+
+        return Object.assign({}, state, {
+            settings,
+            api
+        });
     }
 
     if (Actions.isType(action, Actions.APPEND_BRANCH_INFOS)) {
@@ -141,7 +151,7 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
 
         const newBranchInfos = state.branchInfos.map(x => {
             x.sonarQubeMetrics = new B.LazyFetch<API.SonarQubeMetrics>(() => {
-                return API.fetchSonarQubeMetricsByKey(state.settings, x.repo, x.branch);
+                return state.api.fetchSonarQubeMetricsByKey(x.repo, x.branch);
             });
             return x;
         });
@@ -163,4 +173,12 @@ export default combineReducers({
 export interface RootState {
     app: AppState;
     filter: FilterState;
+}
+
+function resolveSettings(settings: Settings): Settings {
+    settings.baseUrl = trimSlash(settings.baseUrl);
+    if (settings.items.sonarQubeMetrics && settings.items.sonarQubeMetrics.resolver) {
+        settings.items.sonarQubeMetrics.resolver.baseUrl = trimSlash(settings.items.sonarQubeMetrics.resolver.baseUrl);
+    }
+    return settings;
 }
