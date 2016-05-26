@@ -111,7 +111,6 @@ export class API {
     }
 
     async isAuthenticatedBitbucket(): Promise<boolean> {
-        console.log(this.bitbucketApi)
         return await this.bitbucketApi.isAuthenticated();
     }
 

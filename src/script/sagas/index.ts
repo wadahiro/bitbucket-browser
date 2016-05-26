@@ -3,7 +3,7 @@ import { take, put, call, fork, select, Effect } from 'redux-saga/effects'
 import * as B from '../bulma';
 
 import * as actions from '../actions'
-import { RootState, AppState }from '../reducers'
+import { RootState, AppState, FilterState }from '../reducers'
 import * as API from '../webapis';
 import { Settings } from '../Settings';
 
@@ -263,9 +263,12 @@ function* handleSonarQubeMetrics(): Iterable<Effect> {
 
 function* watchAndLog() {
     yield* takeEvery('*', function* logger(action) {
-        const state = yield select(state => state)
-        console.log('action', action)
-        console.log('state after', state)
+        const state: RootState = yield select((state: RootState) => state);
+
+        if (state.app.settings && state.app.settings.debug) {
+            console.log('Action: ', action);
+            console.log('State: ', state);
+        }
     })
 }
 
@@ -273,7 +276,7 @@ function* handleSaveFilter() {
     while (true) {
         const action = yield take([actions.CHANGE_FILTER, actions.TOGGLE_FILTER]);
 
-        const filterState = yield select((state: RootState) => state.filter);
+        const filterState: FilterState = yield select((state: RootState) => state.filter);
 
         // Save to URL
         const saveFilters = Object.keys(filterState).map(x => {

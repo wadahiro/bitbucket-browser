@@ -43,7 +43,6 @@ export class LazyFetch<T> {
     }
     fetch(): Promise<T> {
         if (this.resolved !== null) {
-            console.log('use cache')
             return this.resolved;
         } else {
             this.resolved = this.callback();

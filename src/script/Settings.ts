@@ -2,6 +2,7 @@ export interface Settings {
     title?: string;
     baseUrl?: string;
     items?: Items;
+    debug?: boolean;
 }
 
 export interface Items {
