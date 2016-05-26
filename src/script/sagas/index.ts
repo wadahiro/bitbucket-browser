@@ -107,17 +107,22 @@ function* handleFetchBranchInfos(): Iterable<Effect> {
 
         const branchInfosPromises: Promise<API.BranchInfo[]>[] = yield call([api, api.fetchBranchInfos], repos);
 
-        const results = yield branchInfosPromises.map(x => call([api, api.fetchBranchInfo], x));
-
-        const branchInfos = _.flatten(results);
-
-        yield put(<actions.AppendBranchInfosAction>{
-            type: actions.APPEND_BRANCH_INFOS,
-            payload: {
-                branchInfos
-            }
-        })
+        for (var i = 0; i < branchInfosPromises.length; i++) {
+            const promise = branchInfosPromises[i];
+            yield fork(handleFetchBranchInfosPerRepo, api, promise);
+        }
     }
+}
+
+function* handleFetchBranchInfosPerRepo(api: API.API, branchInfosPromise: Promise<API.BranchInfo[]>): Iterable<Effect> {
+    const branchInfos = yield call([api, api.fetchBranchInfo], branchInfosPromise);
+
+    yield put(<actions.AppendBranchInfosAction>{
+        type: actions.APPEND_BRANCH_INFOS,
+        payload: {
+            branchInfos
+        }
+    });
 }
 
 function* handleFetchPullRequestCount(): Iterable<Effect> {

@@ -136,7 +136,7 @@ export class API {
                     .then(handleBranchFetch)
             });
 
-            return promises
+            return promises;
 
         } catch (e) {
             console.error('parsing failed', e);
