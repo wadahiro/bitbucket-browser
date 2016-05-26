@@ -129,6 +129,10 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
                 x.label = item.displayName;
 
                 const meta = resolveCustomComponent(x);
+
+                // hack
+                meta._api = api;
+
                 if (meta.name === 'pullRequestStatus') {
                     meta.lazyFetch = handlePullRequestCount;
                 }
@@ -185,19 +189,31 @@ function LinkFormatter(data, values, metadata, transform) {
 }
 
 function ProjectLink(data, values, metadata) {
-    return LinkFormatter(data, values, metadata, projectLink);
+    const api: API.API = metadata._api;
+    return LinkFormatter(data, values, metadata, (data, branchInfo: API.BranchInfo) => {
+        return api.createBitbucketProjectUrl(branchInfo);
+    });
 }
 
 function RepoLink(data, values, metadata) {
-    return LinkFormatter(data, values, metadata, repoLink);
+    const api: API.API = metadata._api;
+    return LinkFormatter(data, values, metadata, (data, branchInfo: API.BranchInfo) => {
+        return api.createBitbucketRepoUrl(branchInfo);
+    });
 }
 
 function BranchLink(data, values, metadata) {
-    return LinkFormatter(data, values, metadata, branchLink);
+    const api: API.API = metadata._api;
+    return LinkFormatter(data, values, metadata, (data, branchInfo: API.BranchInfo) => {
+        return api.createBitbucketBranchUrl(branchInfo);
+    });
 }
 
 function CommitLink(data, values, metadata) {
-    return LinkFormatter(data, values, metadata, commitLink);
+    const api: API.API = metadata._api;
+    return LinkFormatter(data, values, metadata, (data, branchInfo: API.BranchInfo) => {
+        return api.createBitbucketCommitUrl(branchInfo);
+    });
 }
 
 function BranchNameLinkFormatter(resolver: BranchNameLinkResolver) {
@@ -253,18 +269,19 @@ function PullRequestStatusFormatter(data: API.PullRequestStatus, values: API.Bra
 
     return (
         <div>
-            <div style={style}>Open(Source): {data.prCountSource} {PullRequestBarLink('open')(data.prCountSource, values, metadata) }</div>
-            <div style={style}>Open(Target): {data.prCountTarget}  {PullRequestBarLink('open')(data.prCountTarget, values, metadata) }</div>
-            <div style={style}>Merged: {data.prCountMerged}  {PullRequestBarLink('merged')(data.prCountMerged, values, metadata) }</div>
-            <div style={style}>Declined: {data.prCountDeclined}  {PullRequestBarLink('declined')(data.prCountDeclined, values, metadata) }</div>
+            <div style={style}>Open(Source): {data.prCountSource} {PullRequestBarLink(metadata._api, 'open')(data.prCountSource, values, metadata) }</div>
+            <div style={style}>Open(Target): {data.prCountTarget}  {PullRequestBarLink(metadata._api, 'open')(data.prCountTarget, values, metadata) }</div>
+            <div style={style}>Merged: {data.prCountMerged}  {PullRequestBarLink(metadata._api, 'merged')(data.prCountMerged, values, metadata) }</div>
+            <div style={style}>Declined: {data.prCountDeclined}  {PullRequestBarLink(metadata._api, 'declined')(data.prCountDeclined, values, metadata) }</div>
         </div>
     );
 }
 
-function PullRequestBarLink(state: string) {
-    const transform = pullRequestLink(state);
+function PullRequestBarLink(api: API.API, state: string) {
     return (data, values, metadata) => {
-        return ProgressBarLink(data, values, metadata, transform);
+        return ProgressBarLink(data, values, metadata, (data, branchInfo: API.BranchInfo) => {
+            return api.createPullRequestLink(branchInfo, state);
+        });
     };
 }
 
@@ -305,6 +322,8 @@ function SonarQubeStatusFormatter(sonarForBitbucketStatus: API.SonarForBitbucket
         return LOADING;
     }
 
+    const api: API.API = metadata._api;
+
     const items = sonarForBitbucketStatus.values.map(x => {
         const fromKeys = Object.keys(x.from.statistics);
         const toKeys = Object.keys(x.to.statistics);
@@ -315,7 +334,7 @@ function SonarQubeStatusFormatter(sonarForBitbucketStatus: API.SonarForBitbucket
         };
 
         const item = <div key={x.pullRequestId}>
-            <h3><a href={pullRequestDetailLink(branchInfo.project, branchInfo.repo, x.pullRequestId) }>pull request #{x.pullRequestId}</a></h3>
+            <h3><a href={api.createPullRequestDetailLink(branchInfo, x.pullRequestId) }>pull request #{x.pullRequestId}</a></h3>
             <table className='table is-narrow' style={style}>
                 <thead>
                     <tr>
@@ -460,31 +479,4 @@ function SonarQubeMetricsFormatter(api: API.API, onAuthenticated: () => void) {
             </div>;
         }
     }
-}
-
-// transformer
-function projectLink(data, values: API.BranchInfo) {
-    return `/stash/projects/${values.project}`;
-}
-
-function repoLink(data, values: API.BranchInfo) {
-    return `/stash/projects/${values.project}/repos/${values.repo}`;
-}
-
-function branchLink(data, values: API.BranchInfo) {
-    return `/stash/projects/${values.project}/repos/${values.repo}/browse?at=${values.branch}`;
-}
-
-function commitLink(data, values: API.BranchInfo) {
-    return `/stash/projects/${values.project}/repos/${values.repo}/commits/${values.latestCommitHash}`;
-}
-
-function pullRequestLink(state: string) {
-    return (data, values) => {
-        return `/stash/projects/${values.project}/repos/${values.repo}/pull-requests?state=${state}`;
-    };
-}
-
-function pullRequestDetailLink(project, repo, pullRequestId: number) {
-    return `/stash/projects/${project}/repos/${repo}/pull-requests/${pullRequestId}/overview`;
 }

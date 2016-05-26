@@ -45,7 +45,7 @@ function* initApp(): Iterable<Effect> {
 
     if (!bitbucketAuthenticated) {
         // Redirect to Bitbucket Login page
-        location.href = `/stash/login?next=/stash-browser${encodeURIComponent(location.hash)}`;
+        location.href = `${settings.baseUrl}/login?next=${location.pathname}${encodeURIComponent(location.hash)}`;
     } else {
         const sonarQubeAuthenticated = yield call([api, api.isAuthenticatedSonarQube]);
 

@@ -323,8 +323,35 @@ export class API {
         }
     }
 
+    // URL Generator functions
+
+    createBitbucketProjectUrl(branchInfo: BranchInfo) {
+        return `${this.bitbucketApi.baseUrl}/projects/${branchInfo.project}`;
+    }
+
+    createBitbucketRepoUrl(branchInfo: BranchInfo) {
+        return `${this.createBitbucketProjectUrl(branchInfo)}/repos/${branchInfo.repo}`;
+    }
+
+    createBitbucketBranchUrl(branchInfo: BranchInfo) {
+        return `${this.createBitbucketRepoUrl(branchInfo)}/browse?at=${branchInfo.branch}`;
+    }
+
+    createBitbucketCommitUrl(branchInfo: BranchInfo) {
+        return `${this.createBitbucketRepoUrl(branchInfo)}/commits/${branchInfo.latestCommitHash}`;
+    }
+
+    createPullRequestLink(branchInfo: BranchInfo, state: string) {
+        return `${this.createBitbucketRepoUrl(branchInfo)}/pull-requests?state=${state}`;
+    }
+
+    createPullRequestDetailLink(branchInfo: BranchInfo, pullRequestId: number) {
+        return `${this.createBitbucketRepoUrl(branchInfo)}/pull-requests/${pullRequestId}/overview`;
+    }
+
     createSonarQubeDashboardUrl(id: number) {
         const url = `${this.settings.items.sonarQubeMetrics.resolver.baseUrl}/dashboard/index/${id}`;
+        return url;
     }
 }
 
