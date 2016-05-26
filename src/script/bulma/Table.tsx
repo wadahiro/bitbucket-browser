@@ -69,22 +69,6 @@ export class Table extends React.Component<TableProps, any> {
         sortAscending: this.props.initialSortAscending,
     };
 
-    // componentDidMount() {
-    //     const { results, columnMetadata, resultsPerPage } = this.props;
-    //     const firstPageResults = results.slice(0, resultsPerPage);
-    //     const lazyFetchColMetas = columnMetadata.filter(colMeta => {
-    //             return typeof colMeta.lazyFetch === 'function';
-    //         });
-
-    //     firstPageResults.forEach(x => {
-    //         lazyFetchColMetas.forEach((y, index) => {
-    //             if (x[y.name] === undefined || x[y.name] === null) {
-    //                 y.lazyFetch(x[y.name], x, index);
-    //             }
-    //         });
-    //     });
-    // }
-
     render() {
         const { fixed, results, columnMetadata, resultsPerPage } = this.props;
 
