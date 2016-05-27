@@ -292,14 +292,17 @@ function* updateSonarQubeMetrics(branchInfo: API.BranchInfo) {
 }
 
 function* watchAndLog() {
-    yield* takeEvery('*', function* logger(action) {
-        const state: RootState = yield select((state: RootState) => state);
+    yield take(actions.FETCH_SETTINGS_SUCCEEDED);
 
-        if (state.app.settings && state.app.settings.debug) {
+    const state: RootState = yield select((state: RootState) => state);
+
+    if (state.app.settings && state.app.settings.debug) {
+        yield* takeEvery('*', function* logger(action) {
+
             console.log('Action: ', action);
             console.log('State: ', state);
-        }
-    })
+        });
+    }
 }
 
 function* pollSaveFilters() {
