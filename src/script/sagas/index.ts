@@ -1,5 +1,5 @@
 import { takeEvery } from 'redux-saga'
-import { take, put, call, fork, select, Effect } from 'redux-saga/effects'
+import { take, put, call, fork, join, select, Effect } from 'redux-saga/effects'
 import * as B from '../bulma';
 
 import * as actions from '../actions'
@@ -15,12 +15,10 @@ async function fetchSettings(): Promise<Settings> {
         }
     });
     const settings: Settings = await response.json();
-    document.title = settings.title;
-
     return settings;
 }
 
-function* handleFetchSettings(): Iterable<Effect> {
+function* initApp(): Iterable<Effect> {
     const action: actions.InitAppAction = yield take(actions.INIT_APP);
 
     const settings: Settings = yield call(fetchSettings);
@@ -31,13 +29,6 @@ function* handleFetchSettings(): Iterable<Effect> {
             settings
         }
     });
-}
-
-function* initApp(): Iterable<Effect> {
-    yield take(actions.INIT_APP);
-
-    const action: actions.FetchSettingsScceededAction = yield take(actions.FETCH_SETTINGS_SUCCEEDED);
-    const { settings } = action.payload;
 
     const api: API.API = yield select((state: RootState) => state.app.api);
 
@@ -55,62 +46,50 @@ function* initApp(): Iterable<Effect> {
                 sonarQubeAuthenticated
             }
         });
+
+        // Auto fetching branchs after app initialized 
         yield put(<actions.FetchBranchInfosAction>{
-            type: actions.FETCH_BRANCH_INFOS_REQUESTED,
-            payload: {
-                settings
-            }
+            type: actions.FETCH_BRANCH_INFOS_REQUESTED
         });
     }
 }
 
-function* fetchBranchInfos(action: actions.FetchBranchInfosAction): Iterable<Effect> {
+function* pollReloadBranchInfos(action: actions.ReloadBranchInfosAction): Iterable<Effect> {
     while (true) {
-        const action = yield take(actions.FETCH_BRANCH_INFOS_REQUESTED);
-        const { settings } = action.payload;
+        yield take(actions.RELOAD_BRANCH_INFOS);
+
+        yield put(<actions.FetchBranchInfosAction>{
+            type: actions.FETCH_BRANCH_INFOS_REQUESTED
+        });
+    }
+}
+
+function* pollFetchBranchInfosRequested(action: actions.FetchBranchInfosAction): Iterable<Effect> {
+    while (true) {
+        yield take(actions.FETCH_BRANCH_INFOS_REQUESTED);
 
         const api: API.API = yield select((state: RootState) => state.app.api);
 
         const repos: API.Repo[] = yield call([api, api.fetchAllRepos]);
 
-        yield put(<actions.FetchReposAction>{
-            type: actions.FETCH_REPOS_SUCCEEDED,
-            payload: {
-                settings,
-                repos
-            }
-        });
-    }
-}
+        const task = yield fork(handleFetchBranchInfoAll, repos);
 
-function* reloadBranchInfos(action: actions.ReloadBranchInfosAction): Iterable<Effect> {
-    while (true) {
-        const action = yield take(actions.RELOAD_BRANCH_INFOS);
-        const { settings } = action.payload;
+        yield join(task);
 
         yield put(<actions.FetchBranchInfosAction>{
-            type: actions.FETCH_BRANCH_INFOS_REQUESTED,
-            payload: {
-                settings
-            }
+            type: actions.FETCH_BRANCH_INFOS_SUCCEEDED
         });
     }
 }
 
-function* handleFetchBranchInfos(): Iterable<Effect> {
-    while (true) {
-        const action = yield take(actions.FETCH_REPOS_SUCCEEDED);
+function* handleFetchBranchInfoAll(repos: API.Repo[]): Iterable<Effect> {
+    const api: API.API = yield select((state: RootState) => state.app.api);
 
-        const { settings, repos } = action.payload;
+    const branchInfosPromises: Promise<API.BranchInfo[]>[] = yield call([api, api.fetchBranchInfos], repos);
 
-        const api: API.API = yield select((state: RootState) => state.app.api);
-
-        const branchInfosPromises: Promise<API.BranchInfo[]>[] = yield call([api, api.fetchBranchInfos], repos);
-
-        for (var i = 0; i < branchInfosPromises.length; i++) {
-            const promise = branchInfosPromises[i];
-            yield fork(handleFetchBranchInfosPerRepo, api, promise);
-        }
+    for (var i = 0; i < branchInfosPromises.length; i++) {
+        const promise = branchInfosPromises[i];
+        yield fork(handleFetchBranchInfosPerRepo, api, promise);
     }
 }
 
@@ -293,11 +272,9 @@ function* handleSaveFilter() {
 
 export default function* root(): Iterable<Effect> {
     yield fork(watchAndLog)
-    yield fork(handleFetchSettings)
     yield fork(initApp)
-    yield fork(fetchBranchInfos)
-    yield fork(reloadBranchInfos)
-    yield fork(handleFetchBranchInfos)
+    yield fork(pollFetchBranchInfosRequested)
+    yield fork(pollReloadBranchInfos)
     yield fork(handleFetchPullRequestCount)
     yield fork(handleBuildStatus)
     yield fork(handleSonarForBitbucketStatus)

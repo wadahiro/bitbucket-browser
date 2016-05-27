@@ -176,6 +176,10 @@ export interface RootState {
 }
 
 function resolveSettings(settings: Settings): Settings {
+    // Set HTML Title
+    document.title = settings.title;
+
+    // Fix baseUrls
     settings.baseUrl = trimSlash(settings.baseUrl);
     if (settings.items.sonarQubeMetrics && settings.items.sonarQubeMetrics.resolver) {
         settings.items.sonarQubeMetrics.resolver.baseUrl = trimSlash(settings.items.sonarQubeMetrics.resolver.baseUrl);

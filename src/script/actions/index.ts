@@ -92,33 +92,24 @@ export interface FetchReposAction extends Action {
 
 export const RELOAD_BRANCH_INFOS: ActionType<ReloadBranchInfosAction> = 'RELOAD_BRANCH_INFOS';
 export interface ReloadBranchInfosAction extends Action {
-    payload: {
-        settings: Settings;
-    }
 }
 export function reloadBranchInfos(settings: Settings): ReloadBranchInfosAction {
     return {
-        type: RELOAD_BRANCH_INFOS,
-        payload: {
-            settings
-        }
+        type: RELOAD_BRANCH_INFOS
     };
 }
 
 export const FETCH_BRANCH_INFOS_REQUESTED: ActionType<FetchBranchInfosAction> = 'FETCH_BRANCH_INFOS_REQUESTED';
 export interface FetchBranchInfosAction extends Action {
-    payload: {
-        settings: Settings;
-    }
 }
-
 export function fetchBranchInfos(settings: Settings): FetchBranchInfosAction {
     return {
-        type: FETCH_BRANCH_INFOS_REQUESTED,
-        payload: {
-            settings
-        }
+        type: FETCH_BRANCH_INFOS_REQUESTED
     };
+}
+
+export const FETCH_BRANCH_INFOS_SUCCEEDED: ActionType<FetchBranchInfosSucceededAction> = 'FETCH_BRANCH_INFOS_SUCCEEDED';
+export interface FetchBranchInfosSucceededAction extends Action {
 }
 
 export const APPEND_BRANCH_INFOS: ActionType<AppendBranchInfosAction> = 'APPEND_BRANCH_INFOS';
