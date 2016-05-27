@@ -36,7 +36,6 @@ export interface Branch extends Repo {
 }
 
 export interface PullRequestCount {
-    id: string;
     repoId: number;
     pullRequestIds: {
         [index: string]: number[];
@@ -66,10 +65,10 @@ export interface BranchInfo extends Branch {
      */
     id: string;
     branchNameLink: string;
-    pullRequestStatus: B.LazyFetch<PullRequestCount> | PullRequestStatus
-    buildStatus: B.LazyFetch<BuildStatus> | BuildStatus;
-    sonarForBitbucketStatus: B.LazyFetch<SonarForBitbucketStatus> | SonarForBitbucketStatus;
-    sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics> | SonarQubeMetrics;
+    pullRequestStatus: PullRequestStatus
+    buildStatus: BuildStatus;
+    sonarForBitbucketStatus: SonarForBitbucketStatus;
+    sonarQubeMetrics: SonarQubeMetrics;
 }
 
 export interface PullRequestStatus {
@@ -146,23 +145,7 @@ export class API {
 
     async fetchBranchInfo(branchInfoPromise: Promise<BranchInfo[]>): Promise<BranchInfo[]> {
         const branchInfos = await branchInfoPromise;
-        return this._resolveLazyFetch(branchInfos);
-    }
-
-    _resolveLazyFetch(branchInfoOfSomeProjects: BranchInfo[]) {
-        // important! share fetch instance
-        const fetchPrCount = new B.LazyFetch<PullRequestCount>(() => {
-            return this.fetchPullRequests(branchInfoOfSomeProjects[0]);
-        });
-
-        const newBranchInfos = branchInfoOfSomeProjects.map(x => {
-            x.pullRequestStatus = fetchPrCount;
-            x.sonarQubeMetrics = new B.LazyFetch<SonarQubeMetrics>(() => {
-                return this.fetchSonarQubeMetricsByKey(x.repo, x.branch);
-            });
-            return x;
-        });
-        return newBranchInfos;
+        return branchInfos;
     }
 
     async fetchRepos(project: string): Promise<Repo[]> {
@@ -237,12 +220,11 @@ export class API {
         });
     }
 
-    async fetchPullRequests(branchInfo: BranchInfo): Promise<PullRequestCount> {
-        const pullRequests = await this.bitbucketApi.fetchPullRequests(branchInfo.project, branchInfo.repo);
+    async fetchPullRequests(repo: Repo): Promise<PullRequestCount> {
+        const pullRequests = await this.bitbucketApi.fetchPullRequests(repo.project, repo.repo);
 
         const result: PullRequestCount = {
-            id: branchInfo.id,
-            repoId: branchInfo.repoId,
+            repoId: repo.repoId,
             pullRequestIds: {},
             from: {},
             to: {},

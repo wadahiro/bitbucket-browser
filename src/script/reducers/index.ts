@@ -147,18 +147,8 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
     }
 
     if (Actions.isType(action, Actions.SONARQUBE_AUTHENTICATED)) {
-        const payload = action.payload;
-
-        const newBranchInfos = state.branchInfos.map(x => {
-            x.sonarQubeMetrics = new B.LazyFetch<API.SonarQubeMetrics>(() => {
-                return state.api.fetchSonarQubeMetricsByKey(x.repo, x.branch);
-            });
-            return x;
-        });
-
         return Object.assign({}, state, {
-            sonarQubeAuthenticated: true,
-            branchInfos: newBranchInfos
+            sonarQubeAuthenticated: true
         });
     }
 

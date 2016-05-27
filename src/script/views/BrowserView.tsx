@@ -68,20 +68,8 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.reloadBranchInfos(settings));
     };
 
-    handlePullRequestCount = (fetch: B.LazyFetch<API.PullRequestCount>, branchInfo: API.BranchInfo) => {
-        this.props.dispatch(Actions.fetchPullRequestCount(fetch, branchInfo));
-    };
-
-    handleBuildStatus = (fetch: B.LazyFetch<API.BuildStatus>, branchInfo: API.BranchInfo) => {
-        this.props.dispatch(Actions.fetchBuildStatus(fetch, branchInfo));
-    };
-
-    handleSonarForBitbucketStatus = (fetch: B.LazyFetch<API.SonarForBitbucketStatus>, branchInfo: API.BranchInfo) => {
-        this.props.dispatch(Actions.fetchSonarForBitbucketStatus(fetch, branchInfo));
-    };
-
-    handleSonarQubeMetrics = (fetch: B.LazyFetch<API.SonarQubeMetrics>, branchInfo: API.BranchInfo) => {
-        this.props.dispatch(Actions.fetchSonarQubeMetrics(fetch, branchInfo));
+    handleShowBranchInfo = (branchInfo: API.BranchInfo) => {
+        this.props.dispatch(Actions.showBranchInfoDetails(branchInfo.id));
     };
 
     handleToggleSidebar = (e: React.SyntheticEvent) => {
@@ -163,10 +151,7 @@ class BrowserView extends React.Component<Props, void> {
                                         showFilter={true}
                                         results={filteredBranchInfos}
                                         resultsPerPage={resultsPerPage}
-                                        handlePullRequestCount={this.handlePullRequestCount}
-                                        handleBuildStatus={this.handleBuildStatus}
-                                        handleSonarForBitbucketStatus={this.handleSonarForBitbucketStatus}
-                                        handleSonarQubeMetrics={this.handleSonarQubeMetrics}
+                                        handleShowBranchInfo={this.handleShowBranchInfo}
                                         handleSonarQubeAuthenticated={this.handleSonarQubeAuthenticated}
                                         />
                                 </div>

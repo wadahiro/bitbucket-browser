@@ -92,8 +92,6 @@ const COLUMN_METADATA: B.ColumnMetadata[] = [
         visible: true,
         sortEnabled: true,
     }
-    // sonarQubeMetrics column is added in 'componentDidMount'
-    // branchNameLink column is added in 'componentDidMount'
 ];
 
 interface Props extends React.Props<BitbucketDataTable> {
@@ -103,10 +101,7 @@ interface Props extends React.Props<BitbucketDataTable> {
     enableSort?: boolean;
     results: any[];
     showFilter: boolean;
-    handlePullRequestCount: (prCount: B.LazyFetch<API.PullRequestCount>, branchInfo: API.BranchInfo) => void;
-    handleBuildStatus: (buildStatus: B.LazyFetch<API.BuildStatus>, branchInfo: API.BranchInfo) => void;
-    handleSonarForBitbucketStatus: (sonarForBitbucketStatus: B.LazyFetch<API.SonarForBitbucketStatus>, branchInfo: API.BranchInfo) => void;
-    handleSonarQubeMetrics: (sonarQubeMetrics: B.LazyFetch<API.SonarQubeMetrics>, branchInfo: API.BranchInfo) => void;
+    handleShowBranchInfo: (branchInfo: API.BranchInfo) => void;
     handleSonarQubeAuthenticated: () => void;
 }
 
@@ -118,7 +113,7 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
 
     render() {
         const { settings, api, results, resultsPerPage,
-            handlePullRequestCount, handleBuildStatus, handleSonarForBitbucketStatus, handleSonarQubeMetrics, handleSonarQubeAuthenticated } = this.props;
+            handleShowBranchInfo, handleSonarQubeAuthenticated } = this.props;
 
         const resolvedColumnMetadata = COLUMN_METADATA.filter(x => {
             const item = settings.items[x.name];
@@ -133,17 +128,7 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
                 // hack
                 meta._api = api;
 
-                if (meta.name === 'pullRequestStatus') {
-                    meta.lazyFetch = handlePullRequestCount;
-                }
-                if (meta.name === 'buildStatus') {
-                    meta.lazyFetch = handleBuildStatus;
-                }
-                if (meta.name === 'sonarForBitbucketStatus') {
-                    meta.lazyFetch = handleSonarForBitbucketStatus;
-                }
                 if (meta.name === 'sonarQubeMetrics') {
-                    meta.lazyFetch = handleSonarQubeMetrics;
                     meta.renderer = SonarQubeMetricsFormatter(api, handleSonarQubeAuthenticated);
                 }
                 if (meta.name === 'branchNameLink') {
@@ -157,6 +142,7 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
                 <B.Columns>
                     <B.Table
                         columnMetadata={resolvedColumnMetadata}
+                        handleShowRecord={handleShowBranchInfo}
                         enableSort={true}
                         showPagination={true}
                         resultsPerPage={resultsPerPage}

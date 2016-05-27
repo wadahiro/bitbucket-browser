@@ -18,6 +18,7 @@ export interface TableProps extends React.Props<Table> {
     results: {
         [index: string]: string | number | boolean;
     }[];
+    handleShowRecord?: (data: any) => void;
 }
 
 export interface ColumnMetadata {
@@ -28,27 +29,6 @@ export interface ColumnMetadata {
     headerCenter?: boolean;
     sortEnabled?: boolean;
     renderer?: (value: any, values: any, metadata?: ColumnMetadata) => React.ReactElement<any>;
-    lazyFetch?: (lazyFetch: LazyFetch<any>, values: any) => void;
-}
-
-export class LazyFetch<T> {
-    callback: Function = null;
-    started: boolean = false;
-    resolved: Promise<T> = null;
-    constructor(callback: Function) {
-        this.callback = callback;
-    }
-    isResolved(): boolean {
-        return this.resolved !== null;
-    }
-    fetch(): Promise<T> {
-        if (this.resolved !== null) {
-            return this.resolved;
-        } else {
-            this.resolved = this.callback();
-            return this.resolved;
-        }
-    }
 }
 
 const LOADING = <Loading />;
@@ -160,22 +140,13 @@ export class Table extends React.Component<TableProps, any> {
             pageResults = sortedResults.slice(start, end);
         }
 
-        // lazy fetch
-        // visibleColumns.filter(x => {
-        //     return x.lazyFetch !== null && x.lazyFetch !== undefined;
-        // })
-        //     .forEach(col => {
-        //         const notFetchedResutls = pageResults.filter(x => {
-        //             const value = getValue(x, col.name);
-        //             return value === null || value === undefined;
-        //         });
-        //         setTimeout(() => {
-        //             col.lazyFetch(notFetchedResutls);
-        //         }, 0);
-        //     });
-
         // render
         const body = pageResults.map(x => {
+            //TODO
+            setTimeout(() => {
+                this.props.handleShowRecord(x);
+            });
+
             const tds = visibleColumns.map(col => {
                 const tdStyle = {} as any;
                 tdStyle.wordBreak = 'break-all';
@@ -183,16 +154,7 @@ export class Table extends React.Component<TableProps, any> {
                 const value = getValue(x, col.name);
 
                 // lazy fetch
-                if (value && typeof value['fetch'] === 'function' && col.lazyFetch) {
-                    // FIXME
-                    const fetch = value as LazyFetch<any>;
-                    if (!fetch.started) {
-                        fetch.started === true;
-                        setTimeout(() => {
-                            col.lazyFetch(fetch, x);
-                        });
-                    }
-
+                if (value === null) {
                     return <TD key={col.name} style={tdStyle}>{LOADING}</TD>;
                 }
 

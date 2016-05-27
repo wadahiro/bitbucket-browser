@@ -87,7 +87,7 @@ export interface FetchReposAction extends Action {
     payload: {
         settings: Settings;
         repos: API.Repo[]
-    }
+    };
 }
 
 export const RELOAD_BRANCH_INFOS: ActionType<ReloadBranchInfosAction> = 'RELOAD_BRANCH_INFOS';
@@ -119,6 +119,21 @@ export interface AppendBranchInfosAction extends Action {
     }
 }
 
+export const SHOW_BRANCH_INFO_DETAILS_REQUESTED: ActionType<ShowBranchInfoDetailsAction> = 'SHOW_BRANCH_INFO_DETAILS_REQUESTED';
+export interface ShowBranchInfoDetailsAction extends Action {
+    payload: {
+        id: string;
+    };
+}
+export function showBranchInfoDetails(id: string): ShowBranchInfoDetailsAction {
+    return {
+        type: SHOW_BRANCH_INFO_DETAILS_REQUESTED,
+        payload: {
+            id
+        }
+    };
+}
+
 export const UPDATE_BRANCH_INFO: ActionType<UpdateBranchInfoAction> = 'UPDATE_BRANCH_INFO';
 export interface UpdateBranchInfoAction extends Action {
     payload: {
@@ -126,82 +141,3 @@ export interface UpdateBranchInfoAction extends Action {
     }
 }
 
-export const FETCH_PULL_REQUEST_COUNT: ActionType<FetchPullRequestCountAction> = 'FETCH_PULL_REQUEST_COUNT';
-export interface FetchPullRequestCountAction extends Action {
-    payload: {
-        fetch: B.LazyFetch<API.PullRequestCount>,
-        branchInfo: API.BranchInfo
-    }
-}
-export function fetchPullRequestCount(fetch: B.LazyFetch<API.PullRequestCount>, branchInfo: API.BranchInfo): FetchPullRequestCountAction {
-    if (branchInfo.pullRequestStatus === null) {
-        return;
-    }
-    return {
-        type: FETCH_PULL_REQUEST_COUNT,
-        payload: {
-            fetch,
-            branchInfo
-        }
-    };
-}
-
-export const FETCH_BUILD_STATUS: ActionType<FetchBuildStatusAction> = 'FETCH_BUILD_STATUS';
-export interface FetchBuildStatusAction extends Action {
-    payload: {
-        fetch: B.LazyFetch<API.BuildStatus>,
-        branchInfo: API.BranchInfo
-    }
-}
-export function fetchBuildStatus(fetch: B.LazyFetch<API.BuildStatus>, branchInfo: API.BranchInfo): FetchBuildStatusAction {
-    if (branchInfo.buildStatus === null) {
-        return;
-    }
-    return {
-        type: FETCH_BUILD_STATUS,
-        payload: {
-            fetch,
-            branchInfo
-        }
-    };
-}
-
-export const FETCH_SONAR_FOR_BITBUCKET_STATUS: ActionType<FetchSonarForBitbucketStatusAction> = 'FETCH_SONAR_FOR_BITBUCKET_STATUS';
-export interface FetchSonarForBitbucketStatusAction extends Action {
-    payload: {
-        fetch: B.LazyFetch<API.SonarForBitbucketStatus>,
-        branchInfo: API.BranchInfo
-    }
-}
-export function fetchSonarForBitbucketStatus(fetch: B.LazyFetch<API.SonarForBitbucketStatus>, branchInfo: API.BranchInfo): FetchSonarForBitbucketStatusAction {
-    if (branchInfo.sonarForBitbucketStatus === null) {
-        return;
-    }
-    return {
-        type: FETCH_SONAR_FOR_BITBUCKET_STATUS,
-        payload: {
-            fetch,
-            branchInfo
-        }
-    };
-}
-
-export const FETCH_SONAR_QUBE_METRICS: ActionType<FetchSonarQubeMetricsAction> = 'FETCH_SONAR_QUBE_METRICS';
-export interface FetchSonarQubeMetricsAction extends Action {
-    payload: {
-        fetch: B.LazyFetch<API.SonarQubeMetrics>,
-        branchInfo: API.BranchInfo
-    }
-}
-export function fetchSonarQubeMetrics(fetch: B.LazyFetch<API.SonarQubeMetrics>, branchInfo: API.BranchInfo): FetchSonarQubeMetricsAction {
-    if (branchInfo.sonarQubeMetrics === null) {
-        return;
-    }
-    return {
-        type: FETCH_SONAR_QUBE_METRICS,
-        payload: {
-            fetch,
-            branchInfo
-        }
-    };
-}

@@ -87,14 +87,14 @@ function* handleFetchBranchInfoAll(repos: API.Repo[]): Iterable<Effect> {
 
     const branchInfosPromises: Promise<API.BranchInfo[]>[] = yield call([api, api.fetchBranchInfos], repos);
 
-    for (var i = 0; i < branchInfosPromises.length; i++) {
+    for (let i = 0; i < branchInfosPromises.length; i++) {
         const promise = branchInfosPromises[i];
         yield fork(handleFetchBranchInfosPerRepo, api, promise);
     }
 }
 
 function* handleFetchBranchInfosPerRepo(api: API.API, branchInfosPromise: Promise<API.BranchInfo[]>): Iterable<Effect> {
-    const branchInfos = yield call([api, api.fetchBranchInfo], branchInfosPromise);
+    const branchInfos: API.BranchInfo[] = yield call([api, api.fetchBranchInfo], branchInfosPromise);
 
     yield put(<actions.AppendBranchInfosAction>{
         type: actions.APPEND_BRANCH_INFOS,
@@ -102,22 +102,43 @@ function* handleFetchBranchInfosPerRepo(api: API.API, branchInfosPromise: Promis
             branchInfos
         }
     });
+
+    // Start tasks for lazy loading
+    if (branchInfos.length > 0) {
+        yield fork(handleFetchPullRequestCount, branchInfos);
+
+        // Per branch
+        for (let i = 0; i < branchInfos.length; i++) {
+            yield fork(handleBuildStatus, branchInfos[i]);
+            yield fork(handleSonarQubeMetrics, branchInfos[i]);
+        }
+    }
 }
 
-function* handleFetchPullRequestCount(): Iterable<Effect> {
+function* handleFetchPullRequestCount(branchInfosPerRepo: API.BranchInfo[]): Iterable<Effect> {
+    const settings: Settings = yield select((state: RootState) => state.app.settings);
+    const api: API.API = yield select((state: RootState) => state.app.api);
+
+    const branchInfo = branchInfosPerRepo[0];
+
+    // wait for showing this branchInfo details
     while (true) {
-        const action: actions.FetchPullRequestCountAction = yield take(actions.FETCH_PULL_REQUEST_COUNT);
+        const action: actions.ShowBranchInfoDetailsAction = yield take(actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED);
+        const hit = branchInfosPerRepo.find(x => x.id === action.payload.id);
+        if (hit) {
+            break;
+        }
+    }
 
-        const { fetch, branchInfo } = action.payload;
+    const prCountPerRepo: API.PullRequestCount = yield call([api, api.fetchPullRequests], branchInfosPerRepo[0]);
+
+    for (let i = 0; i < branchInfosPerRepo.length; i++) {
+        const branchInfo = branchInfosPerRepo[i];
+
         const { id, ref } = branchInfo;
+        const { pullRequestIds, from, to, merged, declined } = prCountPerRepo;
 
-        const prCount: API.PullRequestCount = yield fetch.fetch();
-
-        const api: API.API = yield select((state: RootState) => state.app.api);
-
-        const { pullRequestIds, from, to, merged, declined } = prCount;
-
-        const pullRequestStatus = {
+        const pullRequestStatusPerBranch = {
             prCountSource: from[ref] ? from[ref] : 0,
             prCountTarget: to[ref] ? to[ref] : 0,
             prCountMerged: merged[ref] ? merged[ref] : 0,
@@ -125,37 +146,43 @@ function* handleFetchPullRequestCount(): Iterable<Effect> {
             prIds: pullRequestIds[ref] ? pullRequestIds[ref] : []
         };
 
-        let buildStatus;
-        if (branchInfo.latestCommitHash === '') {
-            buildStatus = {
-                commitHash: '',
-                values: []
-            };
-        } else {
-            buildStatus = new B.LazyFetch<API.BuildStatus>(() => {
-                return api.fetchBuildStatus(branchInfo.latestCommitHash);
-            });
-        }
-
-        let sonarForBitbucketStatus;
-        if (pullRequestStatus.prIds.length === 0) {
-            sonarForBitbucketStatus = {
-                repoId: branchInfo.repoId,
-                values: []
-            };
-        } else {
-            sonarForBitbucketStatus = new B.LazyFetch<API.SonarForBitbucketStatus>(() => {
-                return api.fetchSonarForBitbucketStatus(branchInfo.repoId, pullRequestStatus.prIds);
-            });
-        }
+        //  Start tasks for lazy loading        
+        yield fork(handleSonarForBitbucketStatus, branchInfo, pullRequestStatusPerBranch.prIds);
 
         yield put(<actions.UpdateBranchInfoAction>{
             type: actions.UPDATE_BRANCH_INFO,
             payload: {
                 branchInfo: {
                     id,
-                    pullRequestStatus,
-                    buildStatus,
+                    pullRequestStatus: pullRequestStatusPerBranch
+                }
+            }
+        });
+    }
+}
+
+function* handleSonarForBitbucketStatus(branchInfo: API.BranchInfo, prIds: number[]): Iterable<Effect> {
+    const settings: Settings = yield select((state: RootState) => state.app.settings);
+    const api: API.API = yield select((state: RootState) => state.app.api);
+
+    if (!settings.items.sonarForBitbucketStatus.enabled) {
+        return;
+    }
+
+    let sonarForBitbucketStatus;
+    if (prIds.length === 0) {
+        sonarForBitbucketStatus = {
+            repoId: branchInfo.repoId,
+            values: []
+        };
+    } else {
+        const sonarForBitbucketStatus: API.SonarForBitbucketStatus = yield call([api, api.fetchSonarForBitbucketStatus], branchInfo.repoId, prIds);
+
+        yield put(<actions.UpdateBranchInfoAction>{
+            type: actions.UPDATE_BRANCH_INFO,
+            payload: {
+                branchInfo: {
+                    id: branchInfo.id,
                     sonarForBitbucketStatus
                 }
             }
@@ -163,86 +190,106 @@ function* handleFetchPullRequestCount(): Iterable<Effect> {
     }
 }
 
-function* handleBuildStatus(): Iterable<Effect> {
-    while (true) {
-        const action: actions.FetchBuildStatusAction = yield take(actions.FETCH_BUILD_STATUS);
+function* handleBuildStatus(branchInfo: API.BranchInfo): Iterable<Effect> {
+    const settings: Settings = yield select((state: RootState) => state.app.settings);
+    const api: API.API = yield select((state: RootState) => state.app.api);
 
-        const { fetch, branchInfo } = action.payload;
-        const { id } = branchInfo;
-
-        const buildStatus: API.BuildStatus = yield fetch.fetch();
-
-        yield put(<actions.UpdateBranchInfoAction>{
-            type: actions.UPDATE_BRANCH_INFO,
-            payload: {
-                branchInfo: {
-                    id,
-                    buildStatus
-                }
-            }
-        });
+    if (!settings.items.buildStatus.enabled) {
+        return;
     }
-}
 
-function* handleSonarForBitbucketStatus(): Iterable<Effect> {
+    // wait for showing this branchInfo details
     while (true) {
-        const action: actions.FetchSonarForBitbucketStatusAction = yield take(actions.FETCH_SONAR_FOR_BITBUCKET_STATUS);
-
-        const { fetch, branchInfo } = action.payload;
-        const { id } = branchInfo;
-
-        const sonarForBitbucketStatus: API.SonarForBitbucketStatus = yield fetch.fetch();
-
-        yield put(<actions.UpdateBranchInfoAction>{
-            type: actions.UPDATE_BRANCH_INFO,
-            payload: {
-                branchInfo: {
-                    id,
-                    sonarForBitbucketStatus
-                }
-            }
-        });
-    }
-}
-
-function* handleSonarQubeMetrics(): Iterable<Effect> {
-    while (true) {
-        const action: actions.FetchSonarQubeMetricsAction = yield take(actions.FETCH_SONAR_QUBE_METRICS);
-
-        const { fetch, branchInfo } = action.payload;
-        const { id } = branchInfo;
-
-        const sonarQubeAuthenticated: boolean = yield select((state: RootState) => state.app.sonarQubeAuthenticated);
-
-        if (sonarQubeAuthenticated) {
-            const sonarQubeMetrics: API.SonarQubeMetrics = yield fetch.fetch();
-
-            yield put(<actions.UpdateBranchInfoAction>{
-                type: actions.UPDATE_BRANCH_INFO,
-                payload: {
-                    branchInfo: {
-                        id,
-                        sonarQubeMetrics
-                    }
-                }
-            });
-        } else {
-            const sonarQubeMetrics = {
-                err_code: 401,
-                err_msg: 'Unauthorized'
-            };
-
-            yield put(<actions.UpdateBranchInfoAction>{
-                type: actions.UPDATE_BRANCH_INFO,
-                payload: {
-                    branchInfo: {
-                        id,
-                        sonarQubeMetrics
-                    }
-                }
-            });
+        const action: actions.ShowBranchInfoDetailsAction = yield take(actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED);
+        if (action.payload.id === branchInfo.id) {
+            break;
         }
     }
+
+    const { id, latestCommitHash } = branchInfo;
+
+    let buildStatus: API.BuildStatus;
+    if (latestCommitHash === '') {
+        buildStatus = {
+            commitHash: '',
+            values: []
+        };
+    } else {
+        buildStatus = yield call([api, api.fetchBuildStatus], latestCommitHash);
+    }
+
+    yield put(<actions.UpdateBranchInfoAction>{
+        type: actions.UPDATE_BRANCH_INFO,
+        payload: {
+            branchInfo: {
+                id,
+                buildStatus
+            }
+        }
+    });
+}
+
+function* handleSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
+    const settings: Settings = yield select((state: RootState) => state.app.settings);
+    const api: API.API = yield select((state: RootState) => state.app.api);
+
+    if (!settings.items.sonarQubeMetrics.enabled) {
+        return;
+    }
+
+    // wait for showing this branchInfo details
+    while (true) {
+        const action: actions.ShowBranchInfoDetailsAction = yield take(actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED);
+        if (action.payload.id === branchInfo.id) {
+            break;
+        }
+    }
+
+
+    const sonarQubeAuthenticated: boolean = yield select((state: RootState) => state.app.sonarQubeAuthenticated);
+
+    if (sonarQubeAuthenticated) {
+        yield fork(updateSonarQubeMetrics, branchInfo);
+
+    } else {
+        const { id } = branchInfo;
+        const sonarQubeMetrics = {
+            err_code: 401,
+            err_msg: 'Unauthorized'
+        };
+
+        yield put(<actions.UpdateBranchInfoAction>{
+            type: actions.UPDATE_BRANCH_INFO,
+            payload: {
+                branchInfo: {
+                    id,
+                    sonarQubeMetrics
+                }
+            }
+        });
+
+        yield take(actions.SONARQUBE_AUTHENTICATED);
+
+        // Retry after authenticated
+        yield fork(updateSonarQubeMetrics, branchInfo);
+    }
+}
+
+function* updateSonarQubeMetrics(branchInfo: API.BranchInfo) {
+    const api: API.API = yield select((state: RootState) => state.app.api);
+    const { id, repo, branch } = branchInfo;
+
+    const sonarQubeMetrics: API.SonarQubeMetrics = yield call([api, api.fetchSonarQubeMetricsByKey], repo, branch);
+
+    yield put(<actions.UpdateBranchInfoAction>{
+        type: actions.UPDATE_BRANCH_INFO,
+        payload: {
+            branchInfo: {
+                id,
+                sonarQubeMetrics
+            }
+        }
+    });
 }
 
 function* watchAndLog() {
@@ -256,7 +303,7 @@ function* watchAndLog() {
     })
 }
 
-function* handleSaveFilter() {
+function* pollSaveFilters() {
     while (true) {
         const action = yield take([actions.CHANGE_FILTER, actions.TOGGLE_FILTER]);
 
@@ -275,9 +322,5 @@ export default function* root(): Iterable<Effect> {
     yield fork(initApp)
     yield fork(pollFetchBranchInfosRequested)
     yield fork(pollReloadBranchInfos)
-    yield fork(handleFetchPullRequestCount)
-    yield fork(handleBuildStatus)
-    yield fork(handleSonarForBitbucketStatus)
-    yield fork(handleSonarQubeMetrics)
-    yield fork(handleSaveFilter)
+    yield fork(pollSaveFilters)
 }
