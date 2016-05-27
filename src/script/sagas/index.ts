@@ -6,7 +6,7 @@ import * as actions from '../actions'
 import { RootState, AppState, FilterState }from '../reducers'
 import * as API from '../webapis';
 import { Settings } from '../Settings';
-
+import { trimSlash } from '../Utils';
 
 async function fetchSettings(): Promise<Settings> {
     const response = await fetch('./settings.json', {
@@ -21,7 +21,9 @@ async function fetchSettings(): Promise<Settings> {
 function* initApp(): Iterable<Effect> {
     const action: actions.InitAppAction = yield take(actions.INIT_APP);
 
-    const settings: Settings = yield call(fetchSettings);
+    let settings: Settings = yield call(fetchSettings);
+
+    settings = resolveSettings(settings);
 
     yield put(<actions.FetchSettingsScceededAction>{
         type: actions.FETCH_SETTINGS_SUCCEEDED,
@@ -36,7 +38,8 @@ function* initApp(): Iterable<Effect> {
 
     if (!bitbucketAuthenticated) {
         // Redirect to Bitbucket Login page
-        location.href = `${settings.baseUrl}/login?next=${location.pathname}${encodeURIComponent(location.hash)}`;
+        const path = location.pathname.substring(settings.baseUrl.length);
+        location.href = `${settings.baseUrl}/login?next=${path}${encodeURIComponent(location.hash)}`;
     } else {
         const sonarQubeAuthenticated = yield call([api, api.isAuthenticatedSonarQube]);
 
@@ -52,6 +55,18 @@ function* initApp(): Iterable<Effect> {
             type: actions.FETCH_BRANCH_INFOS_REQUESTED
         });
     }
+}
+
+function resolveSettings(settings: Settings): Settings {
+    // Set HTML Title
+    document.title = settings.title;
+
+    // Fix baseUrls
+    settings.baseUrl = trimSlash(settings.baseUrl);
+    if (settings.items.sonarQubeMetrics && settings.items.sonarQubeMetrics.resolver) {
+        settings.items.sonarQubeMetrics.resolver.baseUrl = trimSlash(settings.items.sonarQubeMetrics.resolver.baseUrl);
+    }
+    return settings;
 }
 
 function* pollReloadBranchInfos(action: actions.ReloadBranchInfosAction): Iterable<Effect> {

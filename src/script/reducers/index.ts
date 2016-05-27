@@ -3,7 +3,6 @@ import * as B from '../bulma';
 
 import * as API from '../webapis';
 import { Settings } from '../Settings';
-import { trimSlash } from '../Utils';
 import * as Actions from '../actions';
 
 export interface FilterState {
@@ -109,9 +108,7 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
     if (Actions.isType(action, Actions.FETCH_SETTINGS_SUCCEEDED)) {
         const { settings } = action.payload;
 
-        const resolvedSettings = resolveSettings(settings);
-
-        const api = new API.API(resolvedSettings);
+        const api = new API.API(settings);
 
         return Object.assign({}, state, {
             settings,
@@ -163,16 +160,4 @@ export default combineReducers({
 export interface RootState {
     app: AppState;
     filter: FilterState;
-}
-
-function resolveSettings(settings: Settings): Settings {
-    // Set HTML Title
-    document.title = settings.title;
-
-    // Fix baseUrls
-    settings.baseUrl = trimSlash(settings.baseUrl);
-    if (settings.items.sonarQubeMetrics && settings.items.sonarQubeMetrics.resolver) {
-        settings.items.sonarQubeMetrics.resolver.baseUrl = trimSlash(settings.items.sonarQubeMetrics.resolver.baseUrl);
-    }
-    return settings;
 }
