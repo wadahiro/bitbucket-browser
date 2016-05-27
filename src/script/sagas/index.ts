@@ -1,5 +1,5 @@
 import { takeEvery } from 'redux-saga'
-import { take, put, call, fork, join, select, Effect } from 'redux-saga/effects'
+import { take, put, call, fork, spawn, join, select, Effect } from 'redux-saga/effects'
 import * as B from '../bulma';
 
 import * as actions from '../actions'
@@ -120,12 +120,12 @@ function* handleFetchBranchInfosPerRepo(api: API.API, branchInfosPromise: Promis
 
     // Start tasks for lazy loading
     if (branchInfos.length > 0) {
-        yield fork(handleFetchPullRequestCount, branchInfos);
+        yield spawn(handleFetchPullRequestCount, branchInfos);
 
         // Per branch
         for (let i = 0; i < branchInfos.length; i++) {
-            yield fork(handleBuildStatus, branchInfos[i]);
-            yield fork(handleSonarQubeMetrics, branchInfos[i]);
+            yield spawn(handleBuildStatus, branchInfos[i]);
+            yield spawn(handleSonarQubeMetrics, branchInfos[i]);
         }
     }
 }

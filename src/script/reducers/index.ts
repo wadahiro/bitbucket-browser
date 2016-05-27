@@ -124,6 +124,18 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
         });
     }
 
+    if (Actions.isType(action, Actions.FETCH_BRANCH_INFOS_REQUESTED)) {
+        return Object.assign({}, state, {
+            loading: true
+        });
+    }
+
+    if (Actions.isType(action, Actions.FETCH_BRANCH_INFOS_SUCCEEDED)) {
+        return Object.assign({}, state, {
+            loading: false
+        });
+    }
+
     if (Actions.isType(action, Actions.RELOAD_BRANCH_INFOS)) {
         return Object.assign({}, state, {
             branchInfos: []
