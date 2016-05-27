@@ -121,16 +121,10 @@ export interface AppendBranchInfosAction extends Action {
 
 export const SHOW_BRANCH_INFO_DETAILS_REQUESTED: ActionType<ShowBranchInfoDetailsAction> = 'SHOW_BRANCH_INFO_DETAILS_REQUESTED';
 export interface ShowBranchInfoDetailsAction extends Action {
-    payload: {
-        id: string;
-    };
 }
 export function showBranchInfoDetails(id: string): ShowBranchInfoDetailsAction {
     return {
-        type: SHOW_BRANCH_INFO_DETAILS_REQUESTED,
-        payload: {
-            id
-        }
+        type: `${SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${id}`
     };
 }
 

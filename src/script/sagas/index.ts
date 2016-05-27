@@ -137,13 +137,8 @@ function* handleFetchPullRequestCount(branchInfosPerRepo: API.BranchInfo[]): Ite
     const branchInfo = branchInfosPerRepo[0];
 
     // wait for showing this branchInfo details
-    while (true) {
-        const action: actions.ShowBranchInfoDetailsAction = yield take(actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED);
-        const hit = branchInfosPerRepo.find(x => x.id === action.payload.id);
-        if (hit) {
-            break;
-        }
-    }
+    const actionTypes = branchInfosPerRepo.map(x => `${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${x.id}`);
+    yield take(actionTypes);
 
     const prCountPerRepo: API.PullRequestCount = yield call([api, api.fetchPullRequests], branchInfosPerRepo[0]);
 
@@ -212,16 +207,10 @@ function* handleBuildStatus(branchInfo: API.BranchInfo): Iterable<Effect> {
     if (!settings.items.buildStatus.enabled) {
         return;
     }
+    const { id, latestCommitHash } = branchInfo;
 
     // wait for showing this branchInfo details
-    while (true) {
-        const action: actions.ShowBranchInfoDetailsAction = yield take(actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED);
-        if (action.payload.id === branchInfo.id) {
-            break;
-        }
-    }
-
-    const { id, latestCommitHash } = branchInfo;
+    yield take(`${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${id}`);
 
     let buildStatus: API.BuildStatus;
     if (latestCommitHash === '') {
@@ -252,14 +241,10 @@ function* handleSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
         return;
     }
 
-    // wait for showing this branchInfo details
-    while (true) {
-        const action: actions.ShowBranchInfoDetailsAction = yield take(actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED);
-        if (action.payload.id === branchInfo.id) {
-            break;
-        }
-    }
+    const { id } = branchInfo;
 
+    // wait for showing this branchInfo details
+    yield take(`${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${id}`);
 
     const sonarQubeAuthenticated: boolean = yield select((state: RootState) => state.app.sonarQubeAuthenticated);
 
@@ -267,7 +252,6 @@ function* handleSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
         yield fork(updateSonarQubeMetrics, branchInfo);
 
     } else {
-        const { id } = branchInfo;
         const sonarQubeMetrics = {
             err_code: 401,
             err_msg: 'Unauthorized'
