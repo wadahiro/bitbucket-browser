@@ -37,13 +37,12 @@
     "bulma": "0.0.26",
     "font-awesome": "^4.6.1",
     "lodash": "^4.12.0",
-    "react": "^0.14.7",
-    "react-dom": "^0.14.7",
+    "react": "^15.1.0",
+    "react-dom": "^15.1.0",
     "react-redux": "^4.4.5",
     "react-select": "^1.0.0-beta13",
     "react-sidebar": "^2.1.2",
     "redux": "^3.5.2",
-    "redux-actions": "^0.9.1",
     "redux-saga": "^0.10.4",
     "whatwg-fetch": "^0.10.1"
   }
