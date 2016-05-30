@@ -30,7 +30,7 @@ export class BuildStatusModal extends React.Component<Props, State> {
         const { showButtons } = this.state;
 
         return (
-            <B.ModalCard show={show} onHide={onHide} title='Build Status'>
+            <B.ModalCard show={show} onHide={onHide} title='Build Status' keyboard>
                 <B.Content>
                     { buildStatus.values.map(x => {
                         let iconClassName;

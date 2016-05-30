@@ -69,7 +69,7 @@ export class SonarQubeLoginModal extends React.Component<Props, State> {
         </B.Button>;
 
         return (
-            <B.ModalCard show={show} onHide={onHide} title='SonarQube Login' footer={footer}>
+            <B.ModalCard show={show} onHide={onHide} title='SonarQube Login' keyboard footer={footer}>
                 <B.Content>
                     <form>
                         <B.InputText label='Login' name='login' onChange={this.handleForm} />
