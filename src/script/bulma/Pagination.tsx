@@ -47,7 +47,7 @@ export class Pagination extends React.Component<Props, void> {
                         <IconLink onClick={this.handleFirst} disabled={isFirst} iconClassName='fa fa-angle-double-left' />
                     </li>
                     <li>
-                        <IconLink onClick={this.handlePrev} disabled={isFirst} iconClassName='fa fa-angle-double-left' />
+                        <IconLink onClick={this.handlePrev} disabled={isFirst} iconClassName='fa fa-angle-left' />
                     </li>
                     { start > 0 &&
                         <li >
