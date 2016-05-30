@@ -15,7 +15,7 @@ $green: #3b7fc4;
 }
 
 // @FIXME
-.branch-table > div > div > div > table > thead > tr > th > span {
+.branch-table > div > div > div > table > thead > tr > th {
     color: #222324;
 }
 
@@ -76,53 +76,6 @@ $green: #3b7fc4;
             left: 0;
         }
     }
-}
-
-.behind-graph-container {
-    margin-right: 10px;
-}
-
-.behind-graph-container .progress {
-    border-radius: 0px;
-    -webkit-box-shadow: 0px 0px;
-    box-shadow: 0px 0px;
-    background-color: #FFF;
-    
-    display: block;
-    float: right;
-    height: 5px;
-    line-height: 30px;
-}
-
-.behind-graph-container span {
-    color: #000;
-    float: right;
-    padding-right: 3px;
-}
-
-.ahead-graph-container {
-    margin-left: -23px;
-    margin-right: 23px;
-    padding-left: 2px;
-    border-left-color: grey;
-    border-left-width: 1px;
-    border-left-style: solid;
-}
-
-.ahead-graph-container .progress {
-    border-radius: 0px;
-    -webkit-box-shadow: 0px 0px;
-    box-shadow: 0px 0px;
-    background-color: #FFF;
-    
-    height: 5px;
-    line-height: 30px;
-}
-
-.ahead-graph-container span {
-    color: #000;
-    float: left;
-    padding-left: 3px;
 }
 
 @keyframes spin {
