@@ -7,6 +7,7 @@ import * as _ from 'lodash';
 import * as B from '../bulma';
 import * as API from '../webapis';
 import BitbucketTable from '../components/BitbucketTable';
+import { Footer } from '../components/Footer';
 import { Settings } from '../Settings';
 import { SonarQubeLoginModal } from '../components/SonarQubeLoginModal';
 import { SidebarFilter, SelectOption } from '../components/SidebarFilter';
@@ -156,11 +157,7 @@ class BrowserView extends React.Component<Props, void> {
                         </B.Container>
                     </B.Section>
 
-                    <B.Footer>
-                        <p>
-                            <strong>{settings && settings.title}</strong>.The source code is licensed <a href='http://opensource.org/licenses/mit-license.php'>MIT</a>.
-                        </p>
-                    </B.Footer>
+                    <Footer settings={settings} />
                 </div >
             </SidebarFilter>
         );
@@ -241,14 +238,6 @@ function match(patterns: string[] = [], target: string) {
     });
     return found === undefined ? false : true;
 }
-
-const RIGHT_NAV = [
-    {
-        name: 'reload',
-        label: 'Reload',
-        type: 'button'
-    }
-];
 
 const BrowserViewContainer = connect(
     mapStateToProps
