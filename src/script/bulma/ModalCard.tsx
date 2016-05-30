@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-interface Props extends React.Props<ModalCard> {
+interface Props {
     show: boolean;
     showClose?: boolean;
     onHide: (e: React.SyntheticEvent) => void;

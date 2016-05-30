@@ -1,40 +1,148 @@
 import * as React from 'react';
+import { ModifiersProps, ActiveProps, TitleProps, calcClassNames } from './Utils';
 
-export class Nav extends React.Component<any, any> {
+interface NavProps {
+    style?: any;
+}
+
+export class Nav extends React.Component<NavProps, void> {
     static defaultProps = {
-        paddingTop: 5,
-        paddingBottom: 5
+        style: {}
     };
-    
-    render() {
-        const { paddingTop, paddingBottom } = this.props;
-        
-        return (
-            <nav className="navbar" style={{paddingTop, paddingBottom}}>
-                <div className="navbar-left">
-                    <div className="navbar-item">
-                        <p className="subtitle is-5">
-                            <strong>123</strong> posts
-                        </p>
-                    </div>
-                    <div className="navbar-item">
-                        <p className="control is-grouped">
-                            <input className="input" type="text" placeholder="Find a post" />
-                            <button className="button">
-                                Search
-                            </button>
-                        </p>
-                    </div>
-                </div>
 
-                <div className="navbar-right">
-                    <p className="navbar-item"><strong>All</strong></p>
-                    <p className="navbar-item"><a href="#">Published</a></p>
-                    <p className="navbar-item"><a href="#">Drafts</a></p>
-                    <p className="navbar-item"><a href="#">Deleted</a></p>
-                    <p className="navbar-item"><a className="button is-success">New</a></p>
-                </div>
+    render() {
+        const { style } = this.props;
+
+        return (
+            <nav className={`nav`} style={style}>
+                {this.props.children}
             </nav>
         );
     }
 }
+
+interface NavLeftProps {
+    style?: any;
+}
+
+export class NavLeft extends React.Component<NavLeftProps, void> {
+    static defaultProps = {
+        style: {}
+    };
+
+    render() {
+        const { style } = this.props;
+
+        return (
+            <nav className={`nav-left`} style={style}>
+                {this.props.children}
+            </nav>
+        );
+    }
+}
+
+interface NavCenterProps {
+    style?: any;
+}
+
+export class NavCenter extends React.Component<NavCenterProps, void> {
+    static defaultProps = {
+        style: {}
+    };
+
+    render() {
+        const { style } = this.props;
+
+        return (
+            <nav className={`nav-center`} style={style}>
+                {this.props.children}
+            </nav>
+        );
+    }
+}
+
+
+interface NavRightProps {
+    style?: any;
+    isMenu?: boolean;
+}
+
+export class NavRight extends React.Component<NavRightProps, void> {
+    static defaultProps = {
+        style: {},
+        isMenu: false
+    };
+
+    render() {
+        const { style, isMenu } = this.props;
+        const menu = isMenu ? 'nav-menu' : '';
+
+
+        return (
+            <nav className={`nav-right ${menu}`} style={style}>
+                {this.props.children}
+            </nav>
+        );
+    }
+}
+
+interface NavItemProps extends React.HTMLProps<HTMLSpanElement>, ModifiersProps, ActiveProps, TitleProps {
+}
+
+export class NavItem extends React.Component<NavItemProps, void> {
+    render() {
+        const className = calcClassNames(this.props);
+
+        return (
+            <span {...this.props} className={`nav-item ${className}`}>
+                {this.props.children}
+            </span>
+        );
+    }
+}
+
+interface NavItemLinkProps extends React.HTMLProps<HTMLAnchorElement>, ModifiersProps, ActiveProps, TitleProps {
+}
+
+export class NavItemLink extends React.Component<NavItemLinkProps, void> {
+    render() {
+        const className = calcClassNames(this.props);
+
+        return (
+            <a {...this.props} className={`nav-item ${className}`}>
+                {this.props.children}
+            </a>
+        );
+    }
+}
+
+export class NavItemButton extends React.Component<NavItemLinkProps, void> {
+    render() {
+        const className = calcClassNames(this.props);
+
+        return (
+            <a {...this.props} className={`nav-item button ${className}`}>
+                {this.props.children}
+            </a>
+        );
+    }
+}
+
+interface NavToggleProp extends React.HTMLProps<HTMLAnchorElement> {
+}
+
+export class NavToggle extends React.Component<NavToggleProp, void> {
+    static defaultProps = {
+    };
+
+    render() {
+        return (
+            <span className='nav-toggle'>
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
+        );
+    }
+}
+

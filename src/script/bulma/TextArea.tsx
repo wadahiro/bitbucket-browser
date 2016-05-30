@@ -1,31 +1,15 @@
 import * as React from 'react';
+import { calcClassNames, ModifiersProps } from './Utils';
 
-export interface TextAreaProps extends React.Props<TextArea> {
-    onClick?: (event: React.SyntheticEvent) => void;
-    onChange?: (event: React.SyntheticEvent) => void;
-    name?: string;
-    label?: string;
-    value?: string;
-    placeholder?: string;
-    type?: 'primary' | 'info' | 'success' | 'warning' | 'danger';
-    size?: 'small' | 'medium' | 'large';
+export interface TextAreaProps extends React.HTMLProps<HTMLTextAreaElement>, ModifiersProps {
 }
 
-export class TextArea extends React.Component<TextAreaProps, any> {
+export class TextArea extends React.Component<TextAreaProps, void> {
     render() {
-        const { name, label, placeholder, size, type } = this.props;
-        const isSize = size ? `is-${size}` : '';
-        const isType = type ? `is-${type}` : '';
+        const className = calcClassNames(this.props);
 
         return (
-            <p className='control'>
-                <label className='label'>{label}</label>
-                <textarea className={`textarea ${isSize} ${isType}`}
-                    name={name}
-                    placeholder={placeholder}
-                    value={this.props.value}
-                    onChange={this.props.onChange} />
-            </p>
+            <textarea {...this.props} className={`textarea ${className}`}/>
         );
     }
 }

@@ -1,17 +1,20 @@
 import * as React from 'react';
-import { Type, type, Size, size } from './Utils';
+import { ModifiersProps, calcClassNames } from './Utils';
 
-interface Props extends React.Props<any> {
+interface Props extends ModifiersProps {
     value: number;
     max: number;
-    type?: Type;
-    size?: Size;
 }
 
-export const ProgressBar = (props: Props) => {
-    return (
-        <progress className={`progress ${type(props.type)} ${size(props.size)}`} value={String(props.value) } max={props.max}>
-            {props.children}
-        </progress>
-    );
-};
+export class ProgressBar extends React.Component<Props, void> {
+    render() {
+        const { value, max } = this.props;
+        const className = calcClassNames(this.props);
+
+        return (
+            <progress className={`progress ${className}`} value={String(value) } max={max}>
+                {this.props.children}
+            </progress>
+        );
+    }
+}

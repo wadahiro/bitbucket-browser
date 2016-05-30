@@ -1,17 +1,17 @@
 import * as React from 'react';
+import { ModifiersProps, ButtonSyntaxProps, calcClassNames } from './Utils';
 
 import { Button, ButtonProps } from './Button';
 
-export interface ModalButtonTriggerProps extends ButtonProps {
-    modal: any;
+interface Props extends ButtonProps {
+    modal: JSX.Element;
 }
 
-export class ModalTriggerButton extends React.Component<ModalButtonTriggerProps, any> {
-    static defaultProps = {
-        type: '',
-        size: ''
-    };
+interface State {
+    show: boolean;
+}
 
+export class ModalTriggerButton extends React.Component<Props & React.ClassAttributes<Button>, State> {
     state = {
         show: false
     };
@@ -33,6 +33,7 @@ export class ModalTriggerButton extends React.Component<ModalButtonTriggerProps,
             show: this.state.show,
             onHide: this.close
         });
+
         return (
             <div>
                 <Button {...this.props} onClick={this.open}>

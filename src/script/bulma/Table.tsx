@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Pagination } from './Pagination'
 import { Loading } from './Loading'
 
-export interface TableProps extends React.Props<Table> {
+export interface TableProps {
     fixed?: boolean;
     columnMetadata: ColumnMetadata[];
     enableSort?: boolean;

@@ -1,7 +1,7 @@
 import * as React from 'react';
-import * as B from '../bulma';
+import { Button } from './Button';
 
-interface Props extends React.Props<Dropdown> {
+interface Props {
     label?: string;
     icon?: string;
     position?: 'right' | 'left';
@@ -33,9 +33,9 @@ export class Dropdown extends React.Component<Props, any> {
 
         return (
             <div className={`dropdown ${open}`}>
-                <B.Button onClick={this.toggle}>
+                <Button onClick={this.toggle}>
                     {iconEl}{label}
-                </B.Button>
+                </Button>
                 <ul className={`dropdown-menu dropdown-menu-${position}`}>
                     {this.props.children}
                 </ul>

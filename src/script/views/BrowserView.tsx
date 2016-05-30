@@ -105,40 +105,37 @@ class BrowserView extends React.Component<Props, void> {
                 open={filter.sidebarFilterOpened}
                 >
                 <div>
-                    <section className='hero is-info is-left is-bold'>
-                        <nav className='nav'>
-                            <div className='container is-fluid'>
-                                <div className='nav-left'>
+                    <B.Hero isInfo>
+                        <B.Nav>
+                            <B.Container isFluid>
+                                <B.NavLeft>
                                     { !filter.sidebarFilterOpened &&
-                                        <p className='nav-item'>
-                                            <a onClick={this.handleToggleSidebar}>
-                                                <B.Icon iconClassName='fa fa-angle-double-right' color={'white'} />
-                                            </a>
-                                        </p>
+                                        <B.NavItemLink onClick={this.handleToggleSidebar}>
+                                            <B.Icon iconClassName='fa fa-angle-double-right' color={'white'} />
+                                        </B.NavItemLink>
                                     }
-                                    <p className='nav-item title'>
+                                    <B.NavItem isTitle>
                                         {settings && settings.title}
                                         &nbsp;
                                         {loading &&
                                             <B.Loading />
                                         }
-                                    </p>
-                                </div>
+                                    </B.NavItem>
+                                </B.NavLeft>
 
-                                <span className='nav-toggle'>
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                </span>
+                                <B.NavToggle>
+                                </B.NavToggle>
 
-                                <div className='nav-right nav-menu'>
-                                    <span className='nav-item'>
-                                        <a className='button is-success' onClick={this.reloadBranchInfos} disabled={loading}>Reload</a>
-                                    </span>
-                                </div>
-                            </div>
-                        </nav>
-                    </section>
+                                <B.NavRight isMenu>
+                                    <B.NavItem>
+                                        <B.Button onClick={this.reloadBranchInfos} disabled={loading} isSuccess>
+                                            Reload
+                                        </B.Button>
+                                    </B.NavItem>
+                                </B.NavRight>
+                            </B.Container>
+                        </B.Nav>
+                    </B.Hero>
 
                     <B.Section>
                         <B.Container isFluid>

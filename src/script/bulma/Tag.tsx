@@ -1,31 +1,23 @@
 import * as React from 'react';
+import { SyntaxProps, calcClassNames } from './Utils';
 
-export interface TagProps extends React.Props<Tag> {
-    onClick?: (event: React.SyntheticEvent) => void;
-    type?: '' | 'primary' | 'info' | 'success' | 'warning' | 'danger';
-    size?: '' | 'small' | 'medium' | 'large';
+export interface TagProps extends SyntaxProps {
+    showDelete?: boolean;
+    onDelete?: React.MouseEventHandler;
 }
 
-export class Tag extends React.Component<TagProps, any> {
-    static defaultProps = {
-        type: '',
-        size: ''
-    };
-
+export class Tag extends React.Component<TagProps, void> {
     render() {
-        const { size, type } = this.props;
+        const { showDelete, onDelete } = this.props;
+        const className = calcClassNames(this.props);
 
         return (
-            <span className={`tag ${withIs(size)} ${withIs(type)}`}>
+            <span className={`tag ${className}`}>
                 { this.props.children }
+                { showDelete &&
+                    <button class='delete' onClick={onDelete} />
+                }
             </span>
         );
     }
-}
-
-function withIs(str: string = '') {
-    if (str.length > 0) {
-        return `is-${str}`
-    }
-    return str;
 }

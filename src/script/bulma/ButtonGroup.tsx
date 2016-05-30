@@ -1,16 +1,15 @@
 import * as React from 'react';
+import { calcClassNames, HelpersProps } from './Utils';
 
-export interface ButtonGroupProps extends React.Props<ButtonGroup> {
-    float?: 'left' | 'right';
+export interface ButtonGroupProps extends HelpersProps {
 }
 
-export class ButtonGroup extends React.Component<ButtonGroupProps, any> {
+export class ButtonGroup extends React.Component<ButtonGroupProps, void> {
     render() {
-        const { float } = this.props;
-        const isFloat = float ? `is-pulled-${float}` : '';
-        
+        const className = calcClassNames(this.props);
+
         return (
-            <p className={`control is-grouped ${isFloat}`}>
+            <p className={`control is-grouped ${className}`}>
                 { this.props.children }
             </p>
         );

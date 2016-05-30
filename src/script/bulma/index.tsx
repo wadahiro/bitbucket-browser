@@ -1,7 +1,6 @@
 export * from './Container';
 export * from './Content';
 export * from './Section';
-export * from './Header';
 export * from './Footer';
 export * from './Feed';
 export * from './Nav';
@@ -30,3 +29,4 @@ export * from './MediaObject';
 export * from './Utils';
 export * from './Icon';
 export * from './Loading';
+export * from './Hero';

@@ -219,19 +219,33 @@ function ProgressBarLink(now, values, metadata, transform) {
         return LOADING;
     }
 
-    let type: B.Type = 'success';
+    let isDanger, isWarning, isInfo;
     if (now > 8) {
-        type = 'danger';
+        isDanger = 'danger';
     } else if (now > 5) {
-        type = 'warning';
+        isWarning = 'warning';
     } else if (now > 2) {
-        type = 'info';
+        isInfo = 'info';
     }
 
+    const progressBar =
+        <B.ProgressBar
+            max={10}
+            value={now}
+            isSmall
+            isDanger={isDanger}
+            isWarning={isWarning}
+            isInfo={isInfo}
+            >
+            {now}
+        </B.ProgressBar>;
+
     if (transform) {
-        return <a href={ transform(now, values) } target='_blank'><B.ProgressBar max={10} value={now} type={type} size='small'>{now}</B.ProgressBar></a>;
+        return <a href={ transform(now, values) } target='_blank'>
+            {progressBar}
+        </a>;
     } else {
-        return <B.ProgressBar max={10} value={now} type={type} size='small'>{now}</B.ProgressBar>;
+        return progressBar;
     }
 }
 

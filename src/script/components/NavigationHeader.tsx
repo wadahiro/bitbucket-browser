@@ -9,19 +9,19 @@ export default class NavigationHeader extends React.Component<any, any> {
         const settings = this.resolveSettings(this.props.settings);
 
         return (
-            <B.Header>
-                <B.HeaderLeft>
+            <B.Nav>
+                <B.NavLeft>
                     {leftNav}
-                </B.HeaderLeft>
-                <B.HeaderRight>
+                </B.NavLeft>
+                <B.NavRight>
                     {rightNav}
-                    <B.HeaderItem key='settings'>
+                    <B.NavItem key='settings'>
                         <B.Dropdown icon='fa fa-cog' position='left'>
                             {settings}
                         </B.Dropdown>
-                    </B.HeaderItem>
-                </B.HeaderRight>
-            </B.Header>
+                    </B.NavItem>
+                </B.NavRight>
+            </B.Nav>
         );
     }
 
@@ -29,7 +29,7 @@ export default class NavigationHeader extends React.Component<any, any> {
         const nav = navDef.map(x => {
             const isActive = this.props.active === x.name;
             const item = resolve(x, isActive);
-            return <B.HeaderItem key={x.name} isActive={isActive}>{item}</B.HeaderItem>;
+            return <B.NavItem key={x.name} isActive={isActive}>{item}</B.NavItem>;
         });
         return nav;
     }
@@ -58,7 +58,7 @@ function resolve(def, isActive = false) {
             return (
                 <B.ModalTriggerButton
                     key={def.name}
-                    type='success'
+                    isSuccess
                     modal={def.modal}>
                     {def.label}
                 </B.ModalTriggerButton>

@@ -1,6 +1,7 @@
 import * as React from 'react';
+import { IconLink } from './Icon';
 
-interface Props extends React.Props<Pagination> {
+interface Props {
     pageSize: number;
     currentPage: number;
     onChange: (nextPage: number) => void
@@ -9,7 +10,7 @@ interface Props extends React.Props<Pagination> {
     maxButtons?: number;
 }
 
-export class Pagination extends React.Component<Props, any> {
+export class Pagination extends React.Component<Props, void> {
     static defaultProps = {
         paddingTop: 10,
         paddingBottom: 10,
@@ -42,11 +43,11 @@ export class Pagination extends React.Component<Props, any> {
         return (
             <nav style={style} className='pagination'>
                 <ul>
-                    <li >
-                        <a className='icon' onClick={this.handleFirst} disabled={isFirst}><i className='fa fa-angle-double-left'></i></a>
+                    <li>
+                        <IconLink onClick={this.handleFirst} disabled={isFirst} iconClassName='fa fa-angle-double-left' />
                     </li>
-                    <li >
-                        <a className='icon' onClick={this.handlePrev} disabled={isFirst}><i className='fa fa-angle-left'></i></a>
+                    <li>
+                        <IconLink onClick={this.handlePrev} disabled={isFirst} iconClassName='fa fa-angle-double-left' />
                     </li>
                     { start > 0 &&
                         <li >
@@ -62,15 +63,15 @@ export class Pagination extends React.Component<Props, any> {
                         )
                     }) }
                     { end < pageSize &&
-                        <li >
+                        <li>
                             <p>...</p>
                         </li>
                     }
-                    <li >
-                        <a className='icon' onClick={this.handleNext} disabled={isLast}><i className='fa fa-angle-right'></i></a>
+                    <li>
+                        <IconLink onClick={this.handleNext} disabled={isLast} iconClassName='fa fa-angle-right' />
                     </li>
-                    <li >
-                        <a className='icon' onClick={this.handleLast} disabled={isLast}><i className='fa fa-angle-double-right'></i></a>
+                    <li>
+                        <IconLink onClick={this.handleLast} disabled={isLast} iconClassName='fa fa-angle-double-right' />
                     </li>
                 </ul>
             </nav>
