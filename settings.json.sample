@@ -1,0 +1,62 @@
+{
+    "title": "Bitbucket Browser",
+    "baseUrl": "/bitbucket",
+    "debug": false,
+    "items": {
+        "project": {
+            "displayName": "Project"
+        },
+        "repo": {
+            "displayName": "Repository"
+        },
+        "branch": {
+            "displayName": "Branch"
+        },
+        "branchAuthor": {
+            "enabled": true,
+            "displayName": "Branch Author"
+        },
+        "branchCreated": {
+            "enabled": true,
+            "displayName": "Branch Created"
+        },
+        "latestCommitDate": {
+            "enabled": true,
+            "displayName": "Updated"
+        },
+        "behindAheadBranch": {
+            "enabled": true,
+            "displayName": "Behind/Ahead Branch"
+        },
+        "pullRequestStatus": {
+            "enabled": true,
+            "displayName": "Pull Request Status"
+        },
+        "buildStatus": {
+            "enabled": true,
+            "displayName": "Build Status"
+        },
+        "sonarForBitbucketStatus": {
+            "enabled": false,
+            "displayName": "Sonar for Stash Metric"
+        },
+        "sonarQubeMetrics": {
+            "enabled": false,
+            "displayName": "SonarQube Metrics",
+            "resolver": {
+                "baseUrl": "/sonar",
+                "projectBaseKey": "foo.bar",
+                "metrics": "lines,blocker_violations,critical_violations"
+            }
+        },
+        "branchNameLink": {
+            "enabled": true,
+            "displayName": "JIRA Ticket",
+            "resolver": {
+                "pattern": "ISSUE\\-[0-9]+",
+                "baseUrl": "http://jira.example.org/browse",
+                "displayName": "JIRA Ticket"
+            }
+        }
+    }
+}
