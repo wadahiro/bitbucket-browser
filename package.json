@@ -6,8 +6,9 @@
   "author": "",
   "license": "MIT",
   "scripts": {
+    "postinstall": "typings install",
     "watch": "webpack -w",
-    "build": "set NODE_ENV=production && useref src/index.html public/index.html --js uglify --css uglify && webpack -p --config webpack/webpack.config.js",
+    "build": "useref src/index.html public/index.html --js uglify --css uglify && cross-env NODE_ENV=production webpack -p --config webpack/webpack.config.js",
     "style": "cp -r node_modules/font-awesome/fonts public && node-sass src/css/main.scss public/css/style.css",
     "server": "node-dev test-server.js",
     "start": "cp src/index.html public/index.html && node-dev webpack/webpack.server.js"
@@ -18,6 +19,7 @@
     "babel-plugin-react-transform": "^2.0.0",
     "babel-preset-es2015": "^6.9.0",
     "babel-preset-stage-3": "^6.5.0",
+    "cross-env": "^1.0.8",
     "express": "^4.13.3",
     "node-dev": "^3.0.0",
     "node-sass": "^3.6.0",
