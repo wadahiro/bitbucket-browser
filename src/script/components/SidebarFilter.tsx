@@ -8,7 +8,7 @@ const Sidebar = require('react-sidebar').default;
 
 export type SelectOption = SelectOption;
 
-interface Props extends React.Props<SidebarFilter> {
+interface Props {
     data: API.BranchInfo[];
 
     filter: FilterState;
@@ -18,7 +18,7 @@ interface Props extends React.Props<SidebarFilter> {
     onClose: (e: React.SyntheticEvent) => void;
 }
 
-export class SidebarFilter extends React.Component<Props, any> {
+export class SidebarFilter extends React.Component<Props, void> {
     render() {
         const { data,
             filter,

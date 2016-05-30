@@ -3,7 +3,6 @@ import * as _ from 'lodash';
 
 import * as API from '../webapis';
 import * as B from '../bulma';
-import Spinner from './Spinner';
 import { BehindAheadGraph } from './BehindAheadGraph';
 import { BuildStatusModal } from './BuildStatusModal';
 import { SonarQubeLoginModal } from './SonarQubeLoginModal';
@@ -94,7 +93,7 @@ const COLUMN_METADATA: B.ColumnMetadata[] = [
     }
 ];
 
-interface Props extends React.Props<BitbucketDataTable> {
+interface Props {
     settings: Settings;
     api: API.API;
     resultsPerPage: number;
@@ -105,7 +104,7 @@ interface Props extends React.Props<BitbucketDataTable> {
     handleSonarQubeAuthenticated: () => void;
 }
 
-export default class BitbucketDataTable extends React.Component<Props, any> {
+export default class BitbucketDataTable extends React.Component<Props, void> {
     static defaultProps = {
         resultsPerPage: 5,
         enableSort: true

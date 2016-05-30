@@ -15,7 +15,7 @@ import { AppState, FilterState, RootState } from '../reducers';
 import * as Actions from '../actions';
 
 
-interface Props extends React.Props<any> {
+interface Props {
     dispatch?: Dispatch
 
     settings?: Settings;

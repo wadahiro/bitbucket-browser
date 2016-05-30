@@ -3,14 +3,18 @@ import * as B from '../bulma';
 
 import * as API from '../webapis';
 
-interface Props extends React.Props<BuildStatusModal> {
+interface Props {
     show?: boolean;
     onHide?: (e: React.SyntheticEvent) => void;
     buildStatus: API.BuildStatus;
     cancelLabel?: string;
 }
 
-export class BuildStatusModal extends React.Component<Props, any> {
+interface State {
+    showButtons: boolean;
+}
+
+export class BuildStatusModal extends React.Component<Props, State> {
     static defaultProps = {
         submitLabel: 'Delete',
         cancelLabel: 'Cancel',

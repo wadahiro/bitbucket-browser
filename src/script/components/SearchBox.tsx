@@ -11,7 +11,7 @@ export interface SelectOption {
     value: string;
 }
 
-interface Props extends React.Props<SearchBox> {
+interface Props {
     filter: FilterState;
     data: API.BranchInfo[];
     onChange: (key: string, filer: FilterState) => void;

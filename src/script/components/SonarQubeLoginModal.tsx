@@ -3,7 +3,7 @@ import * as B from '../bulma';
 import { Settings } from '../Settings';
 import * as API from '../webapis';
 
-interface Props extends React.Props<SonarQubeLoginModal> {
+interface Props {
     show?: boolean;
     onHide?: (e: React.SyntheticEvent) => void;
     loginLabel?: string;
@@ -11,7 +11,14 @@ interface Props extends React.Props<SonarQubeLoginModal> {
     api: API.API;
 }
 
-export class SonarQubeLoginModal extends React.Component<Props, any> {
+interface State {
+    login?: string;
+    password?: string;
+    message?: string;
+    show?: boolean;
+}
+
+export class SonarQubeLoginModal extends React.Component<Props, State> {
     static defaultProps = {
         loginLabel: 'Login'
     };
