@@ -13,6 +13,16 @@
 
 **Bitbucket Browser** is a Viewer for [Atlassian Bitbucket (formerly Stash)](https://bitbucket.org/).
 
+![Bitbucket Browser](./images/browser.png)
+
+## Deploy
+**Bitbucket Browser** is made by static files only and **it's not Bitbucket plugins**. You can deploy the files to the web server which is in front of your Bitbucket server.
+
+### Notes
+You must deploy the files under the context path of Bitbucket server in order to use the cookie for Bitbucket server.
+
+For example, if your Bitbucket server is running under `/bitbucket`, **Bitbucket Browser** must be deployed under `/bitbucket/bitbucket-browser`.
+
 ## Settings
 
 1. Rename `settings.json.sample` file to `settings.json`.
