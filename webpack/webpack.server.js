@@ -11,6 +11,7 @@ new WebpackDevServer(webpack(config), {
   proxy: {
     '/bitbucket/*': 'http://localhost:3000',
     '/stash/*': 'http://localhost:3000',
+    '/sonar/*': 'http://localhost:3000',
     '/node_modules/*': 'http://localhost:3000'
   }
 }).listen(9000, 'localhost', function (err, result) {

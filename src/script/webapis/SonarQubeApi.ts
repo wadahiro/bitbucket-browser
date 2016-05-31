@@ -86,7 +86,7 @@ export class SonarQubeApi {
             credentials: 'same-origin'
         })
 
-        const json: SonarQubeMetricsResponse | ErrorResponse = await response.json();
+        const json: SonarQubeMetricsResponse[] | ErrorResponse = await response.json();
 
         // return 404 if the project isn't be found
         if (isErrorResponse(json)) {

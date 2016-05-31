@@ -302,6 +302,7 @@ export class API {
             if (SQAPI.isErrorResponse(e)) {
                 return e;
             }
+            throw e;
         }
     }
 

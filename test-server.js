@@ -645,6 +645,51 @@ app.get('/stash/rest/sonar4stash/latest/statistics', function (req, res) {
 });
 
 
+// SonarQube api response
+
+app.post('/sonar/sessions/login', function (req, res) {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.json({
+    });
+});
+
+app.get('/sonar/api/user_properties', function (req, res) {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.json({
+    });
+});
+
+app.get('/sonar/api/resources', function (req, res) {
+    var resource = req.param('resource');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.json([{
+        id: 0,
+        key: resource,
+        name: resource,
+        date: '2016-04-07T19:23:08+0900',
+        msr: [
+            {
+                key: 'lines',
+                val: 200,
+                frmt_val: '200 lines'
+            },
+            {
+                key: 'blocker_violations',
+                val: 3,
+                frmt_val: '3'
+            },
+            {
+                key: 'critical_violations',
+                val: 5,
+                frmt_val: '5'
+            }
+        ]
+    }]);
+});
+
+
+
+
 app.listen(app.get('port'), function () {
     console.log('Server started: http://localhost:' + app.get('port') + '/');
 });
