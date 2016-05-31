@@ -14,6 +14,11 @@ $green: #3b7fc4;
     }
 }
 
+// Because react-sidebar sets overflow, it needs to set 'hidden' here
+html {
+  overflow-y: hidden;
+}
+
 // @FIXME
 .branch-table > div > div > div > table > thead > tr > th {
     color: #222324;
