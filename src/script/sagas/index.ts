@@ -100,16 +100,15 @@ function* pollFetchBranchInfosRequested(action: actions.FetchBranchInfosAction):
 function* handleFetchBranchInfoAll(repos: API.Repo[]): Iterable<Effect> {
     const api: API.API = yield select((state: RootState) => state.app.api);
 
-    const branchInfosPromises: Promise<API.BranchInfo[]>[] = yield call([api, api.fetchBranchInfos], repos);
 
-    for (let i = 0; i < branchInfosPromises.length; i++) {
-        const promise = branchInfosPromises[i];
-        yield fork(handleFetchBranchInfosPerRepo, api, promise);
+    for (let i = 0; i < repos.length; i++) {
+        const repo = repos[i];
+        yield fork(handleFetchBranchInfosPerRepo, api, repo);
     }
 }
 
-function* handleFetchBranchInfosPerRepo(api: API.API, branchInfosPromise: Promise<API.BranchInfo[]>): Iterable<Effect> {
-    const branchInfos: API.BranchInfo[] = yield call([api, api.fetchBranchInfo], branchInfosPromise);
+function* handleFetchBranchInfosPerRepo(api: API.API, repo: API.Repo): Iterable<Effect> {
+    const branchInfos: API.BranchInfo[] = yield call([api, api.fetchBranchInfo], repo);
 
     yield put(<actions.AppendBranchInfosAction>{
         type: actions.APPEND_BRANCH_INFOS,

@@ -113,39 +113,27 @@ export class API {
         return await this.bitbucketApi.isAuthenticated();
     }
 
-    async fetchBranchInfos(repos: Repo[]): Promise<Promise<BranchInfo[]>[]> {
+    async fetchBranchInfo(repo: Repo): Promise<BranchInfo[]> {
         try {
-            const handleBranchFetch = (branchesOfProject => {
-                const branchInfos: BranchInfo[] = branchesOfProject.map(b => {
-                    const branchInfo: BranchInfo = Object.assign({}, b, <BranchInfo>{
-                        id: `${b.project}_${b.repo}_${b.branch}`,
-                        branchNameLink: getBranchNameLink(this.settings, b.branch),
-                        pullRequestStatus: null,
-                        buildStatus: null,
-                        sonarForBitbucketStatus: null,
-                        sonarQubeMetrics: null
-                    });
-                    return branchInfo;
+            const branches = await this.fetchBranches(repo);
+
+            const branchInfos: BranchInfo[] = branches.map(b => {
+                const branchInfo: BranchInfo = Object.assign({}, b, <BranchInfo>{
+                    id: `${b.project}_${b.repo}_${b.branch}`,
+                    branchNameLink: getBranchNameLink(this.settings, b.branch),
+                    pullRequestStatus: null,
+                    buildStatus: null,
+                    sonarForBitbucketStatus: null,
+                    sonarQubeMetrics: null
                 });
-                return branchInfos;
+                return branchInfo;
             });
-
-            let promises = repos.map(repo => {
-                return this.fetchBranches(repo)
-                    .then(handleBranchFetch)
-            });
-
-            return promises;
+            return branchInfos;
 
         } catch (e) {
             console.error('parsing failed', e);
             return [];
         }
-    }
-
-    async fetchBranchInfo(branchInfoPromise: Promise<BranchInfo[]>): Promise<BranchInfo[]> {
-        const branchInfos = await branchInfoPromise;
-        return branchInfos;
     }
 
     async fetchRepos(project: string): Promise<Repo[]> {
