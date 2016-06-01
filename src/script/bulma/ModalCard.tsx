@@ -1,23 +1,44 @@
 import * as React from 'react';
 
-interface Props extends React.Props<ModalCard> {
+interface Props {
     show: boolean;
     showClose?: boolean;
     onHide: (e: React.SyntheticEvent) => void;
     title: string;
     footer?: JSX.Element;
+    keyboard?: boolean;
 }
 
-export class ModalCard extends React.Component<Props, any> {
+export class ModalCard extends React.Component<Props, void> {
     static defaultProps = {
         show: false,
         showClose: true,
-        onHide: null
+        onHide: null,
+        keyboard: false
     };
+
+    componentWillMount() {
+        if (this.props.keyboard) {
+            document.addEventListener('keydown', this._handleEscKey, false);
+        }
+    }
+
+    componentWillUnmount() {
+        if (this.props.keyboard) {
+            document.removeEventListener('keydown', this._handleEscKey, false);
+        }
+    }
+
 
     close = (e) => {
         if (this.props.onHide) {
             this.props.onHide(e);
+        }
+    };
+
+    _handleEscKey = (e: KeyboardEvent) => {
+        if (this.props.onHide && e.keyCode === 27) {
+            this.props.onHide(null);
         }
     };
 

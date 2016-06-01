@@ -1,17 +1,24 @@
 import * as React from 'react';
 import * as B from '../bulma';
 import { Settings } from '../Settings';
-import * as SQAPI from '../SonarQubeApi';
+import * as API from '../webapis';
 
-interface Props extends React.Props<SonarQubeLoginModal> {
+interface Props {
     show?: boolean;
     onHide?: (e: React.SyntheticEvent) => void;
-    settings: Settings;
     loginLabel?: string;
     onAuthenticated: () => void;
+    api: API.API;
 }
 
-export class SonarQubeLoginModal extends React.Component<Props, any> {
+interface State {
+    login?: string;
+    password?: string;
+    message?: string;
+    show?: boolean;
+}
+
+export class SonarQubeLoginModal extends React.Component<Props, State> {
     static defaultProps = {
         loginLabel: 'Login'
     };
@@ -31,11 +38,12 @@ export class SonarQubeLoginModal extends React.Component<Props, any> {
     login = (e: React.SyntheticEvent) => {
         e.preventDefault();
 
+        const { api } = this.props;
         const { login, password } = this.state;
 
-        SQAPI.authenticate(this.props.settings, login, password)
+        api.authenticateSoarQube(login, password)
             .then(authenticated => {
-                console.log('authenticated', authenticated);
+                console.log('authenticated sonar?', authenticated);
                 if (authenticated) {
                     this.setState({
                         show: false,
@@ -61,11 +69,17 @@ export class SonarQubeLoginModal extends React.Component<Props, any> {
         </B.Button>;
 
         return (
-            <B.ModalCard show={show} onHide={onHide} title='SonarQube Login' footer={footer}>
+            <B.ModalCard show={show} onHide={onHide} title='SonarQube Login' keyboard footer={footer}>
                 <B.Content>
                     <form>
-                        <B.InputText label='Login' name='login' onChange={this.handleForm} />
-                        <B.InputPassword label='Password' name='password' onChange={this.handleForm} />
+                        <B.Control>
+                            <B.Label>Login</B.Label>
+                            <B.InputText name='login' onChange={this.handleForm} />
+                        </B.Control>
+                        <B.Control>
+                            <B.Label>Password</B.Label>
+                            <B.InputPassword name='password' onChange={this.handleForm} />
+                        </B.Control>
                         <p>{message}</p>
                     </form>
                 </B.Content>

@@ -1,18 +1,13 @@
 import * as React from 'react';
 import * as _ from 'lodash';
 
-import { BehindAheadBranch, PullRequestStatus, BuildStatus, SonarStatus,
-    BranchInfo, PullRequestCount,
-    fetchPullRequests, fetchBuildStatus, fetchSonarStatus } from './BitbucketApi';
-import { SonarQubeMetrics, hasError } from './SonarQubeApi'
-import * as B from './bulma';
-import Spinner from './Spinner';
-import { BehindAheadGraph } from './components/BehindAheadGraph';
-import { BuildStatusModal } from './components/BuildStatusModal';
-import { SonarQubeLoginModal } from './components/SonarQubeLoginModal';
-import { UnauthorizedIcon } from './components/UnauthorizedIcon';
-import { Settings, BranchNameLinkResolver } from './Settings';
-import { baseUrl } from './Utils';
+import * as API from '../webapis';
+import * as B from '../bulma';
+import { BehindAheadGraph } from './BehindAheadGraph';
+import { BuildStatusModal } from './BuildStatusModal';
+import { SonarQubeLoginModal } from './SonarQubeLoginModal';
+import { UnauthorizedIcon } from './UnauthorizedIcon';
+import { Settings, BranchNameLinkResolver } from '../Settings';
 
 const LOADING = <B.Loading />;
 
@@ -78,11 +73,11 @@ const COLUMN_METADATA: B.ColumnMetadata[] = [
         renderer: BuildStatusFormatter
     },
     {
-        name: 'sonarStatus',
+        name: 'sonarForBitbucketStatus',
         width: 300,
         visible: true,
         sortEnabled: false,
-        renderer: SonarForBitbucketMetricFormatter
+        renderer: SonarQubeStatusFormatter
     },
     {
         name: 'sonarQubeMetrics',
@@ -96,32 +91,28 @@ const COLUMN_METADATA: B.ColumnMetadata[] = [
         visible: true,
         sortEnabled: true,
     }
-    // sonarQubeMetrics column is added in 'componentDidMount'
-    // branchNameLink column is added in 'componentDidMount'
 ];
 
-interface Props extends React.Props<BitbucketDataTable> {
+interface Props {
     settings: Settings;
+    api: API.API;
     resultsPerPage: number;
     enableSort?: boolean;
     results: any[];
     showFilter: boolean;
-    handlePullRequestCount: (prCount: B.LazyFetch<PullRequestCount>, branchInfo: BranchInfo) => void;
-    handleBuildStatus: (buildStatus: B.LazyFetch<BuildStatus>, branchInfo: BranchInfo) => void;
-    handleSonarStatus: (sonarStatus: B.LazyFetch<SonarStatus>, branchInfo: BranchInfo) => void;
-    handleSonarQubeMetrics: (sonarQubeMetrics: B.LazyFetch<SonarQubeMetrics>, branchInfo: BranchInfo) => void;
+    handleShowBranchInfo: (branchInfo: API.BranchInfo) => void;
     handleSonarQubeAuthenticated: () => void;
 }
 
-export default class BitbucketDataTable extends React.Component<Props, any> {
+export default class BitbucketDataTable extends React.Component<Props, void> {
     static defaultProps = {
         resultsPerPage: 5,
         enableSort: true
     };
 
     render() {
-        const { settings, results, resultsPerPage,
-            handlePullRequestCount, handleBuildStatus, handleSonarStatus, handleSonarQubeMetrics, handleSonarQubeAuthenticated } = this.props;
+        const { settings, api, results, resultsPerPage,
+            handleShowBranchInfo, handleSonarQubeAuthenticated } = this.props;
 
         const resolvedColumnMetadata = COLUMN_METADATA.filter(x => {
             const item = settings.items[x.name];
@@ -132,21 +123,14 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
                 x.label = item.displayName;
 
                 const meta = resolveCustomComponent(x);
-                if (meta.name === 'pullRequestStatus') {
-                    meta.lazyFetch = handlePullRequestCount;
-                }
-                if (meta.name === 'buildStatus') {
-                    meta.lazyFetch = handleBuildStatus;
-                }
-                if (meta.name === 'sonarStatus') {
-                    meta.lazyFetch = handleSonarStatus;
-                }
+
+                // hack
+                meta._api = api;
+
                 if (meta.name === 'sonarQubeMetrics') {
-                    meta.lazyFetch = handleSonarQubeMetrics;
-                    meta.renderer = SonarQubeMetricsFormatter(settings, handleSonarQubeAuthenticated);
+                    meta.renderer = SonarQubeMetricsFormatter(api, handleSonarQubeAuthenticated);
                 }
                 if (meta.name === 'branchNameLink') {
-                    meta.lazyFetch = handleSonarStatus;
                     meta.renderer = BranchNameLinkFormatter(item.resolver);
                 }
                 return meta;
@@ -157,6 +141,7 @@ export default class BitbucketDataTable extends React.Component<Props, any> {
                 <B.Columns>
                     <B.Table
                         columnMetadata={resolvedColumnMetadata}
+                        handleShowRecord={handleShowBranchInfo}
                         enableSort={true}
                         showPagination={true}
                         resultsPerPage={resultsPerPage}
@@ -189,25 +174,37 @@ function LinkFormatter(data, values, metadata, transform) {
 }
 
 function ProjectLink(data, values, metadata) {
-    return LinkFormatter(data, values, metadata, projectLink);
+    const api: API.API = metadata._api;
+    return LinkFormatter(data, values, metadata, (data, branchInfo: API.BranchInfo) => {
+        return api.createBitbucketProjectUrl(branchInfo);
+    });
 }
 
 function RepoLink(data, values, metadata) {
-    return LinkFormatter(data, values, metadata, repoLink);
+    const api: API.API = metadata._api;
+    return LinkFormatter(data, values, metadata, (data, branchInfo: API.BranchInfo) => {
+        return api.createBitbucketRepoUrl(branchInfo);
+    });
 }
 
 function BranchLink(data, values, metadata) {
-    return LinkFormatter(data, values, metadata, branchLink);
+    const api: API.API = metadata._api;
+    return LinkFormatter(data, values, metadata, (data, branchInfo: API.BranchInfo) => {
+        return api.createBitbucketBranchUrl(branchInfo);
+    });
 }
 
 function CommitLink(data, values, metadata) {
-    return LinkFormatter(data, values, metadata, commitLink);
+    const api: API.API = metadata._api;
+    return LinkFormatter(data, values, metadata, (data, branchInfo: API.BranchInfo) => {
+        return api.createBitbucketCommitUrl(branchInfo);
+    });
 }
 
 function BranchNameLinkFormatter(resolver: BranchNameLinkResolver) {
-    const transform = (data, values: BranchInfo) => {
+    const transform = (data, values: API.BranchInfo) => {
         if (data) {
-            return `${baseUrl(resolver.baseUrl)}/${data}`;
+            return `${resolver.baseUrl}/${data}`;
         }
         return '';
     };
@@ -221,23 +218,37 @@ function ProgressBarLink(now, values, metadata, transform) {
         return LOADING;
     }
 
-    let type: B.Type = 'success';
+    let isDanger, isWarning, isInfo;
     if (now > 8) {
-        type = 'danger';
+        isDanger = 'danger';
     } else if (now > 5) {
-        type = 'warning';
+        isWarning = 'warning';
     } else if (now > 2) {
-        type = 'info';
+        isInfo = 'info';
     }
 
+    const progressBar =
+        <B.ProgressBar
+            max={10}
+            value={now}
+            isSmall
+            isDanger={isDanger}
+            isWarning={isWarning}
+            isInfo={isInfo}
+            >
+            {now}
+        </B.ProgressBar>;
+
     if (transform) {
-        return <a href={ transform(now, values) } target='_blank'><B.ProgressBar max={10} value={now} type={type} size='small'>{now}</B.ProgressBar></a>;
+        return <a href={ transform(now, values) } target='_blank'>
+            {progressBar}
+        </a>;
     } else {
-        return <B.ProgressBar max={10} value={now} type={type} size='small'>{now}</B.ProgressBar>;
+        return progressBar;
     }
 }
 
-function BehindAheadGraphFormatter(data: BehindAheadBranch, values, metadata) {
+function BehindAheadGraphFormatter(data: API.BehindAheadBranch, values, metadata) {
     if (data === null) {
         return LOADING;
     }
@@ -245,7 +256,7 @@ function BehindAheadGraphFormatter(data: BehindAheadBranch, values, metadata) {
     return <BehindAheadGraph behind={data.behindBranch} ahead={data.aheadBranch} />;
 }
 
-function PullRequestStatusFormatter(data: PullRequestStatus, values: BranchInfo, metadata) {
+function PullRequestStatusFormatter(data: API.PullRequestStatus, values: API.BranchInfo, metadata) {
     if (data === null) {
         return LOADING;
     }
@@ -257,22 +268,23 @@ function PullRequestStatusFormatter(data: PullRequestStatus, values: BranchInfo,
 
     return (
         <div>
-            <div style={style}>Open(Source): {data.prCountSource} {PullRequestBarLink('open')(data.prCountSource, values, metadata) }</div>
-            <div style={style}>Open(Target): {data.prCountTarget}  {PullRequestBarLink('open')(data.prCountTarget, values, metadata) }</div>
-            <div style={style}>Merged: {data.prCountMerged}  {PullRequestBarLink('merged')(data.prCountMerged, values, metadata) }</div>
-            <div style={style}>Declined: {data.prCountDeclined}  {PullRequestBarLink('declined')(data.prCountDeclined, values, metadata) }</div>
+            <div style={style}>Open(Source): {data.prCountSource} {PullRequestBarLink(metadata._api, 'open')(data.prCountSource, values, metadata) }</div>
+            <div style={style}>Open(Target): {data.prCountTarget}  {PullRequestBarLink(metadata._api, 'open')(data.prCountTarget, values, metadata) }</div>
+            <div style={style}>Merged: {data.prCountMerged}  {PullRequestBarLink(metadata._api, 'merged')(data.prCountMerged, values, metadata) }</div>
+            <div style={style}>Declined: {data.prCountDeclined}  {PullRequestBarLink(metadata._api, 'declined')(data.prCountDeclined, values, metadata) }</div>
         </div>
     );
 }
 
-function PullRequestBarLink(state: string) {
-    const transform = pullRequestLink(state);
+function PullRequestBarLink(api: API.API, state: string) {
     return (data, values, metadata) => {
-        return ProgressBarLink(data, values, metadata, transform);
+        return ProgressBarLink(data, values, metadata, (data, branchInfo: API.BranchInfo) => {
+            return api.createPullRequestLink(branchInfo, state);
+        });
     };
 }
 
-function BuildStatusFormatter(buildStatus: BuildStatus, values, metadata) {
+function BuildStatusFormatter(buildStatus: API.BuildStatus, values, metadata) {
     if (buildStatus === null) {
         return LOADING;
     }
@@ -304,12 +316,14 @@ function BuildStatusFormatter(buildStatus: BuildStatus, values, metadata) {
     );
 }
 
-function SonarForBitbucketMetricFormatter(sonarStatus: SonarStatus, branchInfo: BranchInfo, metadata) {
-    if (sonarStatus === null) {
+function SonarQubeStatusFormatter(sonarForBitbucketStatus: API.SonarForBitbucketStatus, branchInfo: API.BranchInfo, metadata) {
+    if (sonarForBitbucketStatus === null) {
         return LOADING;
     }
 
-    const items = sonarStatus.values.map(x => {
+    const api: API.API = metadata._api;
+
+    const items = sonarForBitbucketStatus.values.map(x => {
         const fromKeys = Object.keys(x.from.statistics);
         const toKeys = Object.keys(x.to.statistics);
         const keys = _.union(fromKeys, toKeys).filter(x => x !== 'componentId');
@@ -319,7 +333,7 @@ function SonarForBitbucketMetricFormatter(sonarStatus: SonarStatus, branchInfo: 
         };
 
         const item = <div key={x.pullRequestId}>
-            <h3><a href={pullRequestDetailLink(branchInfo.project, branchInfo.repo, x.pullRequestId) }>pull request #{x.pullRequestId}</a></h3>
+            <h3><a href={api.createPullRequestDetailLink(branchInfo, x.pullRequestId) }>pull request #{x.pullRequestId}</a></h3>
             <table className='table is-narrow' style={style}>
                 <thead>
                     <tr>
@@ -416,16 +430,16 @@ function _toSonarDisplayValue(key: string, value: string | number): string {
 }
 
 
-function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => void) {
-    return (metrics: SonarQubeMetrics, branchInfo: BranchInfo, metadata) => {
+function SonarQubeMetricsFormatter(api: API.API, onAuthenticated: () => void) {
+    return (metrics: API.SonarQubeMetrics, branchInfo: API.BranchInfo, metadata) => {
         if (metrics === null) {
             return LOADING;
         }
-        if (hasError(metrics)) {
+        if (API.isSonarQubeError(metrics)) {
             // Show needing authentication
             if (metrics.err_code === 401) {
                 return (
-                    <B.ModalTriggerLink modal={<SonarQubeLoginModal settings={settings} onAuthenticated={onAuthenticated} />}>
+                    <B.ModalTriggerLink modal={<SonarQubeLoginModal api={api} onAuthenticated={onAuthenticated} />}>
                         <UnauthorizedIcon type='danger' />
                         Unauthorized.&nbsp; Please click me.
                     </B.ModalTriggerLink>
@@ -442,7 +456,7 @@ function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => vo
             };
 
             return <div>
-                <h3><a href={`${baseUrl(settings.items.sonarQubeMetrics.resolver.baseUrl)}/dashboard/index/${metrics.id}`} target='_blank'>{metrics.name}</a></h3>
+                <h3><a href={api.createSonarQubeDashboardUrl(metrics.id) } target='_blank'>{metrics.name}</a></h3>
                 <table className='table is-narrow' style={style}>
                     <thead>
                         <tr>
@@ -464,31 +478,4 @@ function SonarQubeMetricsFormatter(settings: Settings, onAuthenticated: () => vo
             </div>;
         }
     }
-}
-
-// transformer
-function projectLink(data, values: BranchInfo) {
-    return `/stash/projects/${values.project}`;
-}
-
-function repoLink(data, values: BranchInfo) {
-    return `/stash/projects/${values.project}/repos/${values.repo}`;
-}
-
-function branchLink(data, values: BranchInfo) {
-    return `/stash/projects/${values.project}/repos/${values.repo}/browse?at=${values.branch}`;
-}
-
-function commitLink(data, values: BranchInfo) {
-    return `/stash/projects/${values.project}/repos/${values.repo}/commits/${values.latestCommitHash}`;
-}
-
-function pullRequestLink(state: string) {
-    return (data, values) => {
-        return `/stash/projects/${values.project}/repos/${values.repo}/pull-requests?state=${state}`;
-    };
-}
-
-function pullRequestDetailLink(project, repo, pullRequestId: number) {
-    return `/stash/projects/${project}/repos/${repo}/pull-requests/${pullRequestId}/overview`;
 }

@@ -1,35 +1,27 @@
 import * as React from 'react';
 import * as B from '../bulma';
-import { BranchInfo } from '../BitbucketApi';
+import * as API from '../webapis';
 import SearchBox, { SelectOption } from './SearchBox';
+import { FilterState } from '../reducers';
 
 const Sidebar = require('react-sidebar').default;
 
 export type SelectOption = SelectOption;
 
-interface Props extends React.Props<SidebarFilter> {
-    data: BranchInfo[];
+interface Props {
+    data: API.BranchInfo[];
 
-    projectIncludes: string;
-    repoIncludes: string;
-    branchIncludes: string;
-    branchAuthorIncludes: string;
+    filter: FilterState;
 
-    projectExcludes: string;
-    repoExcludes: string;
-    branchExcludes: string;
-    branchAuthorExcludes: string;
-
-    onChange: (key: string, values: SelectOption[]) => void;
+    onChange: (key: string, filter: FilterState) => void;
     open: boolean;
     onClose: (e: React.SyntheticEvent) => void;
 }
 
-export class SidebarFilter extends React.Component<Props, any> {
+export class SidebarFilter extends React.Component<Props, void> {
     render() {
         const { data,
-            projectIncludes, repoIncludes, branchIncludes, branchAuthorIncludes,
-            projectExcludes, repoExcludes, branchExcludes, branchAuthorExcludes,
+            filter,
             onChange,
             open,
             onClose
@@ -65,14 +57,7 @@ export class SidebarFilter extends React.Component<Props, any> {
                         <SearchBox
                             data={data}
                             onChange={onChange}
-                            defaultProjectIncludes={projectIncludes}
-                            defaultRepoIncludes={repoIncludes}
-                            defaultBranchIncludes={branchIncludes}
-                            defaultBranchAuthorIncludes={branchAuthorIncludes}
-                            defaultProjectExcludes={projectExcludes}
-                            defaultRepoExcludes={repoExcludes}
-                            defaultBranchExcludes={branchExcludes}
-                            defaultBranchAuthorExcludes={branchAuthorExcludes}
+                            filter={filter}
                             />
                     }
                 </B.Section>

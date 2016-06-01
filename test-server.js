@@ -2,14 +2,15 @@ var fs = require('fs');
 var path = require('path');
 var express = require('express');
 
+var contextPath = '/bitbucket';
+
 var app = express();
-var COMMENTS_FILE = path.join(__dirname, 'comments.json');
 app.set('port', (process.env.PORT || 3000));
 app.use('/', express.static(path.join(__dirname, 'public')));
 app.use('/node_modules', express.static(path.join(__dirname, 'node_modules')));
 
 
-app.get('/stash/rest/api/1.0/repos', function (req, res) {
+app.get(contextPath + '/rest/api/1.0/repos', function (req, res) {
     setTimeout(function () {
         res.setHeader('Cache-Control', 'no-cache');
         res.json({
@@ -61,7 +62,7 @@ app.get('/stash/rest/api/1.0/repos', function (req, res) {
     }, 0);
 });
 
-app.get('/stash/rest/api/1.0/projects', function (req, res) {
+app.get(contextPath + '/rest/api/1.0/projects', function (req, res) {
     res.setHeader('Cache-Control', 'no-cache');
     res.json({
         "size": 2,
@@ -112,7 +113,7 @@ app.get('/stash/rest/api/1.0/projects', function (req, res) {
     });
 });
 
-app.get('/stash/rest/api/1.0/projects/PRJ1/repos', function (req, res) {
+app.get(contextPath + '/rest/api/1.0/projects/PRJ1/repos', function (req, res) {
     res.setHeader('Cache-Control', 'no-cache');
     res.json(
         {
@@ -134,7 +135,7 @@ app.get('/stash/rest/api/1.0/projects/PRJ1/repos', function (req, res) {
     );
 });
 
-app.get('/stash/rest/api/1.0/projects/PRJ2/repos', function (req, res) {
+app.get(contextPath + '/rest/api/1.0/projects/PRJ2/repos', function (req, res) {
     res.setHeader('Cache-Control', 'no-cache');
     res.json(
         {
@@ -252,7 +253,7 @@ app.get('/stash/rest/api/1.0/projects/PRJ2/repos', function (req, res) {
 
 // get branches api response
 
-app.get('/stash/rest/api/1.0/projects/PRJ1/repos/test-core/branches', function (req, res) {
+app.get(contextPath + '/rest/api/1.0/projects/PRJ1/repos/test-core/branches', function (req, res) {
     res.setHeader('Cache-Control', 'no-cache');
     res.json(
         {
@@ -300,7 +301,7 @@ app.get('/stash/rest/api/1.0/projects/PRJ1/repos/test-core/branches', function (
     );
 });
 
-app.get('/stash/rest/api/1.0/projects/PRJ2/repos/test-service/branches', function (req, res) {
+app.get(contextPath + '/rest/api/1.0/projects/PRJ2/repos/test-service/branches', function (req, res) {
     res.setHeader('Cache-Control', 'no-cache');
     res.json(
         {
@@ -377,17 +378,19 @@ app.get('/stash/rest/api/1.0/projects/PRJ2/repos/test-service/branches', functio
 });
 
 
-app.get('/stash/rest/api/1.0/projects/PRJ2/repos/test-utils/branches', function (req, res) {
+app.get(contextPath + '/rest/api/1.0/projects/PRJ2/repos/test-utils/branches', function (req, res) {
     res.setHeader('Cache-Control', 'no-cache');
     res.json(
-        {}
+        {
+            values: []
+        }
     );
 });
 
 
 // Pull request api response
 
-app.get('/stash/rest/api/1.0/projects/PRJ1/repos/test-core/pull-requests', function (req, res) {
+app.get(contextPath + '/rest/api/1.0/projects/PRJ1/repos/test-core/pull-requests', function (req, res) {
     setTimeout(function () {
         res.setHeader('Cache-Control', 'no-cache');
         res.json(
@@ -440,7 +443,7 @@ app.get('/stash/rest/api/1.0/projects/PRJ1/repos/test-core/pull-requests', funct
 });
 
 
-app.get('/stash/rest/api/1.0/projects/PRJ2/repos/test-service/pull-requests', function (req, res) {
+app.get(contextPath + '/rest/api/1.0/projects/PRJ2/repos/test-service/pull-requests', function (req, res) {
     setTimeout(function () {
         res.setHeader('Cache-Control', 'no-cache');
         res.json(
@@ -554,17 +557,19 @@ app.get('/stash/rest/api/1.0/projects/PRJ2/repos/test-service/pull-requests', fu
     }, 0);
 });
 
-app.get('/stash/rest/api/1.0/projects/PRJ2/repos/test-utils/pull-requests', function (req, res) {
+app.get(contextPath + '/rest/api/1.0/projects/PRJ2/repos/test-utils/pull-requests', function (req, res) {
     res.setHeader('Cache-Control', 'no-cache');
     res.json(
-        {}
+        {
+            values: []
+        }
     );
 });
 
 
 // build-status api response
 
-app.get('/stash/rest/build-status/1.0/commits/ddfa05c0bb2f988f5fd8b8ce0c085fcd5e429190', function (req, res) {
+app.get(contextPath + '/rest/build-status/1.0/commits/ddfa05c0bb2f988f5fd8b8ce0c085fcd5e429190', function (req, res) {
     setTimeout(function () {
         res.setHeader('Cache-Control', 'no-cache');
         res.json({
@@ -582,7 +587,7 @@ app.get('/stash/rest/build-status/1.0/commits/ddfa05c0bb2f988f5fd8b8ce0c085fcd5e
     }, 0);
 });
 
-app.get('/stash/rest/build-status/1.0/commits/95f773d9188ca4de6e3d7de0483957f93c279934', function (req, res) {
+app.get(contextPath + '/rest/build-status/1.0/commits/95f773d9188ca4de6e3d7de0483957f93c279934', function (req, res) {
     setTimeout(function () {
         res.setHeader('Cache-Control', 'no-cache');
         res.json({
@@ -611,7 +616,7 @@ app.get('/stash/rest/build-status/1.0/commits/95f773d9188ca4de6e3d7de0483957f93c
 
 // sonar4stash api response
 
-app.get('/stash/rest/sonar4stash/latest/statistics', function (req, res) {
+app.get(contextPath + '/rest/sonar4stash/latest/statistics', function (req, res) {
     setTimeout(function () {
         res.setHeader('Cache-Control', 'no-cache');
         res.json({
@@ -639,6 +644,51 @@ app.get('/stash/rest/sonar4stash/latest/statistics', function (req, res) {
         });
     }, 0);
 });
+
+
+// SonarQube api response
+
+app.post('/sonar/sessions/login', function (req, res) {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.json({
+    });
+});
+
+app.get('/sonar/api/user_properties', function (req, res) {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.json({
+    });
+});
+
+app.get('/sonar/api/resources', function (req, res) {
+    var resource = req.param('resource');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.json([{
+        id: 0,
+        key: resource,
+        name: resource,
+        date: '2016-04-07T19:23:08+0900',
+        msr: [
+            {
+                key: 'lines',
+                val: 200,
+                frmt_val: '200 lines'
+            },
+            {
+                key: 'blocker_violations',
+                val: 3,
+                frmt_val: '3'
+            },
+            {
+                key: 'critical_violations',
+                val: 5,
+                frmt_val: '5'
+            }
+        ]
+    }]);
+});
+
+
 
 
 app.listen(app.get('port'), function () {

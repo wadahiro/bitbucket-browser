@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-export interface ContainerProps extends React.Props<Container> {
+export interface ContainerProps {
     isFluid?: boolean;
 }
 
-export class Container extends React.Component<ContainerProps, any> {
+export class Container extends React.Component<ContainerProps, void> {
     static defaultProps = {
         isFluid: false
     };

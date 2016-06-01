@@ -1,6 +1,8 @@
 export interface Settings {
-    title: string;
-    items: Items;
+    title?: string;
+    baseUrl?: string;
+    items?: Items;
+    debug?: boolean;
 }
 
 export interface Items {
@@ -37,14 +39,14 @@ export interface Items {
         enabled: boolean;
         displayName: string;
     },
-    sonarStatus: {
+    sonarForBitbucketStatus: {
         enabled: boolean;
         displayName: string;
     },
     sonarQubeMetrics: {
         enabled: boolean;
         displayName: string;
-        resolver: SonarStatusResolver
+        resolver: SonarQubeMetricsResolver
     },
     branchNameLink: {
         enabled: boolean;
@@ -59,7 +61,7 @@ export interface BranchNameLinkResolver {
     displayName: string;
 }
 
-export interface SonarStatusResolver {
+export interface SonarQubeMetricsResolver {
     baseUrl: string;
     projectBaseKey: string;
     metrics: string;

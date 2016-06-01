@@ -1,15 +1,20 @@
 import * as React from 'react';
 import * as B from '../bulma';
-import { BuildStatus } from '../BitBucketApi';
 
-interface Props extends React.Props<BuildStatusModal> {
+import * as API from '../webapis';
+
+interface Props {
     show?: boolean;
     onHide?: (e: React.SyntheticEvent) => void;
-    buildStatus: BuildStatus;
+    buildStatus: API.BuildStatus;
     cancelLabel?: string;
 }
 
-export class BuildStatusModal extends React.Component<Props, any> {
+interface State {
+    showButtons: boolean;
+}
+
+export class BuildStatusModal extends React.Component<Props, State> {
     static defaultProps = {
         submitLabel: 'Delete',
         cancelLabel: 'Cancel',
@@ -25,7 +30,7 @@ export class BuildStatusModal extends React.Component<Props, any> {
         const { showButtons } = this.state;
 
         return (
-            <B.ModalCard show={show} onHide={onHide} title='Build Status'>
+            <B.ModalCard show={show} onHide={onHide} title='Build Status' keyboard>
                 <B.Content>
                     { buildStatus.values.map(x => {
                         let iconClassName;

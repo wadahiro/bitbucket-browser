@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-export interface MediaObjectProps extends React.Props<MediaObject> {
+export interface MediaObjectProps {
     figure: JSX.Element;
     figureSize?: '32x32' | '64x64';
 }

@@ -3,49 +3,32 @@ import * as _ from 'lodash';
 const Select = require('react-select');
 
 import * as B from '../bulma';
-import { BranchInfo } from '../BitbucketApi';
+import * as API from '../webapis';
+import { FilterState } from '../reducers';
 
 export interface SelectOption {
     label: string;
     value: string;
 }
 
-interface Props extends React.Props<SearchBox> {
-    defaultProjectIncludes?: string;
-    defaultRepoIncludes?: string;
-    defaultBranchIncludes?: string;
-    defaultBranchAuthorIncludes?: string;
-
-    defaultProjectExcludes?: string;
-    defaultRepoExcludes?: string;
-    defaultBranchExcludes?: string;
-    defaultBranchAuthorExcludes?: string;
-
-    data: BranchInfo[];
-    onChange: (key: string, values: SelectOption[]) => void;
+interface Props {
+    filter: FilterState;
+    data: API.BranchInfo[];
+    onChange: (key: string, filer: FilterState) => void;
 }
 
-export default class SearchBox extends React.Component<Props, any> {
-
-    state = {
-        defaultProjectIncludes: this.props.defaultProjectIncludes,
-        defaultProjectExcludes: this.props.defaultProjectExcludes,
-        defaultRepoIncludes: this.props.defaultRepoIncludes,
-        defaultRepoExcludes: this.props.defaultRepoExcludes,
-        defaultBranchIncludes: this.props.defaultBranchIncludes,
-        defaultBranchExcludes: this.props.defaultBranchExcludes,
-        defaultBranchAuthorIncludes: this.props.defaultBranchAuthorIncludes,
-        defaultBranchAuthorExcludes: this.props.defaultBranchAuthorExcludes
-    }
+export default class SearchBox extends React.Component<Props, void> {
 
     onChange = (key, values: SelectOption[]) => {
-        this.props.onChange(key, values);
-    }
+        const filter = Object.assign({}, this.props.filter, {
+            [key]: values ? values.map(x => x.value) : []
+        });
+        this.props.onChange(key, filter);
+    };
 
     render() {
         const { data } = this.props;
-        const { defaultProjectIncludes, defaultRepoIncludes, defaultBranchIncludes, defaultBranchAuthorIncludes,
-            defaultProjectExcludes, defaultRepoExcludes, defaultBranchExcludes, defaultBranchAuthorExcludes } = this.props;
+        const { filter } = this.props;
 
         const options = _.reduce<any, any>(data, (s, x) => {
             s.project.push(x.project);
@@ -81,40 +64,40 @@ export default class SearchBox extends React.Component<Props, any> {
                 <div style={style}>
                     <label className='control-label'>Project</label>
                     <div style={selectStyle}>
-                        <Select name='projectIncludes' placeholder={includes} value={defaultProjectIncludes} options={projectOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'projectIncludes') } />
+                        <Select name='projectIncludes' placeholder={includes} value={filter.projectIncludes} options={projectOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'projectIncludes') } />
                     </div>
                     <div style={selectStyle}>
-                        <Select name='projectExcludes' placeholder={excludes} value={defaultProjectExcludes} options={projectOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'projectExcludes') } />
+                        <Select name='projectExcludes' placeholder={excludes} value={filter.projectExcludes} options={projectOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'projectExcludes') } />
                     </div>
                 </div>
                 <hr />
                 <div style={style}>
                     <label className='control-label'>Repository</label>
                     <div style={selectStyle}>
-                        <Select name='repoIncludes' placeholder={includes} value={defaultRepoIncludes} options={repoOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'repoIncludes') } />
+                        <Select name='repoIncludes' placeholder={includes} value={filter.repoIncludes} options={repoOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'repoIncludes') } />
                     </div>
                     <div style={selectStyle}>
-                        <Select name='repoExcludes' placeholder={excludes} value={defaultRepoExcludes} options={repoOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'repoExcludes') } />
+                        <Select name='repoExcludes' placeholder={excludes} value={filter.repoExcludes} options={repoOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'repoExcludes') } />
                     </div>
                 </div>
                 <hr />
                 <div style={style}>
                     <label className='control-label'>Branch</label>
                     <div style={selectStyle}>
-                        <Select name='branchIncludes' placeholder={includes} value={defaultBranchIncludes} options={branchOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchIncludes') } />
+                        <Select name='branchIncludes' placeholder={includes} value={filter.branchIncludes} options={branchOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchIncludes') } />
                     </div>
                     <div style={selectStyle}>
-                        <Select name='branchExcludes' placeholder={excludes} value={defaultBranchExcludes} options={branchOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchExcludes') } />
+                        <Select name='branchExcludes' placeholder={excludes} value={filter.branchExcludes} options={branchOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchExcludes') } />
                     </div>
                 </div>
                 <hr />
                 <div style={style}>
                     <label className='control-label'>Branch Author</label>
                     <div style={selectStyle}>
-                        <Select name='branchAuthorIncludes' placeholder={includes} value={defaultBranchAuthorIncludes} options={branchAuthorOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchAuthorIncludes') } />
+                        <Select name='branchAuthorIncludes' placeholder={includes} value={filter.branchAuthorIncludes} options={branchAuthorOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchAuthorIncludes') } />
                     </div>
                     <div style={selectStyle}>
-                        <Select name='branchAuthorExcludes' placeholder={excludes} value={defaultBranchAuthorExcludes} options={branchAuthorOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchAuthorExcludes') } />
+                        <Select name='branchAuthorExcludes' placeholder={excludes} value={filter.branchAuthorExcludes} options={branchAuthorOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchAuthorExcludes') } />
                     </div>
                 </div>
             </div>

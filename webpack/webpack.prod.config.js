@@ -6,12 +6,15 @@ var config = require('./webpack.base.config.js')
 config.bail = true
 config.debug = false
 config.profile = false
-// config.devtool = '#source-map'
+config.devtool = null
 
 config.plugins = config.plugins.concat([
+    new webpack.DefinePlugin({
+        'process.env.NODE_ENV': '"production"'
+    }),
     new webpack.optimize.OccurenceOrderPlugin(true),
     new webpack.optimize.DedupePlugin(),
-//   new webpack.optimize.UglifyJsPlugin({ output: {comments: false} }),
+    //   new webpack.optimize.UglifyJsPlugin({ output: {comments: false} }),
 ])
 
 module.exports = config

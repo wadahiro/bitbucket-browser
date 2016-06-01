@@ -1,31 +1,18 @@
 import * as React from 'react';
+import { calcClassNames, ModifiersProps } from './Utils';
 
-export interface CheckboxProps extends React.Props<Checkbox> {
-    onClick?: (event: React.SyntheticEvent) => void;
-    onChange?: (event: React.SyntheticEvent) => void;
-    name?: string;
-    label?: string;
-    checked?: boolean;
-    placeholder?: string;
-    type?: 'primary' | 'info' | 'success' | 'warning' | 'danger';
-    size?: 'small' | 'medium' | 'large';
+export interface CheckboxProps extends React.HTMLProps<HTMLInputElement>, ModifiersProps {
 }
 
-export class Checkbox extends React.Component<CheckboxProps, any> {
-    static defaultProps = {
-        type: '',
-        size: ''
-    };
-
+export class Checkbox extends React.Component<CheckboxProps, void> {
     render() {
-        const { name, checked, label, placeholder, size, type, onChange } = this.props;
-        const isSize = size ? `is-${size}` : '';
-        const isType = type ? `is-${type}` : '';
+        const { label } = this.props;
+        const className = calcClassNames(this.props);
 
         return (
             <p className='control'>
-                <label className='checkbox'>
-                    <input name={name} type='checkbox' checked={checked} onChange={onChange}/>
+                <label className={`checkbox ${className}`}>
+                    <input {...this.props} type='checkbox'  />
                     {label}
                 </label>
             </p>

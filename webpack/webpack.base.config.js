@@ -38,15 +38,19 @@ module.exports = {
         exclude: [/node_modules/],
         loader: 'babel-loader!ts-loader'
       }
-    //   {
-    //     test: /\.css$/,
-    //     loader: "style!css"
-    //   }
+      //   {
+      //     test: /\.css$/,
+      //     loader: "style!css"
+      //   }
     ]
   },
   resolve: {
     modulesDirectories: ['node_modules'],
     extensions: ['', '.tsx', '.ts', '.js', '.jsx']
+  },
+  externals: {
+    "react": "React",
+    "react-dom": "ReactDOM"
   },
   plugins: [
   ],

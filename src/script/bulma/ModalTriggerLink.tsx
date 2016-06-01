@@ -1,25 +1,24 @@
 import * as React from 'react';
 
-export interface ModalLinkTriggerProps extends React.Props<ModalTriggerLink> {
-    modal: any;
+interface Props extends React.HTMLProps<HTMLAnchorElement> {
+    modal: JSX.Element;
 }
 
-export class ModalTriggerLink extends React.Component<ModalLinkTriggerProps, any> {
-    static defaultProps = {
-        type: '',
-        size: ''
-    };
-    
+interface State {
+    show: boolean;
+}
+
+export class ModalTriggerLink extends React.Component<Props, State> {
     state = {
         show: false
     };
-    
+
     open = (e) => {
         this.setState({
             show: true
         });
     };
-    
+
     close = (e) => {
         this.setState({
             show: false
@@ -33,7 +32,7 @@ export class ModalTriggerLink extends React.Component<ModalLinkTriggerProps, any
         });
         return (
             <div>
-                <a onClick={this.open}>
+                <a {...this.props} onClick={this.open}>
                     { this.props.children }
                 </a>
                 { this.state.show && modal }

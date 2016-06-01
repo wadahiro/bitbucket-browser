@@ -1,14 +1,39 @@
 import * as React from 'react';
 
-export class Modal extends React.Component<any, any> {
+interface Props {
+    show: boolean;
+    onHide: (e: React.SyntheticEvent) => void;
+    keyboard?: boolean;
+}
+
+export class Modal extends React.Component<Props, void> {
     static defaultProps = {
         show: false,
-        onHide: null
+        onHide: null,
+        keyboard: false
     };
+
+    componentWillMount() {
+        if (this.props.keyboard) {
+            document.addEventListener('keydown', this._handleEscKey, false);
+        }
+    }
+
+    componentWillUnmount() {
+        if (this.props.keyboard) {
+            document.removeEventListener('keydown', this._handleEscKey, false);
+        }
+    }
 
     close = (e) => {
         if (this.props.onHide) {
             this.props.onHide(e);
+        }
+    };
+
+    _handleEscKey = (e: KeyboardEvent) => {
+        if (this.props.onHide && e.keyCode === 27) {
+            this.props.onHide(null);
         }
     };
 

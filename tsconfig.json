@@ -1,17 +1,16 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es6",
+        "module": "es2015",
+        "moduleResolution": "node",
+        "target": "es2015",
         "jsx": "react",
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
-        "outDir": "dist",
+        "outDir": ".tmp",
         "sourceMap": true
     },
     "exclude": [
         "public",
-        "node_modules",
-        "typings/main.d.ts",
-        "typings/main"
+        "node_modules"
     ]
 }

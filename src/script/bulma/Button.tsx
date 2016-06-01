@@ -1,28 +1,15 @@
 import * as React from 'react';
+import { ModifiersProps, ButtonSyntaxProps, calcClassNames } from './Utils';
 
-export interface ButtonProps extends React.Props<Button> {
-    onClick?: (event: React.SyntheticEvent) => void;
-    type?: '' | 'primary' | 'info' | 'success' | 'warning' | 'danger';
-    size?: '' | 'small' | 'medium' | 'large';
-    loading?: boolean;
-    className?: string;
+export interface ButtonProps extends React.HTMLProps<HTMLButtonElement>, ModifiersProps, ButtonSyntaxProps {
 }
 
-export class Button extends React.Component<ButtonProps, any> {
-    static defaultProps = {
-        type: '',
-        size: '',
-        className: ''
-    };
-
+export class Button extends React.Component<ButtonProps, void> {
     render() {
-        const { size, type, loading, onClick, className } = this.props;
-        
-        const isLoading = loading ? 'is-loading' : '';
+        const className = calcClassNames(this.props);
 
         return (
-            <button className={`button is-${size} is-${type} ${isLoading} ${className}`}
-                onClick={onClick}>
+            <button {...this.props} className={`button ${className}`}>
                 { this.props.children }
             </button>
         );
