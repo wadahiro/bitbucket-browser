@@ -28,7 +28,7 @@ export class SidebarFilter extends React.Component<Props, void> {
         } = this.props;
 
         const sidebarStyle = {
-            width: 300,
+            width: 350,
             background: '#f5f7fa'
         };
 
