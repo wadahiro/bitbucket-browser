@@ -39,7 +39,11 @@ function* initApp(): Iterable<Effect> {
     if (!bitbucketAuthenticated) {
         // Redirect to Bitbucket Login page
         const path = location.pathname.substring(settings.baseUrl.length);
-        location.href = `${settings.baseUrl}/login?next=${path}${encodeURIComponent(location.hash)}`;
+        let hash;
+        if (location.hash) {
+            hash = `#${encodeURIComponent(location.hash.substring(1))}`;
+        }
+        location.href = `${settings.baseUrl}/login?next=${path}${hash}`;
     } else {
         const sonarQubeAuthenticated = yield call([api, api.isAuthenticatedSonarQube]);
 
