@@ -11,8 +11,10 @@ export class ProgressBar extends React.Component<Props, void> {
         const { value, max } = this.props;
         const className = calcClassNames(this.props);
 
+        // Work-around for https://github.com/facebook/react/issues/6704
+        const v = value === 0 ? '' : value;
         return (
-            <progress className={`progress ${className}`} value={String(value) } max={max}>
+            <progress className={`progress ${className}`} value={v} max={max}>
                 {this.props.children}
             </progress>
         );
