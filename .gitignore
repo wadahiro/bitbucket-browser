@@ -4,6 +4,6 @@ node_modules
 public
 typings
 dll
-tmp
+.tmp
 .awcache
 .happypack

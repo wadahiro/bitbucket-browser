@@ -7,12 +7,14 @@
   "license": "MIT",
   "scripts": {
     "postinstall": "typings install",
-    "watch": "webpack -w",
     "build:dll": "webpack --config=webpack/webpack.dll.js",
-    "build": "useref src/index.html public/index.html --js uglify --css uglify && cross-env NODE_ENV=production webpack -p --config webpack/webpack.config.js",
-    "style": "cp -r node_modules/font-awesome/fonts public && node-sass src/css/main.scss public/css/style.css",
+    "build:style": "cp -r node_modules/font-awesome/fonts public && node-sass src/css/main.scss public/css/style.css",
+    "build:html": "useref src/index.html public/index.html --js uglify --css uglify",
+    "build:script": "cross-env webpack --config webpack/webpack.config.js",
+    "build:assets": "npm run build:dll && npm run build:style && npm run build:html",
+    "build": "cross-env NODE_ENV=production npm run build:assets && cross-env NODE_ENV=production npm run build:script",
     "server": "node-dev test-server.js",
-    "start": "cp src/index.html public/index.html && node-dev webpack/webpack.server.js"
+    "start": "node-dev webpack/webpack.server.js"
   },
   "devDependencies": {
     "awesome-typescript-loader": "^1.0.0",

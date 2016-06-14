@@ -10,9 +10,11 @@ require('react-sidebar');
 require('whatwg-fetch');
 
 // for dev
-require('webpack-dev-server/client');
-// require('webpack/hot/only-dev-server');
-require('react-hot-loader');
-require('redux-devtools');
-require('redux-devtools-log-monitor');
-require('redux-devtools-dock-monitor');
+if (process.env.NODE_ENV !== 'production') {
+    require('webpack-dev-server/client');
+    // require('webpack/hot/only-dev-server');
+    require('react-hot-loader');
+    require('redux-devtools');
+    require('redux-devtools-log-monitor');
+    require('redux-devtools-dock-monitor');
+}
