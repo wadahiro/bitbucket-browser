@@ -97,9 +97,11 @@ interface Props {
     settings: Settings;
     api: API.API;
     resultsPerPage: number;
+    currentPage: number;
     enableSort?: boolean;
     results: any[];
     showFilter: boolean;
+    handlePage: (nextPage: number) => void;
     handleShowBranchInfo: (branchInfo: API.BranchInfo) => void;
     handleSonarQubeAuthenticated: () => void;
 }
@@ -111,8 +113,8 @@ export default class BitbucketDataTable extends React.Component<Props, void> {
     };
 
     render() {
-        const { settings, api, results, resultsPerPage,
-            handleShowBranchInfo, handleSonarQubeAuthenticated } = this.props;
+        const { settings, api, results, resultsPerPage, currentPage,
+            handlePage, handleShowBranchInfo, handleSonarQubeAuthenticated } = this.props;
 
         const resolvedColumnMetadata = COLUMN_METADATA.filter(x => {
             const item = settings.items[x.name];
@@ -142,8 +144,10 @@ export default class BitbucketDataTable extends React.Component<Props, void> {
                     <B.Table
                         columnMetadata={resolvedColumnMetadata}
                         handleShowRecord={handleShowBranchInfo}
+                        handlePage={handlePage}
                         enableSort={true}
                         showPagination={true}
+                        currentPage={currentPage}
                         resultsPerPage={resultsPerPage}
                         results={this.props.results}
                         rowKey='id' />

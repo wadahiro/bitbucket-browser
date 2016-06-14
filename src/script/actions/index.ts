@@ -58,6 +58,21 @@ export function toggleFilter(): ToggleFilterAction {
     };
 }
 
+export const CHANGE_PAGE: ActionType<ChangePageAction> = 'CHANGE_PAGE';
+interface ChangePageAction extends Action {
+    payload: {
+        nextPage: number;
+    }
+}
+export function changePage(nextPage: number): ChangePageAction {
+    return {
+        type: CHANGE_PAGE,
+        payload: {
+            nextPage
+        }
+    };
+}
+
 export const CHANGE_FILTER: ActionType<ChangeFilterAction> = 'CHANGE_FILTER';
 interface ChangeFilterAction extends Action {
     payload: {

@@ -31,6 +31,7 @@ interface Props {
     filter?: FilterState;
 
     resultsPerPage?: number;
+    currentPage?: number;
 }
 
 function mapStateToProps(state: RootState, props: Props): Props {
@@ -47,6 +48,7 @@ function mapStateToProps(state: RootState, props: Props): Props {
         filter: state.filter,
 
         resultsPerPage: state.app.resultsPerPage,
+        currentPage: state.app.currentPage
     };
 }
 
@@ -77,11 +79,15 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.toggleFilter());
     };
 
+    handlePage = (nextPage: number) => {
+        this.props.dispatch(Actions.changePage(nextPage));
+    };
+
     render() {
         const { settings, api,
             branchInfos, loading, branchInfosLoaded,
             filter,
-            resultsPerPage } = this.props;
+            resultsPerPage, currentPage } = this.props;
 
         const filteredBranchInfos = filterBranchInfo(branchInfos, filter);
 
@@ -149,6 +155,8 @@ class BrowserView extends React.Component<Props, void> {
                                         showFilter={true}
                                         results={filteredBranchInfos}
                                         resultsPerPage={resultsPerPage}
+                                        currentPage={currentPage}
+                                        handlePage={this.handlePage}
                                         handleShowBranchInfo={this.handleShowBranchInfo}
                                         handleSonarQubeAuthenticated={this.handleSonarQubeAuthenticated}
                                         />

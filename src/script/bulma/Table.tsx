@@ -18,7 +18,9 @@ export interface TableProps {
     results: {
         [index: string]: string | number | boolean;
     }[];
+    currentPage?: number;
     handleShowRecord?: (data: any) => void;
+    handlePage?: (index: number) => void;
 }
 
 export interface ColumnMetadata {
@@ -44,7 +46,6 @@ export class Table extends React.Component<TableProps, any> {
     };
 
     state = {
-        currentPage: 0,
         currentSortKey: this.props.initialSort,
         sortAscending: this.props.initialSortAscending,
     };
@@ -110,7 +111,7 @@ export class Table extends React.Component<TableProps, any> {
     };
 
     renderBody(visibleColumns: ColumnMetadata[], pageSize: number): JSX.Element[] {
-        const { results, rowKey, showPagination, resultsPerPage } = this.props;
+        const { results, rowKey, showPagination, resultsPerPage, currentPage } = this.props;
         const { currentSortKey, sortAscending } = this.state;
 
         // sort
@@ -134,8 +135,8 @@ export class Table extends React.Component<TableProps, any> {
         // pagination
         let pageResults = sortedResults;
         if (showPagination) {
-            const currentPage = fixCurrentPage(this.state.currentPage, pageSize);
-            const start = currentPage * resultsPerPage;
+            const fixedCurrentPage = fixCurrentPage(currentPage, pageSize);
+            const start = fixedCurrentPage * resultsPerPage;
             const end = start + resultsPerPage;
             pageResults = sortedResults.slice(start, end);
         }
@@ -179,22 +180,20 @@ export class Table extends React.Component<TableProps, any> {
     }
 
     renderPagination(pageSize): JSX.Element {
-        const { results, showPagination, resultsPerPage } = this.props;
-        let { currentPage } = this.state;
+        const { results, showPagination, resultsPerPage, currentPage } = this.props;
 
         if (!showPagination) {
             return <div />;
         }
 
-        currentPage = fixCurrentPage(currentPage, pageSize);
+        const fixedCurrentPage = fixCurrentPage(currentPage, pageSize);
 
-        return <Pagination pageSize={pageSize} currentPage={currentPage} onChange={this.handlePageChange} />
+        return <Pagination pageSize={pageSize} currentPage={fixedCurrentPage} onChange={this.handlePageChange} />
     }
 
     handlePageChange = (newPage: number) => {
-        this.setState({
-            currentPage: newPage
-        });
+        const { handlePage } = this.props;
+        handlePage(newPage);
     };
 }
 

@@ -82,6 +82,7 @@ export interface AppState {
     branchInfos?: API.BranchInfo[];
 
     resultsPerPage?: number;
+    currentPage?: number;
 }
 
 const initialAppState: AppState = {
@@ -94,7 +95,8 @@ const initialAppState: AppState = {
     branchInfosLoaded: false,
     branchInfos: [],
 
-    resultsPerPage: 5
+    resultsPerPage: 5,
+    currentPage: 0
 };
 
 export const appStateReducer = (state: AppState = initialAppState, action: Actions.Action) => {
@@ -102,7 +104,7 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
     if (Actions.isType(action, Actions.INIT_APP_SUCCEEDED)) {
         const payload = action.payload;
 
-        return Object.assign({}, state, payload);
+        return Object.assign<AppState, AppState, AppState>({}, state, payload);
     }
 
     if (Actions.isType(action, Actions.FETCH_SETTINGS_SUCCEEDED)) {
@@ -110,7 +112,7 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
 
         const api = new API.API(settings);
 
-        return Object.assign({}, state, {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
             settings,
             api
         });
@@ -119,25 +121,25 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
     if (Actions.isType(action, Actions.APPEND_BRANCH_INFOS)) {
         const payload = action.payload;
 
-        return Object.assign({}, state, {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
             branchInfos: state.branchInfos.concat(payload.branchInfos)
         });
     }
 
     if (Actions.isType(action, Actions.FETCH_BRANCH_INFOS_REQUESTED)) {
-        return Object.assign({}, state, {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
             loading: true
         });
     }
 
     if (Actions.isType(action, Actions.FETCH_BRANCH_INFOS_SUCCEEDED)) {
-        return Object.assign({}, state, {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
             loading: false
         });
     }
 
     if (Actions.isType(action, Actions.RELOAD_BRANCH_INFOS)) {
-        return Object.assign({}, state, {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
             branchInfos: []
         });
     }
@@ -145,7 +147,7 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
     if (Actions.isType(action, Actions.UPDATE_BRANCH_INFO)) {
         const { branchInfo } = action.payload;
 
-        return Object.assign({}, state, {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
             branchInfos: state.branchInfos.map(x => {
                 if (x.id === branchInfo.id) {
                     return Object.assign({}, x, branchInfo);
@@ -156,8 +158,16 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
     }
 
     if (Actions.isType(action, Actions.SONARQUBE_AUTHENTICATED)) {
-        return Object.assign({}, state, {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
             sonarQubeAuthenticated: true
+        });
+    }
+
+    if (Actions.isType(action, Actions.CHANGE_PAGE)) {
+        const payload = action.payload;
+
+        return Object.assign<AppState, AppState, AppState>({}, state, {
+            currentPage: payload.nextPage
         });
     }
 
