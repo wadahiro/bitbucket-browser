@@ -32,7 +32,8 @@ module.exports = {
         include: [
           path.join(__dirname, '../src/script') //important for performance!
         ],
-        loaders: ['happypack/loader', 'ts-loader']
+        loaders: ['react-hot', 'babel?cacheDirectory=true', 'awesome-typescript-loader?useBabel=true&babelOptions=true&forkChecker=true'],
+        // loaders: ['happypack/loader', 'awesome-typescript-loader?useBabel=true&babelOptions=true&forkChecker=true']
       }
       //   {
       //     test: /\.css$/,
@@ -50,12 +51,14 @@ module.exports = {
       context: path.join(__dirname, '../src/script'),
       manifest: require('../dll/vendor-manifest.json')
     }),
-    new HappyPack({
-      // loaders is the only required parameter:
-      loaders: ['react-hot', 'babel?cacheDirectory=./tmp'],
+    // I'm waiting the issue...
+    // https://github.com/amireh/happypack/issues/33
+    // new HappyPack({
+    //   // loaders is the only required parameter:
+    //   loaders: ['react-hot', 'babel'],
 
-      // customize as needed, see Configuration below
-    })
+    //   // customize as needed, see Configuration below
+    // })
   ],
   cache: true
 }
