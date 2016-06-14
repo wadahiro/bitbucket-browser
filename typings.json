@@ -9,6 +9,9 @@
     "react-redux": "registry:dt/react-redux#4.4.0+20160501125835",
     "redux": "registry:dt/redux#3.3.1+20160326112656",
     "redux-actions": "registry:dt/redux-actions#0.8.0+20160505165756",
+    "redux-devtools": "registry:dt/redux-devtools#3.0.0+20151215130854",
+    "redux-devtools-dock-monitor": "registry:dt/redux-devtools-dock-monitor#1.0.1+20151216103641",
+    "redux-devtools-log-monitor": "registry:dt/redux-devtools-log-monitor#1.0.1+20151216103641",
     "redux-saga": "registry:dt/redux-saga#0.9.1+20160316155526",
     "whatwg-fetch": "registry:dt/whatwg-fetch#0.0.0+20160412133644"
   }

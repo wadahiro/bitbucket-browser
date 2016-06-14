@@ -30,13 +30,13 @@ module.exports = {
         test: /\.js(x?)$/,
         cacheDirectory: true,
         exclude: [/node_modules/],
-        loaders: ['babel-loader?optional[]=runtime']
+        loaders: ['babel']
       },
       {
         test: /\.ts(x?)$/,
         cacheDirectory: true,
         exclude: [/node_modules/],
-        loader: 'babel-loader!ts-loader'
+        loaders: ['babel', 'ts-loader']
       }
       //   {
       //     test: /\.css$/,
@@ -47,10 +47,6 @@ module.exports = {
   resolve: {
     modulesDirectories: ['node_modules'],
     extensions: ['', '.tsx', '.ts', '.js', '.jsx']
-  },
-  externals: {
-    "react": "React",
-    "react-dom": "ReactDOM"
   },
   plugins: [
   ],

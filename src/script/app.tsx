@@ -1,27 +1,12 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { Provider, connect } from 'react-redux'
-import { createStore, applyMiddleware } from 'redux'
-import createSagaMiddleware from 'redux-saga'
-import * as _ from 'lodash';
+import { Provider } from 'react-redux'
 
-import * as Actions from './actions';
-import reducers from './reducers'
-import rootSaga from './sagas'
-
-import * as B from './bulma';
+import configureStore from './store/configureStore';
 import BrowserView from './views/BrowserView';
+import DevTools from './components/DevTools';
 
-// require('babel-polyfill');
 require('whatwg-fetch');
-
-const sagaMiddleware = createSagaMiddleware();
-const store = createStore(
-    reducers,
-    applyMiddleware(sagaMiddleware)
-);
-sagaMiddleware.run(rootSaga);
-
 
 class App extends React.Component<any, any> {
     render() {
@@ -29,6 +14,22 @@ class App extends React.Component<any, any> {
     }
 }
 
-ReactDOM.render(<Provider store={store}>
-    <App />
-</Provider>, document.getElementById('app'));
+const store = configureStore();
+
+let root;
+if (process.env.NODE_ENV === 'production') {
+    root = <App />;
+} else {
+    root = <div>
+        <App />
+        <DevTools />
+    </div>;
+}
+
+
+ReactDOM.render(
+    <Provider store={store}>
+        {root}
+    </Provider>,
+    document.getElementById('app')
+);

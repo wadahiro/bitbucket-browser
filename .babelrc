@@ -1,3 +1,7 @@
 {
-  "presets": ["es2015", "stage-3"]
+  "passPerPreset": true,
+  "presets": [
+    "es2015",
+    "stage-3"
+  ]
 }
