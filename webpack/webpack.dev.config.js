@@ -3,12 +3,10 @@ var webpack = require('webpack')
 
 var config = require('./webpack.base.config.js')
 
-config.debug = true
-config.profile = false
-config.devtool = 'inline-source-map'
+config.cache = true
+config.devtool = 'cheap-module-eval-source-map'
 
 config.plugins = config.plugins.concat([
-//   new webpack.HotModuleReplacementPlugin(),
   new webpack.NoErrorsPlugin()
 ])
 

@@ -1,4 +1,5 @@
 var webpack = require('webpack')
+var HappyPack = require('happypack');
 
 var path = require('path')
 var objectAssign = require('object-assign')
@@ -27,20 +28,15 @@ module.exports = {
   module: {
     loaders: [
       {
-        test: /\.js(x?)$/,
-        cacheDirectory: true,
-        exclude: [/node_modules/],
-        loaders: ['babel']
-      },
-      {
         test: /\.ts(x?)$/,
-        cacheDirectory: true,
-        exclude: [/node_modules/],
-        loaders: ['babel', 'ts-loader']
+        include: [
+          path.join(__dirname, '../src/script') //important for performance!
+        ],
+        loaders: ['happypack/loader', 'ts-loader']
       }
       //   {
       //     test: /\.css$/,
-      //     loader: "style!css"
+      //     loader: 'style!css'
       //   }
     ]
   },
@@ -49,6 +45,17 @@ module.exports = {
     extensions: ['', '.tsx', '.ts', '.js', '.jsx']
   },
   plugins: [
+    //Typically you'd have plenty of other plugins here as well
+    new webpack.DllReferencePlugin({
+      context: path.join(__dirname, '../src/script'),
+      manifest: require('../dll/vendor-manifest.json')
+    }),
+    new HappyPack({
+      // loaders is the only required parameter:
+      loaders: ['react-hot', 'babel?cacheDirectory=./tmp'],
+
+      // customize as needed, see Configuration below
+    })
   ],
   cache: true
 }
