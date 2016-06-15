@@ -73,6 +73,21 @@ export function changePage(nextPage: number): ChangePageAction {
     };
 }
 
+export const CHANGE_SORT_COLUMN: ActionType<ChangeSortColumnAction> = 'CHANGE_SORT_COLUMN';
+interface ChangeSortColumnAction extends Action {
+    payload: {
+        nextSortColumn: string;
+    }
+}
+export function changeSortColumn(nextSortColumn: string): ChangeSortColumnAction {
+    return {
+        type: CHANGE_SORT_COLUMN,
+        payload: {
+            nextSortColumn
+        }
+    };
+}
+
 export const CHANGE_FILTER: ActionType<ChangeFilterAction> = 'CHANGE_FILTER';
 interface ChangeFilterAction extends Action {
     payload: {

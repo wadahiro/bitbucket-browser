@@ -30,6 +30,9 @@ interface Props {
 
     filter?: FilterState;
 
+    sortColumn?: string;
+    sortAscending?: boolean;
+
     resultsPerPage?: number;
     currentPage?: number;
 }
@@ -46,6 +49,9 @@ function mapStateToProps(state: RootState, props: Props): Props {
         branchInfos: state.app.branchInfos,
 
         filter: state.filter,
+
+        sortColumn: state.app.currentSortColumn,
+        sortAscending: state.app.currentSortAscending,
 
         resultsPerPage: state.app.resultsPerPage,
         currentPage: state.app.currentPage
@@ -83,10 +89,15 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.changePage(nextPage));
     };
 
+    handleSort = (nextSortColumn: string) => {
+        this.props.dispatch(Actions.changeSortColumn(nextSortColumn));
+    };
+
     render() {
         const { settings, api,
             branchInfos, loading, branchInfosLoaded,
             filter,
+            sortColumn, sortAscending,
             resultsPerPage, currentPage } = this.props;
 
         const filteredBranchInfos = filterBranchInfo(branchInfos, filter);
@@ -156,9 +167,12 @@ class BrowserView extends React.Component<Props, void> {
                                         results={filteredBranchInfos}
                                         resultsPerPage={resultsPerPage}
                                         currentPage={currentPage}
+                                        sortColumn={sortColumn}
+                                        sortAscending={sortAscending}
                                         handlePage={this.handlePage}
                                         handleShowBranchInfo={this.handleShowBranchInfo}
                                         handleSonarQubeAuthenticated={this.handleSonarQubeAuthenticated}
+                                        handleSort={this.handleSort}
                                         />
                                 </div>
                             }

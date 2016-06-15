@@ -83,6 +83,9 @@ export interface AppState {
 
     resultsPerPage?: number;
     currentPage?: number;
+
+    currentSortColumn?: string;
+    currentSortAscending?: boolean;
 }
 
 const initialAppState: AppState = {
@@ -168,6 +171,20 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
 
         return Object.assign<AppState, AppState, AppState>({}, state, {
             currentPage: payload.nextPage
+        });
+    }
+
+    if (Actions.isType(action, Actions.CHANGE_SORT_COLUMN)) {
+        const payload = action.payload;
+
+        let nextAscending = state.currentSortAscending;
+        if (state.currentSortColumn === payload.nextSortColumn) {
+            nextAscending = !nextAscending;
+        }
+
+        return Object.assign<AppState, AppState, AppState>({}, state, {
+            currentSortColumn: payload.nextSortColumn,
+            currentSortAscending: nextAscending
         });
     }
 

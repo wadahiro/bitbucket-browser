@@ -6,8 +6,8 @@ export interface TableProps {
     fixed?: boolean;
     columnMetadata: ColumnMetadata[];
     enableSort?: boolean;
-    initialSort?: string;
-    initialSortAscending?: boolean;
+    sortColumn?: string;
+    sortAscending?: boolean;
     showPagination?: boolean;
     resultsPerPage?: number;
     rowKey: string;
@@ -21,6 +21,7 @@ export interface TableProps {
     currentPage?: number;
     handleShowRecord?: (data: any) => void;
     handlePage?: (index: number) => void;
+    handleSort?: (columnName: string) => void;
 }
 
 export interface ColumnMetadata {
@@ -35,19 +36,14 @@ export interface ColumnMetadata {
 
 const LOADING = <Loading />;
 
-export class Table extends React.Component<TableProps, any> {
+export class Table extends React.Component<TableProps, void> {
     static defaultProps = {
         fixed: false,
-        initialSort: null,
-        initialSortAscending: true,
+        sortColumn: null,
+        sortAscending: true,
         showPagination: false,
         resultsPerPage: 5,
         results: []
-    };
-
-    state = {
-        currentSortKey: this.props.initialSort,
-        sortAscending: this.props.initialSortAscending,
     };
 
     render() {
@@ -80,6 +76,8 @@ export class Table extends React.Component<TableProps, any> {
     }
 
     renderThead(visibleColumns: ColumnMetadata[]): JSX.Element[] {
+        const { enableSort, sortColumn, sortAscending } = this.props;
+
         const thead = visibleColumns.map(x => {
             const thStyle = {} as any;
             if (x.width) {
@@ -89,8 +87,8 @@ export class Table extends React.Component<TableProps, any> {
                 thStyle.textAlign = 'center';
             }
             let sortMark = '';
-            if (this.props.enableSort && x.sortEnabled !== false && this.state.currentSortKey === x.name) {
-                sortMark = this.state.sortAscending ? '▲' : '▼';
+            if (enableSort && x.sortEnabled !== false && sortColumn === x.name) {
+                sortMark = sortAscending ? '▲' : '▼';
             }
             return <th name={x.name} key={x.name} style={thStyle} onClick={this.sort(x) }>{x.label || x.name} {sortMark}</th>;
         });
@@ -98,28 +96,23 @@ export class Table extends React.Component<TableProps, any> {
     }
 
     sort = (columnMetadata: ColumnMetadata) => (e) => {
-        if (this.props.enableSort && columnMetadata.sortEnabled !== false) {
-            let nextSortAscending = this.state.sortAscending;
-            if (this.state.currentSortKey === columnMetadata.name) {
-                nextSortAscending = !nextSortAscending;
-            }
-            this.setState({
-                currentSortKey: columnMetadata.name,
-                sortAscending: nextSortAscending
-            });
+        const { enableSort, sortColumn, sortAscending, handleSort } = this.props;
+
+        if (enableSort && handleSort && columnMetadata.sortEnabled !== false) {
+            handleSort(columnMetadata.name);
         }
     };
 
     renderBody(visibleColumns: ColumnMetadata[], pageSize: number): JSX.Element[] {
-        const { results, rowKey, showPagination, resultsPerPage, currentPage } = this.props;
-        const { currentSortKey, sortAscending } = this.state;
+        const { results, rowKey, showPagination, resultsPerPage, currentPage,
+            sortColumn, sortAscending } = this.props;
 
         // sort
         let sortedResults = results;
-        if (currentSortKey !== null) {
+        if (sortColumn !== null) {
             sortedResults = results.slice().sort((a, b) => {
-                const valueA = toString(a[currentSortKey]);
-                const valueB = toString(b[currentSortKey]);
+                const valueA = toString(a[sortColumn]);
+                const valueB = toString(b[sortColumn]);
                 if (valueA < valueB) {
                     return sortAscending ? -1 : 1;
                 }
