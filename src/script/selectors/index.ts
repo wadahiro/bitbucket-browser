@@ -4,15 +4,49 @@ import { createSelector } from 'reselect';
 import * as API from '../webapis';
 import { RootState, BrowserState, FilterState } from '../reducers';
 
-const getFilterState = (state: RootState) => state.filter
-const getBrowserState = (state: RootState) => state.browser
+const getFilterState = (state: RootState) => state.filter;
+const getBranchInfos = (state: RootState) => state.browser.branchInfos;
+const getCurrentSortColumn = (state: RootState) => state.browser.currentSortColumn;
+const getCurrentSortAscending = (state: RootState) => state.browser.currentSortAscending;
+const getCurrentPage = (state: RootState) => state.browser.currentPage;
+const getResultsPerPage = (state: RootState) => state.browser.resultsPerPage;
 
-export const getVisibleBranchInfos = createSelector<RootState, API.BranchInfo[], FilterState, BrowserState>(
+export const getFilteredBranchInfos = createSelector<RootState, API.BranchInfo[], API.BranchInfo[], FilterState>(
+    getBranchInfos,
     getFilterState,
-    getBrowserState,
-    (filterState, browserState) => {
-        const filteredBranchInfos = filterBranchInfo(browserState.branchInfos, filterState);
-        return filteredBranchInfos;
+    (branchInfos, filterState) => {
+        const filtered = filterBranchInfo(branchInfos, filterState);
+        return filtered;
+    }
+);
+
+export const getPageSize = createSelector<RootState, number, API.BranchInfo[], number>(
+    getFilteredBranchInfos,
+    getResultsPerPage,
+    (filteredBranchInfos, resultsPerPage) => {
+        const pageSize = Math.ceil(filteredBranchInfos.length / resultsPerPage);
+        return pageSize;
+    }
+);
+
+export const getSortedBranchInfos = createSelector<RootState, API.BranchInfo[], API.BranchInfo[], string, boolean>(
+    getFilteredBranchInfos,
+    getCurrentSortColumn,
+    getCurrentSortAscending,
+    (filteredBranchInfos, sortColumn, sortAscending) => {
+        const sorted = sortBranchInfo(filteredBranchInfos, sortColumn, sortAscending);
+        return sorted;
+    }
+);
+
+export const getSlicedBranchInfos = createSelector<RootState, API.BranchInfo[], API.BranchInfo[], number, number, number>(
+    getSortedBranchInfos,
+    getCurrentPage,
+    getResultsPerPage,
+    getPageSize,
+    (sortedBranchInfos, currentPage, resultsPerPage, pageSize) => {
+        const sliced = sliceBranchInfo(sortedBranchInfos, currentPage, resultsPerPage, pageSize);
+        return sliced;
     }
 );
 
@@ -84,4 +118,45 @@ function match(patterns: string[] = [], target: string) {
         return re.test(target);
     });
     return found === undefined ? false : true;
+}
+
+function sortBranchInfo(branchInfos: API.BranchInfo[], sortColumn: string, sortAscending: boolean) {
+    let sortedResults = branchInfos;
+    if (sortColumn !== null) {
+        sortedResults = branchInfos.slice().sort((a, b) => {
+            const valueA = toString(a[sortColumn]);
+            const valueB = toString(b[sortColumn]);
+            if (valueA < valueB) {
+                return sortAscending ? -1 : 1;
+            }
+            if (valueA === valueB) {
+                return 0;
+            }
+            if (valueA > valueB) {
+                return sortAscending ? 1 : -1;
+            }
+        });
+    }
+    return sortedResults;
+}
+
+function toString(value: any = '') {
+    return value + '';
+}
+
+function sliceBranchInfo(branchInfos: API.BranchInfo[], currentPage: number, resultsPerPage: number, pageSize: number) {
+    const fixedCurrentPage = fixCurrentPage(currentPage, pageSize);
+    const start = fixedCurrentPage * resultsPerPage;
+    const end = start + resultsPerPage;
+
+    const pageResults = branchInfos.slice(start, end);
+
+    return pageResults;
+}
+
+function fixCurrentPage(currentPage: number, pageSize: number) {
+    if (currentPage >= pageSize) {
+        return pageSize - 1;
+    }
+    return currentPage;
 }

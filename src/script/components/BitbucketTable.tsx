@@ -96,7 +96,7 @@ const COLUMN_METADATA: B.ColumnMetadata[] = [
 interface Props {
     settings: Settings;
     api: API.API;
-    resultsPerPage: number;
+    pageSize: number;
     currentPage: number;
     enableSort?: boolean;
     sortColumn?: string;
@@ -110,13 +110,12 @@ interface Props {
 
 export default class BitbucketDataTable extends React.Component<Props, void> {
     static defaultProps = {
-        resultsPerPage: 5,
         enableSort: true
     };
 
     render() {
         const { settings, api, results,
-            resultsPerPage, currentPage,
+            pageSize, currentPage,
             sortColumn, sortAscending,
             handlePageChanged, handleSonarQubeAuthenticated, handleSort } = this.props;
 
@@ -154,9 +153,9 @@ export default class BitbucketDataTable extends React.Component<Props, void> {
                         sortAscending={sortAscending}
                         handleSort={handleSort}
                         showPagination={true}
+                        pageSize={pageSize}
                         currentPage={currentPage}
-                        handlePageChanged={handlePageChanged}
-                        resultsPerPage={resultsPerPage} />
+                        handlePageChanged={handlePageChanged} />
                 </B.Columns>
             </div>
         );

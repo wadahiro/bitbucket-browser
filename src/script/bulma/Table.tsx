@@ -9,7 +9,6 @@ export interface TableProps {
         [index: string]: string | number | boolean;
     }[];
     columnMetadata: ColumnMetadata[];
-    resultsPerPage?: number;
 
     // sort
     enableSort?: boolean;
@@ -18,6 +17,7 @@ export interface TableProps {
 
     // paging
     showPagination?: boolean;
+    pageSize?: number;
     currentPage?: number;
 
     // layout
@@ -55,10 +55,9 @@ export class Table extends React.Component<TableProps, void> {
     };
 
     render() {
-        const { fixed, results, columnMetadata, resultsPerPage } = this.props;
+        const { fixed, results, columnMetadata } = this.props;
 
         const visibleColumns = columnMetadata.filter(x => x.visible !== false);
-        const pageSize = Math.ceil(results.length / resultsPerPage);
 
         const tableLayout = {} as any;
         if (fixed) {
@@ -67,7 +66,7 @@ export class Table extends React.Component<TableProps, void> {
 
         return (
             <div>
-                {this.renderPagination(pageSize) }
+                {this.renderPagination() }
                 <table style={tableLayout} className={`table ${resolveModifiers(this.props)} `}>
                     <thead>
                         <TR>
@@ -75,10 +74,10 @@ export class Table extends React.Component<TableProps, void> {
                         </TR>
                     </thead>
                     <tbody>
-                        {this.renderBody(visibleColumns, pageSize) }
+                        {this.renderBody(visibleColumns) }
                     </tbody>
                 </table>
-                {this.renderPagination(pageSize) }
+                {this.renderPagination() }
             </div>
         );
     }
@@ -111,39 +110,11 @@ export class Table extends React.Component<TableProps, void> {
         }
     };
 
-    renderBody(visibleColumns: ColumnMetadata[], pageSize: number): JSX.Element[] {
-        const { results, rowKey, showPagination, resultsPerPage, currentPage,
-            sortColumn, sortAscending } = this.props;
-
-        // sort
-        let sortedResults = results;
-        if (sortColumn !== null) {
-            sortedResults = results.slice().sort((a, b) => {
-                const valueA = toString(a[sortColumn]);
-                const valueB = toString(b[sortColumn]);
-                if (valueA < valueB) {
-                    return sortAscending ? -1 : 1;
-                }
-                if (valueA === valueB) {
-                    return 0;
-                }
-                if (valueA > valueB) {
-                    return sortAscending ? 1 : -1;
-                }
-            });
-        }
-
-        // pagination
-        let pageResults = sortedResults;
-        if (showPagination) {
-            const fixedCurrentPage = fixCurrentPage(currentPage, pageSize);
-            const start = fixedCurrentPage * resultsPerPage;
-            const end = start + resultsPerPage;
-            pageResults = sortedResults.slice(start, end);
-        }
+    renderBody(visibleColumns: ColumnMetadata[]): JSX.Element[] {
+        const { results, rowKey } = this.props;
 
         // render
-        const body = pageResults.map(x => {
+        const body = results.map(x => {
             const tds = visibleColumns.map(col => {
                 const tdStyle = {} as any;
                 tdStyle.wordBreak = 'break-all';
@@ -176,29 +147,20 @@ export class Table extends React.Component<TableProps, void> {
         return body;
     }
 
-    renderPagination(pageSize): JSX.Element {
-        const { results, showPagination, resultsPerPage, currentPage } = this.props;
+    renderPagination(): JSX.Element {
+        const { results, showPagination, pageSize, currentPage } = this.props;
 
         if (!showPagination) {
             return <div />;
         }
 
-        const fixedCurrentPage = fixCurrentPage(currentPage, pageSize);
-
-        return <Pagination pageSize={pageSize} currentPage={fixedCurrentPage} onChange={this.handlePageChanged} />
+        return <Pagination pageSize={pageSize} currentPage={currentPage} onChange={this.handlePageChanged} />
     }
 
     handlePageChanged = (newPage: number) => {
         const { handlePageChanged } = this.props;
         handlePageChanged(newPage);
     };
-}
-
-function fixCurrentPage(currentPage: number, pageSize: number) {
-    if (currentPage >= pageSize) {
-        return pageSize - 1;
-    }
-    return currentPage;
 }
 
 function getValue(val: Object, path: string = '') {
@@ -210,10 +172,6 @@ function getValue(val: Object, path: string = '') {
         // TODO map check
         return s[x];
     }, val);
-}
-
-function toString(value: any = '') {
-    return value + '';
 }
 
 function resolveModifiers(props: TableProps) {

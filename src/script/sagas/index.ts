@@ -3,7 +3,7 @@ import { take, put, call, fork, spawn, join, select, Effect } from 'redux-saga/e
 import * as B from '../bulma';
 
 import * as actions from '../actions'
-import { getVisibleBranchInfos } from '../selectors'
+import { getSlicedBranchInfos } from '../selectors'
 import { RootState, AppState, FilterState }from '../reducers'
 import * as API from '../webapis';
 import { Settings } from '../Settings';
@@ -331,7 +331,7 @@ function* pollAddedBranchInfo() {
 
         const rootState: RootState = yield select((state: RootState) => state);
 
-        const branchInfos = getVisibleBranchInfos(rootState);
+        const branchInfos = getSlicedBranchInfos(rootState);
 
         for (let i = 0; i < branchInfos.length; i++) {
             const branchInfo = branchInfos[i];
@@ -353,7 +353,7 @@ function* pollChangePage() {
 
         const rootState: RootState = yield select((state: RootState) => state);
 
-        const branchInfos = getVisibleBranchInfos(rootState);
+        const branchInfos = getSlicedBranchInfos(rootState);
 
         for (let i = 0; i < branchInfos.length; i++) {
             const branchInfo = branchInfos[i];

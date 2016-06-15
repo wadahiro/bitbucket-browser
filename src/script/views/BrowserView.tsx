@@ -14,7 +14,7 @@ import { SidebarFilter, SelectOption } from '../components/SidebarFilter';
 import { AppState, FilterState, RootState } from '../reducers';
 
 import * as Actions from '../actions';
-import { getVisibleBranchInfos } from '../selectors';
+import { getSlicedBranchInfos, getPageSize } from '../selectors';
 
 
 interface Props {
@@ -27,13 +27,14 @@ interface Props {
     sonarQubeAuthenticated?: boolean;
 
     branchInfos?: API.BranchInfo[];
+    visibleBranchInfos?: API.BranchInfo[];
 
     filter?: FilterState;
 
     sortColumn?: string;
     sortAscending?: boolean;
 
-    resultsPerPage?: number;
+    pageSize?: number;
     currentPage?: number;
 }
 
@@ -47,12 +48,13 @@ function mapStateToProps(state: RootState, props: Props): Props {
 
         filter: state.filter,
 
-        branchInfos: getVisibleBranchInfos(state),
+        branchInfos: state.browser.branchInfos,
+        visibleBranchInfos: getSlicedBranchInfos(state),
 
         sortColumn: state.browser.currentSortColumn,
         sortAscending: state.browser.currentSortAscending,
 
-        resultsPerPage: state.browser.resultsPerPage,
+        pageSize: getPageSize(state),
         currentPage: state.browser.currentPage
     };
 }
@@ -93,9 +95,10 @@ class BrowserView extends React.Component<Props, void> {
         const { settings, api,
             loading,
             branchInfos,
+            visibleBranchInfos,
             filter,
             sortColumn, sortAscending,
-            resultsPerPage, currentPage } = this.props;
+            pageSize, currentPage } = this.props;
 
         const leftNav = [
             {
@@ -159,8 +162,8 @@ class BrowserView extends React.Component<Props, void> {
                                         settings={settings}
                                         api={api}
                                         showFilter={true}
-                                        results={branchInfos}
-                                        resultsPerPage={resultsPerPage}
+                                        results={visibleBranchInfos}
+                                        pageSize={pageSize}
                                         currentPage={currentPage}
                                         sortColumn={sortColumn}
                                         sortAscending={sortAscending}
