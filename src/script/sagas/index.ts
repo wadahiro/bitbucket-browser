@@ -3,6 +3,7 @@ import { take, put, call, fork, spawn, join, select, Effect } from 'redux-saga/e
 import * as B from '../bulma';
 
 import * as actions from '../actions'
+import { getSlicedBranchInfos } from '../selectors'
 import { RootState, AppState, FilterState }from '../reducers'
 import * as API from '../webapis';
 import { Settings } from '../Settings';
@@ -167,7 +168,10 @@ function* handleFetchPullRequestCount(branchInfosPerRepo: API.BranchInfo[]): Ite
             payload: {
                 branchInfo: {
                     id,
-                    pullRequestStatus: pullRequestStatusPerBranch
+                    pullRequestStatus: {
+                        value: pullRequestStatusPerBranch,
+                        completed: true
+                    }
                 }
             }
         });
@@ -196,7 +200,10 @@ function* handleSonarForBitbucketStatus(branchInfo: API.BranchInfo, prIds: numbe
             payload: {
                 branchInfo: {
                     id: branchInfo.id,
-                    sonarForBitbucketStatus
+                    sonarForBitbucketStatus: {
+                        value: sonarForBitbucketStatus,
+                        completed: true
+                    }
                 }
             }
         });
@@ -230,7 +237,10 @@ function* handleBuildStatus(branchInfo: API.BranchInfo): Iterable<Effect> {
         payload: {
             branchInfo: {
                 id,
-                buildStatus
+                buildStatus: {
+                    value: buildStatus,
+                    completed: true
+                }
             }
         }
     });
@@ -265,7 +275,10 @@ function* handleSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
             payload: {
                 branchInfo: {
                     id,
-                    sonarQubeMetrics
+                    sonarQubeMetrics: {
+                        value: sonarQubeMetrics,
+                        completed: false
+                    }
                 }
             }
         });
@@ -288,7 +301,10 @@ function* updateSonarQubeMetrics(branchInfo: API.BranchInfo) {
         payload: {
             branchInfo: {
                 id,
-                sonarQubeMetrics
+                sonarQubeMetrics: {
+                    value: sonarQubeMetrics,
+                    completed: true
+                }
             }
         }
     });
@@ -310,7 +326,7 @@ function* watchAndLog() {
 
 function* pollSaveFilters() {
     while (true) {
-        const action = yield take([actions.CHANGE_FILTER, actions.TOGGLE_FILTER]);
+        const action = yield take([actions.CHANGE_FILTER, actions.TOGGLE_SIDEBAR]);
 
         const filterState: FilterState = yield select((state: RootState) => state.filter);
 
@@ -323,9 +339,9 @@ function* pollSaveFilters() {
 }
 
 export default function* root(): Iterable<Effect> {
-    yield fork(watchAndLog)
-    yield fork(initApp)
-    yield fork(pollFetchBranchInfosRequested)
-    yield fork(pollReloadBranchInfos)
-    yield fork(pollSaveFilters)
+    yield fork(watchAndLog);
+    yield fork(initApp);
+    yield fork(pollFetchBranchInfosRequested);
+    yield fork(pollReloadBranchInfos);
+    yield fork(pollSaveFilters);
 }

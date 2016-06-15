@@ -49,12 +49,42 @@ export function initApp(): InitAppAction {
     };
 }
 
-export const TOGGLE_FILTER: ActionType<ToggleFilterAction> = 'TOGGLE_FILTER';
-interface ToggleFilterAction extends Action {
+export const TOGGLE_SIDEBAR: ActionType<ToggleSidebarAction> = 'TOGGLE_SIDEBAR';
+interface ToggleSidebarAction extends Action {
 }
-export function toggleFilter(): ToggleFilterAction {
+export function toggleFilter(): ToggleSidebarAction {
     return {
-        type: TOGGLE_FILTER
+        type: TOGGLE_SIDEBAR
+    };
+}
+
+export const CHANGE_PAGE: ActionType<ChangePageAction> = 'CHANGE_PAGE';
+export interface ChangePageAction extends Action {
+    payload: {
+        nextPage: number;
+    }
+}
+export function changePage(nextPage: number): ChangePageAction {
+    return {
+        type: CHANGE_PAGE,
+        payload: {
+            nextPage
+        }
+    };
+}
+
+export const CHANGE_SORT_COLUMN: ActionType<ChangeSortColumnAction> = 'CHANGE_SORT_COLUMN';
+interface ChangeSortColumnAction extends Action {
+    payload: {
+        nextSortColumn: string;
+    }
+}
+export function changeSortColumn(nextSortColumn: string): ChangeSortColumnAction {
+    return {
+        type: CHANGE_SORT_COLUMN,
+        payload: {
+            nextSortColumn
+        }
     };
 }
 

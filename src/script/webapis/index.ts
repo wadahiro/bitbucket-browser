@@ -65,10 +65,17 @@ export interface BranchInfo extends Branch {
      */
     id: string;
     branchNameLink: string;
-    pullRequestStatus: PullRequestStatus
-    buildStatus: BuildStatus;
-    sonarForBitbucketStatus: SonarForBitbucketStatus;
-    sonarQubeMetrics: SonarQubeMetrics;
+    pullRequestStatus: LazyItem<PullRequestStatus>
+    buildStatus: LazyItem<BuildStatus>;
+    sonarForBitbucketStatus: LazyItem<SonarForBitbucketStatus>;
+    sonarQubeMetrics: LazyItem<SonarQubeMetrics>;
+
+    fetchCompleted: boolean;
+}
+
+export interface LazyItem<T> {
+    value: T;
+    completed: boolean;
 }
 
 export interface PullRequestStatus {
@@ -94,6 +101,13 @@ export function isSonarQubeError(response: any): response is SQAPI.ErrorResponse
     return SQAPI.isErrorResponse(response);
 }
 
+export function isFetchCompleted(branchInfo: BranchInfo) {
+    const hasFalse = Object.keys(branchInfo)
+        .filter(x => branchInfo[x] && branchInfo[x].completed !== undefined)
+        .find(x => branchInfo[x].completed === false);
+    return !hasFalse;
+}
+
 export class API {
     settings: Settings;
     bitbucketApi: BAPI.BitbucketApi;
@@ -116,15 +130,19 @@ export class API {
     async fetchBranchInfo(repo: Repo): Promise<BranchInfo[]> {
         try {
             const branches = await this.fetchBranches(repo);
+            const items = this.settings.items;
 
             const branchInfos: BranchInfo[] = branches.map(b => {
                 const branchInfo: BranchInfo = Object.assign({}, b, <BranchInfo>{
                     id: `${b.project}_${b.repo}_${b.branch}`,
                     branchNameLink: getBranchNameLink(this.settings, b.branch),
-                    pullRequestStatus: null,
-                    buildStatus: null,
-                    sonarForBitbucketStatus: null,
-                    sonarQubeMetrics: null
+
+                    pullRequestStatus: items.pullRequestStatus.enabled ? { value: null, completed: false } : null,
+                    buildStatus: items.buildStatus.enabled ? { value: null, completed: false } : null,
+                    sonarForBitbucketStatus: items.sonarForBitbucketStatus.enabled ? { value: null, completed: false } : null,
+                    sonarQubeMetrics: items.sonarQubeMetrics.enabled ? { value: null, completed: false } : null,
+
+                    fetchCompleted: false // update at reducer
                 });
                 return branchInfo;
             });

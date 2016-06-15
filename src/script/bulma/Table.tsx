@@ -3,22 +3,33 @@ import { Pagination } from './Pagination'
 import { Loading } from './Loading'
 
 export interface TableProps {
-    fixed?: boolean;
-    columnMetadata: ColumnMetadata[];
-    enableSort?: boolean;
-    initialSort?: string;
-    initialSortAscending?: boolean;
-    showPagination?: boolean;
-    resultsPerPage?: number;
+    // basic
     rowKey: string;
+    results: {
+        [index: string]: string | number | boolean;
+    }[];
+    columnMetadata: ColumnMetadata[];
+
+    // sort
+    enableSort?: boolean;
+    sortColumn?: string;
+    sortAscending?: boolean;
+
+    // paging
+    showPagination?: boolean;
+    pageSize?: number;
+    currentPage?: number;
+
+    // layout
+    fixed?: boolean;
     borders?: boolean;
     stripes?: boolean;
     narrower?: boolean;
     combine?: boolean;
-    results: {
-        [index: string]: string | number | boolean;
-    }[];
-    handleShowRecord?: (data: any) => void;
+
+    // event handlers
+    handlePageChanged?: (nextPage: number) => void;
+    handleSort?: (nextSortColumn: string) => void;
 }
 
 export interface ColumnMetadata {
@@ -33,27 +44,20 @@ export interface ColumnMetadata {
 
 const LOADING = <Loading />;
 
-export class Table extends React.Component<TableProps, any> {
+export class Table extends React.Component<TableProps, void> {
     static defaultProps = {
         fixed: false,
-        initialSort: null,
-        initialSortAscending: true,
+        sortColumn: null,
+        sortAscending: true,
         showPagination: false,
         resultsPerPage: 5,
         results: []
     };
 
-    state = {
-        currentPage: 0,
-        currentSortKey: this.props.initialSort,
-        sortAscending: this.props.initialSortAscending,
-    };
-
     render() {
-        const { fixed, results, columnMetadata, resultsPerPage } = this.props;
+        const { fixed, results, columnMetadata } = this.props;
 
         const visibleColumns = columnMetadata.filter(x => x.visible !== false);
-        const pageSize = Math.ceil(results.length / resultsPerPage);
 
         const tableLayout = {} as any;
         if (fixed) {
@@ -62,7 +66,7 @@ export class Table extends React.Component<TableProps, any> {
 
         return (
             <div>
-                {this.renderPagination(pageSize) }
+                {this.renderPagination() }
                 <table style={tableLayout} className={`table ${resolveModifiers(this.props)} `}>
                     <thead>
                         <TR>
@@ -70,15 +74,17 @@ export class Table extends React.Component<TableProps, any> {
                         </TR>
                     </thead>
                     <tbody>
-                        {this.renderBody(visibleColumns, pageSize) }
+                        {this.renderBody(visibleColumns) }
                     </tbody>
                 </table>
-                {this.renderPagination(pageSize) }
+                {this.renderPagination() }
             </div>
         );
     }
 
     renderThead(visibleColumns: ColumnMetadata[]): JSX.Element[] {
+        const { enableSort, sortColumn, sortAscending } = this.props;
+
         const thead = visibleColumns.map(x => {
             const thStyle = {} as any;
             if (x.width) {
@@ -88,8 +94,8 @@ export class Table extends React.Component<TableProps, any> {
                 thStyle.textAlign = 'center';
             }
             let sortMark = '';
-            if (this.props.enableSort && x.sortEnabled !== false && this.state.currentSortKey === x.name) {
-                sortMark = this.state.sortAscending ? '▲' : '▼';
+            if (enableSort && x.sortEnabled !== false && sortColumn === x.name) {
+                sortMark = sortAscending ? '▲' : '▼';
             }
             return <th name={x.name} key={x.name} style={thStyle} onClick={this.sort(x) }>{x.label || x.name} {sortMark}</th>;
         });
@@ -97,63 +103,26 @@ export class Table extends React.Component<TableProps, any> {
     }
 
     sort = (columnMetadata: ColumnMetadata) => (e) => {
-        if (this.props.enableSort && columnMetadata.sortEnabled !== false) {
-            let nextSortAscending = this.state.sortAscending;
-            if (this.state.currentSortKey === columnMetadata.name) {
-                nextSortAscending = !nextSortAscending;
-            }
-            this.setState({
-                currentSortKey: columnMetadata.name,
-                sortAscending: nextSortAscending
-            });
+        const { enableSort, sortColumn, sortAscending, handleSort } = this.props;
+
+        if (enableSort && handleSort && columnMetadata.sortEnabled !== false) {
+            handleSort(columnMetadata.name);
         }
     };
 
-    renderBody(visibleColumns: ColumnMetadata[], pageSize: number): JSX.Element[] {
-        const { results, rowKey, showPagination, resultsPerPage } = this.props;
-        const { currentSortKey, sortAscending } = this.state;
-
-        // sort
-        let sortedResults = results;
-        if (currentSortKey !== null) {
-            sortedResults = results.slice().sort((a, b) => {
-                const valueA = toString(a[currentSortKey]);
-                const valueB = toString(b[currentSortKey]);
-                if (valueA < valueB) {
-                    return sortAscending ? -1 : 1;
-                }
-                if (valueA === valueB) {
-                    return 0;
-                }
-                if (valueA > valueB) {
-                    return sortAscending ? 1 : -1;
-                }
-            });
-        }
-
-        // pagination
-        let pageResults = sortedResults;
-        if (showPagination) {
-            const currentPage = fixCurrentPage(this.state.currentPage, pageSize);
-            const start = currentPage * resultsPerPage;
-            const end = start + resultsPerPage;
-            pageResults = sortedResults.slice(start, end);
-        }
+    renderBody(visibleColumns: ColumnMetadata[]): JSX.Element[] {
+        const { results, rowKey } = this.props;
 
         // render
-        const body = pageResults.map(x => {
-            //TODO
-            setTimeout(() => {
-                this.props.handleShowRecord(x);
-            });
-
+        const body = results.map(x => {
             const tds = visibleColumns.map(col => {
                 const tdStyle = {} as any;
                 tdStyle.wordBreak = 'break-all';
 
                 const value = getValue(x, col.name);
 
-                // lazy fetch
+                // show loading 
+                // we use null value as loading state
                 if (value === null) {
                     return <TD key={col.name} style={tdStyle}>{LOADING}</TD>;
                 }
@@ -178,31 +147,20 @@ export class Table extends React.Component<TableProps, any> {
         return body;
     }
 
-    renderPagination(pageSize): JSX.Element {
-        const { results, showPagination, resultsPerPage } = this.props;
-        let { currentPage } = this.state;
+    renderPagination(): JSX.Element {
+        const { results, showPagination, pageSize, currentPage } = this.props;
 
         if (!showPagination) {
             return <div />;
         }
 
-        currentPage = fixCurrentPage(currentPage, pageSize);
-
-        return <Pagination pageSize={pageSize} currentPage={currentPage} onChange={this.handlePageChange} />
+        return <Pagination pageSize={pageSize} currentPage={currentPage} onChange={this.handlePageChanged} />
     }
 
-    handlePageChange = (newPage: number) => {
-        this.setState({
-            currentPage: newPage
-        });
+    handlePageChanged = (newPage: number) => {
+        const { handlePageChanged } = this.props;
+        handlePageChanged(newPage);
     };
-}
-
-function fixCurrentPage(currentPage: number, pageSize: number) {
-    if (currentPage >= pageSize) {
-        return pageSize - 1;
-    }
-    return currentPage;
 }
 
 function getValue(val: Object, path: string = '') {
@@ -214,10 +172,6 @@ function getValue(val: Object, path: string = '') {
         // TODO map check
         return s[x];
     }, val);
-}
-
-function toString(value: any = '') {
-    return value + '';
 }
 
 function resolveModifiers(props: TableProps) {
