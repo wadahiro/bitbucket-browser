@@ -13,6 +13,7 @@
     "redux-devtools-dock-monitor": "registry:dt/redux-devtools-dock-monitor#1.0.1+20151216103641",
     "redux-devtools-log-monitor": "registry:dt/redux-devtools-log-monitor#1.0.1+20151216103641",
     "redux-saga": "registry:dt/redux-saga#0.9.1+20160316155526",
+    "reselect": "registry:dt/reselect#2.0.2+20160319031821",
     "whatwg-fetch": "registry:dt/whatwg-fetch#0.0.0+20160412133644"
   }
 }

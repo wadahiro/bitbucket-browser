@@ -14,6 +14,7 @@ import { SidebarFilter, SelectOption } from '../components/SidebarFilter';
 import { AppState, FilterState, RootState } from '../reducers';
 
 import * as Actions from '../actions';
+import { getVisibleBranchInfos } from '../selectors';
 
 
 interface Props {
@@ -25,7 +26,6 @@ interface Props {
 
     sonarQubeAuthenticated?: boolean;
 
-    branchInfosLoaded?: boolean;
     branchInfos?: API.BranchInfo[];
 
     filter?: FilterState;
@@ -45,16 +45,15 @@ function mapStateToProps(state: RootState, props: Props): Props {
 
         sonarQubeAuthenticated: state.app.sonarQubeAuthenticated,
 
-        branchInfosLoaded: state.app.branchInfosLoaded,
-        branchInfos: state.app.branchInfos,
-
         filter: state.filter,
 
-        sortColumn: state.app.currentSortColumn,
-        sortAscending: state.app.currentSortAscending,
+        branchInfos: getVisibleBranchInfos(state),
 
-        resultsPerPage: state.app.resultsPerPage,
-        currentPage: state.app.currentPage
+        sortColumn: state.browser.currentSortColumn,
+        sortAscending: state.browser.currentSortAscending,
+
+        resultsPerPage: state.browser.resultsPerPage,
+        currentPage: state.browser.currentPage
     };
 }
 
@@ -77,15 +76,12 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.reloadBranchInfos(settings));
     };
 
-    handleShowBranchInfo = (branchInfo: API.BranchInfo) => {
-        this.props.dispatch(Actions.showBranchInfoDetails(branchInfo.id));
-    };
-
     handleToggleSidebar = (e: React.SyntheticEvent) => {
         this.props.dispatch(Actions.toggleFilter());
     };
 
     handlePage = (nextPage: number) => {
+        // lazy loading the details of the showing records
         this.props.dispatch(Actions.changePage(nextPage));
     };
 
@@ -95,12 +91,11 @@ class BrowserView extends React.Component<Props, void> {
 
     render() {
         const { settings, api,
-            branchInfos, loading, branchInfosLoaded,
+            loading,
+            branchInfos,
             filter,
             sortColumn, sortAscending,
             resultsPerPage, currentPage } = this.props;
-
-        const filteredBranchInfos = filterBranchInfo(branchInfos, filter);
 
         const leftNav = [
             {
@@ -164,13 +159,12 @@ class BrowserView extends React.Component<Props, void> {
                                         settings={settings}
                                         api={api}
                                         showFilter={true}
-                                        results={filteredBranchInfos}
+                                        results={branchInfos}
                                         resultsPerPage={resultsPerPage}
                                         currentPage={currentPage}
                                         sortColumn={sortColumn}
                                         sortAscending={sortAscending}
                                         handlePage={this.handlePage}
-                                        handleShowBranchInfo={this.handleShowBranchInfo}
                                         handleSonarQubeAuthenticated={this.handleSonarQubeAuthenticated}
                                         handleSort={this.handleSort}
                                         />
@@ -190,75 +184,6 @@ function appendFilter(strArray, state, key) {
     if (state[key] !== '') {
         strArray.push(`${key}=${state[key]}`);
     }
-}
-
-function filterBranchInfo(data: API.BranchInfo[], filter: FilterState) {
-    const projectIncludes = filter.projectIncludes;
-    const projectExcludes = filter.projectExcludes;
-
-    const repoIncludes = filter.repoIncludes;
-    const repoExcludes = filter.repoExcludes;
-
-    const branchIncludes = filter.branchIncludes;
-    const branchExcludes = filter.branchExcludes;
-
-    const branchAuthorIncludes = filter.branchAuthorIncludes;
-    const branchAuthorExcludes = filter.branchAuthorExcludes;
-
-    let chain = _.chain(data);
-
-    // Includes
-    if (projectIncludes.length > 0) {
-        chain = chain.filter(row => {
-            return _.includes(projectIncludes, row.project) || match(projectIncludes, row.project);
-        });
-    }
-    if (repoIncludes.length > 0) {
-        chain = chain.filter(row => {
-            return _.includes(repoIncludes, row.repo) || match(repoIncludes, row.repo);
-        });
-    }
-    if (branchIncludes.length > 0) {
-        chain = chain.filter(row => {
-            return _.includes(branchIncludes, row.branch) || match(branchIncludes, row.branch);
-        });
-    }
-    if (branchAuthorIncludes.length > 0) {
-        chain = chain.filter(row => {
-            return _.includes(branchAuthorIncludes, row.branchAuthor) || match(branchAuthorIncludes, row.branchAuthor);
-        });
-    }
-
-    // Excludes
-    if (projectExcludes.length > 0) {
-        chain = chain.filter(row => {
-            return !(_.includes(projectExcludes, row.project) || match(projectExcludes, row.project));
-        });
-    }
-    if (repoExcludes.length > 0) {
-        chain = chain.filter(row => {
-            return !(_.includes(repoExcludes, row.repo) || match(repoExcludes, row.repo));
-        });
-    }
-    if (branchExcludes.length > 0) {
-        chain = chain.filter(row => {
-            return !(_.includes(branchExcludes, row.branch) || match(branchExcludes, row.branch));
-        });
-    }
-    if (branchAuthorExcludes.length > 0) {
-        chain = chain.filter(row => {
-            return !(_.includes(branchAuthorExcludes, row.branchAuthor) || match(branchAuthorExcludes, row.branchAuthor));
-        });
-    }
-    return chain.value();
-}
-
-function match(patterns: string[] = [], target: string) {
-    const found = patterns.find(pattern => {
-        const re = new RegExp(pattern);
-        return re.test(target);
-    });
-    return found === undefined ? false : true;
 }
 
 const BrowserViewContainer = connect(

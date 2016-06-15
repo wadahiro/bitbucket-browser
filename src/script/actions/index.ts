@@ -59,7 +59,7 @@ export function toggleFilter(): ToggleFilterAction {
 }
 
 export const CHANGE_PAGE: ActionType<ChangePageAction> = 'CHANGE_PAGE';
-interface ChangePageAction extends Action {
+export interface ChangePageAction extends Action {
     payload: {
         nextPage: number;
     }

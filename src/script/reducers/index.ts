@@ -77,15 +77,6 @@ export interface AppState {
     loading?: boolean;
 
     sonarQubeAuthenticated?: boolean;
-
-    branchInfosLoaded?: boolean;
-    branchInfos?: API.BranchInfo[];
-
-    resultsPerPage?: number;
-    currentPage?: number;
-
-    currentSortColumn?: string;
-    currentSortAscending?: boolean;
 }
 
 const initialAppState: AppState = {
@@ -93,13 +84,7 @@ const initialAppState: AppState = {
     api: null,
     loading: false,
 
-    sonarQubeAuthenticated: true,
-
-    branchInfosLoaded: false,
-    branchInfos: [],
-
-    resultsPerPage: 5,
-    currentPage: 0
+    sonarQubeAuthenticated: true
 };
 
 export const appStateReducer = (state: AppState = initialAppState, action: Actions.Action) => {
@@ -121,14 +106,6 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
         });
     }
 
-    if (Actions.isType(action, Actions.APPEND_BRANCH_INFOS)) {
-        const payload = action.payload;
-
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            branchInfos: state.branchInfos.concat(payload.branchInfos)
-        });
-    }
-
     if (Actions.isType(action, Actions.FETCH_BRANCH_INFOS_REQUESTED)) {
         return Object.assign<AppState, AppState, AppState>({}, state, {
             loading: true
@@ -141,8 +118,48 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
         });
     }
 
-    if (Actions.isType(action, Actions.RELOAD_BRANCH_INFOS)) {
+    if (Actions.isType(action, Actions.SONARQUBE_AUTHENTICATED)) {
         return Object.assign<AppState, AppState, AppState>({}, state, {
+            sonarQubeAuthenticated: true
+        });
+    }
+
+    return state;
+};
+
+export interface BrowserState {
+    branchInfos?: API.BranchInfo[];
+
+    resultsPerPage?: number;
+    currentPage?: number;
+
+    currentSortColumn?: string;
+    currentSortAscending?: boolean;
+}
+
+const initialBrowserState: BrowserState = {
+    branchInfos: [],
+
+    resultsPerPage: 5,
+    currentPage: 0,
+
+    currentSortColumn: null,
+    currentSortAscending: true
+};
+
+export const browserStateReducer = (state: BrowserState = initialBrowserState, action: Actions.Action) => {
+
+    if (Actions.isType(action, Actions.APPEND_BRANCH_INFOS)) {
+        const payload = action.payload;
+        const nextBranchInfos = state.branchInfos.concat(payload.branchInfos);
+
+        return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
+            branchInfos: nextBranchInfos
+        });
+    }
+
+    if (Actions.isType(action, Actions.RELOAD_BRANCH_INFOS)) {
+        return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
             branchInfos: []
         });
     }
@@ -150,7 +167,7 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
     if (Actions.isType(action, Actions.UPDATE_BRANCH_INFO)) {
         const { branchInfo } = action.payload;
 
-        return Object.assign<AppState, AppState, AppState>({}, state, {
+        return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
             branchInfos: state.branchInfos.map(x => {
                 if (x.id === branchInfo.id) {
                     return Object.assign({}, x, branchInfo);
@@ -160,16 +177,10 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
         });
     }
 
-    if (Actions.isType(action, Actions.SONARQUBE_AUTHENTICATED)) {
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            sonarQubeAuthenticated: true
-        });
-    }
-
     if (Actions.isType(action, Actions.CHANGE_PAGE)) {
         const payload = action.payload;
 
-        return Object.assign<AppState, AppState, AppState>({}, state, {
+        return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
             currentPage: payload.nextPage
         });
     }
@@ -182,7 +193,7 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
             nextAscending = !nextAscending;
         }
 
-        return Object.assign<AppState, AppState, AppState>({}, state, {
+        return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
             currentSortColumn: payload.nextSortColumn,
             currentSortAscending: nextAscending
         });
@@ -193,10 +204,12 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
 
 export default combineReducers({
     app: appStateReducer,
+    browser: browserStateReducer,
     filter: filterReducer
 });
 
 export interface RootState {
     app: AppState;
+    browser: BrowserState;
     filter: FilterState;
 }

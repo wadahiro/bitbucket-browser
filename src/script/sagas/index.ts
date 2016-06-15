@@ -3,6 +3,7 @@ import { take, put, call, fork, spawn, join, select, Effect } from 'redux-saga/e
 import * as B from '../bulma';
 
 import * as actions from '../actions'
+import { getVisibleBranchInfos } from '../selectors'
 import { RootState, AppState, FilterState }from '../reducers'
 import * as API from '../webapis';
 import { Settings } from '../Settings';
@@ -322,10 +323,53 @@ function* pollSaveFilters() {
     }
 }
 
+function* pollAddedBranchInfo() {
+    while (true) {
+        const action: actions.AppendBranchInfosAction = yield take(actions.APPEND_BRANCH_INFOS);
+
+        const appended = action.payload.branchInfos
+
+        const rootState: RootState = yield select((state: RootState) => state);
+
+        const branchInfos = getVisibleBranchInfos(rootState);
+
+        for (let i = 0; i < branchInfos.length; i++) {
+            const branchInfo = branchInfos[i];
+
+            for (let j = 0; j < appended.length; j++) {
+                const append = appended[j];
+                if (append.id === branchInfo.id) {
+                    // lazy load the details of the branch
+                    yield put(actions.showBranchInfoDetails(branchInfo.id));
+                }
+            }
+        }
+    }
+}
+
+function* pollChangePage() {
+    while (true) {
+        const action: actions.ChangePageAction = yield take(actions.CHANGE_PAGE);
+
+        const rootState: RootState = yield select((state: RootState) => state);
+
+        const branchInfos = getVisibleBranchInfos(rootState);
+
+        for (let i = 0; i < branchInfos.length; i++) {
+            const branchInfo = branchInfos[i];
+
+            // lazy load the details of the branch
+            yield put(actions.showBranchInfoDetails(branchInfo.id));
+        }
+    }
+}
+
 export default function* root(): Iterable<Effect> {
     yield fork(watchAndLog)
     yield fork(initApp)
     yield fork(pollFetchBranchInfosRequested)
     yield fork(pollReloadBranchInfos)
     yield fork(pollSaveFilters)
+    yield fork(pollAddedBranchInfo)
+    yield fork(pollChangePage)
 }

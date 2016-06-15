@@ -3,25 +3,33 @@ import { Pagination } from './Pagination'
 import { Loading } from './Loading'
 
 export interface TableProps {
-    fixed?: boolean;
+    // basic
+    rowKey: string;
+    results: {
+        [index: string]: string | number | boolean;
+    }[];
     columnMetadata: ColumnMetadata[];
+    resultsPerPage?: number;
+
+    // sort
     enableSort?: boolean;
     sortColumn?: string;
     sortAscending?: boolean;
+
+    // paging
     showPagination?: boolean;
-    resultsPerPage?: number;
-    rowKey: string;
+    currentPage?: number;
+
+    // layout
+    fixed?: boolean;
     borders?: boolean;
     stripes?: boolean;
     narrower?: boolean;
     combine?: boolean;
-    results: {
-        [index: string]: string | number | boolean;
-    }[];
-    currentPage?: number;
-    handleShowRecord?: (data: any) => void;
-    handlePage?: (index: number) => void;
-    handleSort?: (columnName: string) => void;
+
+    // event handlers
+    handlePage?: (nextPage: number) => void;
+    handleSort?: (nextSortColumn: string) => void;
 }
 
 export interface ColumnMetadata {
@@ -136,18 +144,14 @@ export class Table extends React.Component<TableProps, void> {
 
         // render
         const body = pageResults.map(x => {
-            //TODO
-            setTimeout(() => {
-                this.props.handleShowRecord(x);
-            });
-
             const tds = visibleColumns.map(col => {
                 const tdStyle = {} as any;
                 tdStyle.wordBreak = 'break-all';
 
                 const value = getValue(x, col.name);
 
-                // lazy fetch
+                // show loading 
+                // we use null value as loading state
                 if (value === null) {
                     return <TD key={col.name} style={tdStyle}>{LOADING}</TD>;
                 }
