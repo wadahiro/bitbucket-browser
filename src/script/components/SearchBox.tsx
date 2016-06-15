@@ -19,9 +19,11 @@ interface Props {
 
 export default class SearchBox extends React.Component<Props, void> {
 
-    onChange = (key, values: SelectOption[]) => {
+    // If upgrading react-select to 1.0.0, need to change this arguments and logic
+    // https://github.com/JedWatson/react-select/blob/master/CHANGES.md
+    onChange = (key, values: string) => {
         const filter = Object.assign({}, this.props.filter, {
-            [key]: values ? values.map(x => x.value) : []
+            [key]: values && values !== '' ? values.split(',') : []
         });
         this.props.onChange(key, filter);
     };
