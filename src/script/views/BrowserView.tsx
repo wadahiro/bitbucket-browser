@@ -14,7 +14,7 @@ import { SidebarFilter, SelectOption } from '../components/SidebarFilter';
 import { AppState, FilterState, RootState } from '../reducers';
 
 import * as Actions from '../actions';
-import { getSlicedBranchInfos, getPageSize } from '../selectors';
+import { getSlicedBranchInfos, getPageSize, getFixedCurrentPage } from '../selectors';
 
 
 interface Props {
@@ -55,7 +55,7 @@ function mapStateToProps(state: RootState, props: Props): Props {
         sortAscending: state.browser.currentSortAscending,
 
         pageSize: getPageSize(state),
-        currentPage: state.browser.currentPage
+        currentPage: getFixedCurrentPage(state)
     };
 }
 

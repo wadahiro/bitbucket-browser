@@ -29,6 +29,16 @@ export const getPageSize = createSelector<RootState, number, API.BranchInfo[], n
     }
 );
 
+export const getFixedCurrentPage = createSelector<RootState, number, API.BranchInfo[], number, number>(
+    getFilteredBranchInfos,
+    getPageSize,
+    getCurrentPage,
+    (filteredBranchInfos, pageSize, currentPage) => {
+        const fixedCurrentPage = fixCurrentPage(currentPage, pageSize);
+        return fixedCurrentPage;
+    }
+);
+
 export const getSortedBranchInfos = createSelector<RootState, API.BranchInfo[], API.BranchInfo[], string, boolean>(
     getFilteredBranchInfos,
     getCurrentSortColumn,
@@ -41,11 +51,11 @@ export const getSortedBranchInfos = createSelector<RootState, API.BranchInfo[], 
 
 export const getSlicedBranchInfos = createSelector<RootState, API.BranchInfo[], API.BranchInfo[], number, number, number>(
     getSortedBranchInfos,
-    getCurrentPage,
+    getFixedCurrentPage,
     getResultsPerPage,
     getPageSize,
-    (sortedBranchInfos, currentPage, resultsPerPage, pageSize) => {
-        const sliced = sliceBranchInfo(sortedBranchInfos, currentPage, resultsPerPage, pageSize);
+    (sortedBranchInfos, fixedCurrentPage, resultsPerPage, pageSize) => {
+        const sliced = sliceBranchInfo(sortedBranchInfos, fixedCurrentPage, resultsPerPage, pageSize);
         return sliced;
     }
 );
@@ -144,8 +154,7 @@ function toString(value: any = '') {
     return value + '';
 }
 
-function sliceBranchInfo(branchInfos: API.BranchInfo[], currentPage: number, resultsPerPage: number, pageSize: number) {
-    const fixedCurrentPage = fixCurrentPage(currentPage, pageSize);
+function sliceBranchInfo(branchInfos: API.BranchInfo[], fixedCurrentPage: number, resultsPerPage: number, pageSize: number) {
     const start = fixedCurrentPage * resultsPerPage;
     const end = start + resultsPerPage;
 
