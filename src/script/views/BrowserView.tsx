@@ -63,7 +63,7 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.initApp());
     }
 
-    onChangeFilter = (key: string, filter: FilterState) => {
+    handleFilterChanged = (key: string, filter: FilterState) => {
         this.props.dispatch(Actions.changeFilter(filter));
     };
 
@@ -112,7 +112,7 @@ class BrowserView extends React.Component<Props, void> {
         return (
             <SidebarFilter
                 data={branchInfos}
-                onChange={this.onChangeFilter}
+                onChange={this.handleFilterChanged}
                 filter={filter}
                 onClose={this.handleToggleSidebar}
                 open={filter.sidebarFilterOpened}
