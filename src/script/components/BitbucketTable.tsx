@@ -10,6 +10,7 @@ import { UnauthorizedIcon } from './UnauthorizedIcon';
 import { Settings, BranchNameLinkResolver } from '../Settings';
 
 const LOADING = <B.Loading />;
+const NONE = <span>-</span>;
 
 const COLUMN_METADATA: B.ColumnMetadata[] = [
     {
@@ -223,10 +224,6 @@ function BranchNameLinkFormatter(resolver: BranchNameLinkResolver) {
 }
 
 function ProgressBarLink(now, values, metadata, transform) {
-    if (now === null) {
-        return LOADING;
-    }
-
     let isDanger, isWarning, isInfo;
     if (now > 8) {
         isDanger = 'danger';
@@ -258,17 +255,15 @@ function ProgressBarLink(now, values, metadata, transform) {
 }
 
 function BehindAheadGraphFormatter(data: API.BehindAheadBranch, values, metadata) {
-    if (data === null) {
-        return LOADING;
-    }
-
     return <BehindAheadGraph behind={data.behindBranch} ahead={data.aheadBranch} />;
 }
 
-function PullRequestStatusFormatter(data: API.PullRequestStatus, values: API.BranchInfo, metadata) {
-    if (data === null) {
+function PullRequestStatusFormatter(item: API.LazyItem<API.PullRequestStatus>, values: API.BranchInfo, metadata) {
+    if (!item.completed) {
         return LOADING;
     }
+
+    const data = item.value;
 
     const style = {
         marginBottom: 10,
@@ -293,13 +288,15 @@ function PullRequestBarLink(api: API.API, state: string) {
     };
 }
 
-function BuildStatusFormatter(buildStatus: API.BuildStatus, values, metadata) {
-    if (buildStatus === null) {
+function BuildStatusFormatter(item: API.LazyItem<API.BuildStatus>, values, metadata) {
+    if (!item.completed) {
         return LOADING;
     }
 
+    const buildStatus = item.value;
+
     if (buildStatus.values.length === 0) {
-        return <span>-</span>;
+        return NONE;
     }
 
     const latestBuildStatus = buildStatus.values[0];
@@ -325,10 +322,12 @@ function BuildStatusFormatter(buildStatus: API.BuildStatus, values, metadata) {
     );
 }
 
-function SonarQubeStatusFormatter(sonarForBitbucketStatus: API.SonarForBitbucketStatus, branchInfo: API.BranchInfo, metadata) {
-    if (sonarForBitbucketStatus === null) {
+function SonarQubeStatusFormatter(item: API.LazyItem<API.SonarForBitbucketStatus>, branchInfo: API.BranchInfo, metadata) {
+    if (!item.completed) {
         return LOADING;
     }
+
+    const sonarForBitbucketStatus = item.value;
 
     const api: API.API = metadata._api;
 
@@ -368,7 +367,7 @@ function SonarQubeStatusFormatter(sonarForBitbucketStatus: API.SonarForBitbucket
     });
 
     if (items.length === 0) {
-        return <span>-</span>;
+        return NONE;
     }
     return <div>{items}</div>;
 }
@@ -440,10 +439,13 @@ function _toSonarDisplayValue(key: string, value: string | number): string {
 
 
 function SonarQubeMetricsFormatter(api: API.API, onAuthenticated: () => void) {
-    return (metrics: API.SonarQubeMetrics, branchInfo: API.BranchInfo, metadata) => {
-        if (metrics === null) {
+    return (item: API.LazyItem<API.SonarQubeMetrics>, branchInfo: API.BranchInfo, metadata) => {
+        if (!item.completed) {
             return LOADING;
         }
+
+        const metrics = item.value;
+
         if (API.isSonarQubeError(metrics)) {
             // Show needing authentication
             if (metrics.err_code === 401) {
@@ -457,7 +459,7 @@ function SonarQubeMetricsFormatter(api: API.API, onAuthenticated: () => void) {
 
             // Not Found
             if (metrics.err_code === 404) {
-                return <span>-</span>;
+                return NONE;
             }
         } else {
             const style = {

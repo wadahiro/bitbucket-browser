@@ -170,7 +170,13 @@ export const browserStateReducer = (state: BrowserState = initialBrowserState, a
         return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
             branchInfos: state.branchInfos.map(x => {
                 if (x.id === branchInfo.id) {
-                    return Object.assign({}, x, branchInfo);
+                    const newBranchInfo = Object.assign({}, x, branchInfo);
+
+                    // Check lazy loading completed
+                    const fetchCompleted = API.isFetchCompleted(newBranchInfo);
+                    newBranchInfo.fetchCompleted = fetchCompleted;
+
+                    return newBranchInfo;
                 }
                 return x;
             })

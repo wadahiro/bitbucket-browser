@@ -168,7 +168,10 @@ function* handleFetchPullRequestCount(branchInfosPerRepo: API.BranchInfo[]): Ite
             payload: {
                 branchInfo: {
                     id,
-                    pullRequestStatus: pullRequestStatusPerBranch
+                    pullRequestStatus: {
+                        value: pullRequestStatusPerBranch,
+                        completed: true
+                    }
                 }
             }
         });
@@ -197,7 +200,10 @@ function* handleSonarForBitbucketStatus(branchInfo: API.BranchInfo, prIds: numbe
             payload: {
                 branchInfo: {
                     id: branchInfo.id,
-                    sonarForBitbucketStatus
+                    sonarForBitbucketStatus: {
+                        value: sonarForBitbucketStatus,
+                        completed: true
+                    }
                 }
             }
         });
@@ -231,7 +237,10 @@ function* handleBuildStatus(branchInfo: API.BranchInfo): Iterable<Effect> {
         payload: {
             branchInfo: {
                 id,
-                buildStatus
+                buildStatus: {
+                    value: buildStatus,
+                    completed: true
+                }
             }
         }
     });
@@ -266,7 +275,10 @@ function* handleSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
             payload: {
                 branchInfo: {
                     id,
-                    sonarQubeMetrics
+                    sonarQubeMetrics: {
+                        value: sonarQubeMetrics,
+                        completed: false
+                    }
                 }
             }
         });
@@ -289,7 +301,10 @@ function* updateSonarQubeMetrics(branchInfo: API.BranchInfo) {
         payload: {
             branchInfo: {
                 id,
-                sonarQubeMetrics
+                sonarQubeMetrics: {
+                    value: sonarQubeMetrics,
+                    completed: true
+                }
             }
         }
     });
@@ -323,53 +338,10 @@ function* pollSaveFilters() {
     }
 }
 
-function* pollAddedBranchInfo() {
-    while (true) {
-        const action: actions.AppendBranchInfosAction = yield take(actions.APPEND_BRANCH_INFOS);
-
-        const appended = action.payload.branchInfos
-
-        const rootState: RootState = yield select((state: RootState) => state);
-
-        const branchInfos = getSlicedBranchInfos(rootState);
-
-        for (let i = 0; i < branchInfos.length; i++) {
-            const branchInfo = branchInfos[i];
-
-            for (let j = 0; j < appended.length; j++) {
-                const append = appended[j];
-                if (append.id === branchInfo.id) {
-                    // lazy load the details of the branch
-                    yield put(actions.showBranchInfoDetails(branchInfo.id));
-                }
-            }
-        }
-    }
-}
-
-function* pollChangePage() {
-    while (true) {
-        const action: actions.ChangePageAction = yield take(actions.CHANGE_PAGE);
-
-        const rootState: RootState = yield select((state: RootState) => state);
-
-        const branchInfos = getSlicedBranchInfos(rootState);
-
-        for (let i = 0; i < branchInfos.length; i++) {
-            const branchInfo = branchInfos[i];
-
-            // lazy load the details of the branch
-            yield put(actions.showBranchInfoDetails(branchInfo.id));
-        }
-    }
-}
-
 export default function* root(): Iterable<Effect> {
-    yield fork(watchAndLog)
-    yield fork(initApp)
-    yield fork(pollFetchBranchInfosRequested)
-    yield fork(pollReloadBranchInfos)
-    yield fork(pollSaveFilters)
-    yield fork(pollAddedBranchInfo)
-    yield fork(pollChangePage)
+    yield fork(watchAndLog);
+    yield fork(initApp);
+    yield fork(pollFetchBranchInfosRequested);
+    yield fork(pollReloadBranchInfos);
+    yield fork(pollSaveFilters);
 }

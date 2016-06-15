@@ -69,6 +69,14 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.initApp());
     }
 
+    componentWillReceiveProps(nextProps: Props) {
+        nextProps.visibleBranchInfos.forEach(x => {
+            if (!x.fetchCompleted) {
+                this.props.dispatch(Actions.showBranchInfoDetails(x.id));
+            }
+        });
+    }
+
     handleFilterChanged = (key: string, filter: FilterState) => {
         this.props.dispatch(Actions.changeFilter(filter));
     };
