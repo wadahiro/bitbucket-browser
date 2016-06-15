@@ -103,7 +103,7 @@ interface Props {
     sortAscending?: boolean;
     results: any[];
     showFilter: boolean;
-    handlePage: (nextPage: number) => void;
+    handlePageChanged: (nextPage: number) => void;
     handleSonarQubeAuthenticated: () => void;
     handleSort: (nextSortColumn: string) => void;
 }
@@ -118,7 +118,7 @@ export default class BitbucketDataTable extends React.Component<Props, void> {
         const { settings, api, results,
             resultsPerPage, currentPage,
             sortColumn, sortAscending,
-            handlePage, handleSonarQubeAuthenticated, handleSort } = this.props;
+            handlePageChanged, handleSonarQubeAuthenticated, handleSort } = this.props;
 
         const resolvedColumnMetadata = COLUMN_METADATA.filter(x => {
             const item = settings.items[x.name];
@@ -155,7 +155,7 @@ export default class BitbucketDataTable extends React.Component<Props, void> {
                         handleSort={handleSort}
                         showPagination={true}
                         currentPage={currentPage}
-                        handlePage={handlePage}
+                        handlePageChanged={handlePageChanged}
                         resultsPerPage={resultsPerPage} />
                 </B.Columns>
             </div>

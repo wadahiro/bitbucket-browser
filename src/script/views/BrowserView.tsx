@@ -63,7 +63,7 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.initApp());
     }
 
-    onChange = (key: string, filter: FilterState) => {
+    onChangeFilter = (key: string, filter: FilterState) => {
         this.props.dispatch(Actions.changeFilter(filter));
     };
 
@@ -80,7 +80,7 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.toggleFilter());
     };
 
-    handlePage = (nextPage: number) => {
+    handlePageChanged = (nextPage: number) => {
         // lazy loading the details of the showing records
         this.props.dispatch(Actions.changePage(nextPage));
     };
@@ -112,7 +112,7 @@ class BrowserView extends React.Component<Props, void> {
         return (
             <SidebarFilter
                 data={branchInfos}
-                onChange={this.onChange}
+                onChange={this.onChangeFilter}
                 filter={filter}
                 onClose={this.handleToggleSidebar}
                 open={filter.sidebarFilterOpened}
@@ -164,7 +164,7 @@ class BrowserView extends React.Component<Props, void> {
                                         currentPage={currentPage}
                                         sortColumn={sortColumn}
                                         sortAscending={sortAscending}
-                                        handlePage={this.handlePage}
+                                        handlePageChanged={this.handlePageChanged}
                                         handleSonarQubeAuthenticated={this.handleSonarQubeAuthenticated}
                                         handleSort={this.handleSort}
                                         />

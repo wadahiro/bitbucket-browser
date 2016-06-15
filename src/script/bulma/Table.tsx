@@ -28,7 +28,7 @@ export interface TableProps {
     combine?: boolean;
 
     // event handlers
-    handlePage?: (nextPage: number) => void;
+    handlePageChanged?: (nextPage: number) => void;
     handleSort?: (nextSortColumn: string) => void;
 }
 
@@ -185,12 +185,12 @@ export class Table extends React.Component<TableProps, void> {
 
         const fixedCurrentPage = fixCurrentPage(currentPage, pageSize);
 
-        return <Pagination pageSize={pageSize} currentPage={fixedCurrentPage} onChange={this.handlePageChange} />
+        return <Pagination pageSize={pageSize} currentPage={fixedCurrentPage} onChange={this.handlePageChanged} />
     }
 
-    handlePageChange = (newPage: number) => {
-        const { handlePage } = this.props;
-        handlePage(newPage);
+    handlePageChanged = (newPage: number) => {
+        const { handlePageChanged } = this.props;
+        handlePageChanged(newPage);
     };
 }
 
