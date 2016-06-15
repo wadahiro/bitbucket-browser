@@ -311,7 +311,7 @@ function* watchAndLog() {
 
 function* pollSaveFilters() {
     while (true) {
-        const action = yield take([actions.CHANGE_FILTER, actions.TOGGLE_FILTER]);
+        const action = yield take([actions.CHANGE_FILTER, actions.TOGGLE_SIDEBAR]);
 
         const filterState: FilterState = yield select((state: RootState) => state.filter);
 

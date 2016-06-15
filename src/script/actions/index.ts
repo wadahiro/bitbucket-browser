@@ -49,12 +49,12 @@ export function initApp(): InitAppAction {
     };
 }
 
-export const TOGGLE_FILTER: ActionType<ToggleFilterAction> = 'TOGGLE_FILTER';
-interface ToggleFilterAction extends Action {
+export const TOGGLE_SIDEBAR: ActionType<ToggleSidebarAction> = 'TOGGLE_SIDEBAR';
+interface ToggleSidebarAction extends Action {
 }
-export function toggleFilter(): ToggleFilterAction {
+export function toggleFilter(): ToggleSidebarAction {
     return {
-        type: TOGGLE_FILTER
+        type: TOGGLE_SIDEBAR
     };
 }
 

@@ -14,8 +14,6 @@ export interface FilterState {
     branchExcludes?: string[];
     branchAuthorIncludes?: string[];
     branchAuthorExcludes?: string[];
-
-    sidebarFilterOpened?: boolean;
 }
 
 function initFilterState(): FilterState {
@@ -27,9 +25,7 @@ function initFilterState(): FilterState {
         branchIncludes: [],
         branchExcludes: [],
         branchAuthorIncludes: [],
-        branchAuthorExcludes: [],
-
-        sidebarFilterOpened: false
+        branchAuthorExcludes: []
     };
 
     // Restore from URL
@@ -61,12 +57,6 @@ export const filterReducer = (state: FilterState = initFilterState(), action: Ac
         return Object.assign<FilterState, FilterState, FilterState>({}, state, filter);
     }
 
-    if (Actions.isType(action, Actions.TOGGLE_FILTER)) {
-        return Object.assign<FilterState, FilterState, FilterState>({}, state, {
-            sidebarFilterOpened: !state.sidebarFilterOpened
-        });
-    }
-
     return state;
 }
 
@@ -77,6 +67,8 @@ export interface AppState {
     loading?: boolean;
 
     sonarQubeAuthenticated?: boolean;
+
+    sidebarOpened?: boolean;
 }
 
 const initialAppState: AppState = {
@@ -84,7 +76,9 @@ const initialAppState: AppState = {
     api: null,
     loading: false,
 
-    sonarQubeAuthenticated: true
+    sonarQubeAuthenticated: true,
+
+    sidebarOpened: false
 };
 
 export const appStateReducer = (state: AppState = initialAppState, action: Actions.Action) => {
@@ -121,6 +115,12 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
     if (Actions.isType(action, Actions.SONARQUBE_AUTHENTICATED)) {
         return Object.assign<AppState, AppState, AppState>({}, state, {
             sonarQubeAuthenticated: true
+        });
+    }
+
+    if (Actions.isType(action, Actions.TOGGLE_SIDEBAR)) {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
+            sidebarOpened: !state.sidebarOpened
         });
     }
 

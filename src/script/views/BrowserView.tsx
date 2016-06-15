@@ -26,6 +26,8 @@ interface Props {
 
     sonarQubeAuthenticated?: boolean;
 
+    sidebarOpened?: boolean;
+
     branchInfos?: API.BranchInfo[];
     visibleBranchInfos?: API.BranchInfo[];
 
@@ -45,6 +47,8 @@ function mapStateToProps(state: RootState, props: Props): Props {
         loading: state.app.loading,
 
         sonarQubeAuthenticated: state.app.sonarQubeAuthenticated,
+
+        sidebarOpened: state.app.sidebarOpened,
 
         filter: state.filter,
 
@@ -94,6 +98,7 @@ class BrowserView extends React.Component<Props, void> {
     render() {
         const { settings, api,
             loading,
+            sidebarOpened,
             branchInfos,
             visibleBranchInfos,
             filter,
@@ -118,14 +123,14 @@ class BrowserView extends React.Component<Props, void> {
                 onChange={this.handleFilterChanged}
                 filter={filter}
                 onClose={this.handleToggleSidebar}
-                open={filter.sidebarFilterOpened}
+                open={sidebarOpened}
                 >
                 <div>
                     <B.Hero isInfo>
                         <B.Nav>
                             <B.Container isFluid>
                                 <B.NavLeft>
-                                    { !filter.sidebarFilterOpened &&
+                                    { !sidebarOpened &&
                                         <B.NavItemLink onClick={this.handleToggleSidebar}>
                                             <B.Icon iconClassName='fa fa-angle-double-right' color={'white'} />
                                         </B.NavItemLink>
