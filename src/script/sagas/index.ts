@@ -277,7 +277,7 @@ function* handleSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
                     id,
                     sonarQubeMetrics: {
                         value: sonarQubeMetrics,
-                        completed: false
+                        completed: true
                     }
                 }
             }
