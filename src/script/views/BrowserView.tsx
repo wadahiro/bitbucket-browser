@@ -71,6 +71,7 @@ class BrowserView extends React.Component<Props, void> {
     }
 
     componentWillReceiveProps(nextProps: Props) {
+        // Lazy fetching
         nextProps.visibleBranchInfos.forEach(x => {
             if (!x.fetchCompleted) {
                 this.props.dispatch(Actions.showBranchInfoDetails(x.id));
@@ -114,14 +115,6 @@ class BrowserView extends React.Component<Props, void> {
             sortColumn, sortAscending,
             pageSize, currentPage } = this.props;
 
-        const leftNav = [
-            {
-                name: 'home',
-                label: settings ? settings.title : '',
-                link: '/'
-            }
-        ];
-
         if (!settings) {
             return <div>Loading settings...</div>;
         }
@@ -159,12 +152,6 @@ class BrowserView extends React.Component<Props, void> {
                 <Footer settings={settings} />
             </SidebarFilter>
         );
-    }
-}
-
-function appendFilter(strArray, state, key) {
-    if (state[key] !== '') {
-        strArray.push(`${key}=${state[key]}`);
     }
 }
 
