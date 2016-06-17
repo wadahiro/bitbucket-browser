@@ -8,7 +8,7 @@ let container;
 if (process.env.NODE_ENV === 'production') {
     container = <BrowserView  />;
 } else {
-    const DevTools = require('./DevTools');
+    const DevTools = require('./DevTools').default;
     container = <div>
         <BrowserView  />
         <DevTools />
