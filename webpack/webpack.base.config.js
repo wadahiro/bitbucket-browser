@@ -9,7 +9,7 @@ NODE_ENV = NODE_ENV && NODE_ENV.trim() === 'production' ? 'production' : 'develo
 
 module.exports = {
   target: 'web',
-  entry: ['babel-polyfill', './src/script/app.tsx'],
+  entry: ['babel-polyfill', './src/script/index.tsx'],
   output: {
     path: path.join(__dirname, '../public/js'),
     publicPath: '/js/',
