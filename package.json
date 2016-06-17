@@ -14,10 +14,10 @@
     "build:assets": "npm run build:dll && npm run build:style && npm run build:html",
     "build": "cross-env NODE_ENV=production npm run build:assets && cross-env NODE_ENV=production npm run build:script",
     "server": "node-dev test-server.js",
-    "start": "node-dev webpack/webpack.server.js"
+    "start": "npm run build:assets && node-dev webpack/webpack.server.js"
   },
   "devDependencies": {
-    "awesome-typescript-loader": "^1.0.0",
+    "awesome-typescript-loader": "^0.17.0",
     "babel-core": "^6.9.0",
     "babel-loader": "^6.2.4",
     "babel-plugin-react-transform": "^2.0.0",
