@@ -46,6 +46,9 @@ function* initApp(): Iterable<Effect> {
         }
         location.href = `${settings.baseUrl}/login?next=${path}${hash}`;
     } else {
+        // Restore app state
+        yield fork(restoreStateFromQueryParameter);
+
         const sonarQubeAuthenticated = yield call([api, api.isAuthenticatedSonarQube]);
 
         yield put(<actions.InitAppAction>{
@@ -324,17 +327,56 @@ function* watchAndLog() {
     }
 }
 
-function* pollSaveFilters() {
+const SIDEBAR_OPENED = 'sidebarOpened';
+
+function* restoreStateFromQueryParameter() {
+    if (window.location.hash) {
+        // Restore app state from query parameters
+        const rootState: RootState = yield select((state: RootState) => state);
+        let filterState = rootState.filter;
+        let appState = rootState.app;
+
+        // Restore filterState
+        const query = decodeURIComponent(window.location.hash);
+        const queryParams = query.substring(1).split('&').reduce((s, x) => {
+            const pair = x.split('=');
+            s[pair[0]] = pair[1];
+            return s;
+        }, {});
+        filterState = Object.keys(rootState.filter).reduce((s, x) => {
+            if (queryParams[x]) {
+                s[x] = queryParams[x].split(',');
+            }
+            return s;
+        }, rootState.filter);
+
+        // Restore sidebar opened
+        appState.sidebarOpened = queryParams[SIDEBAR_OPENED].toLowerCase() === 'true' ? true : false;
+
+        yield put(<actions.RestoreStateAction>{
+            type: actions.RESTORE_STATE,
+            payload: {
+                filterState,
+                appState
+            }
+        });
+    }
+}
+
+function* pollSaveAsQueryParameters() {
     while (true) {
         const action = yield take([actions.CHANGE_FILTER, actions.TOGGLE_SIDEBAR]);
 
         const filterState: FilterState = yield select((state: RootState) => state.filter);
+        const sidebarOpened: boolean = yield select((state: RootState) => state.app.sidebarOpened);
 
         // Save to URL
-        const saveFilters = Object.keys(filterState).map(x => {
+        const queryParameters = Object.keys(filterState).map(x => {
             return `${x}=${filterState[x]}`
         });
-        window.location.hash = saveFilters.join('&');
+        queryParameters.push(`${SIDEBAR_OPENED}=${sidebarOpened}`);
+
+        window.location.hash = queryParameters.join('&');
     }
 }
 
@@ -343,5 +385,5 @@ export default function* root(): Iterable<Effect> {
     yield fork(initApp);
     yield fork(pollFetchBranchInfosRequested);
     yield fork(pollReloadBranchInfos);
-    yield fork(pollSaveFilters);
+    yield fork(pollSaveAsQueryParameters);
 }

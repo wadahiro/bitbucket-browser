@@ -4,7 +4,7 @@ import * as B from '../bulma';
 
 import * as API from '../webapis';
 import { Settings } from '../Settings';
-import { FilterState } from '../reducers';
+import { AppState, FilterState } from '../reducers';
 
 interface ActionType<TAction> extends String { }
 
@@ -47,6 +47,14 @@ export function initApp(): InitAppAction {
             sonarQubeAuthenticated: false
         }
     };
+}
+
+export const RESTORE_STATE: ActionType<RestoreStateAction> = 'RESTORE_STATE';
+export interface RestoreStateAction extends Action {
+    payload: {
+        filterState: FilterState;
+        appState: AppState;
+    }
 }
 
 export const TOGGLE_SIDEBAR: ActionType<ToggleSidebarAction> = 'TOGGLE_SIDEBAR';
