@@ -40,7 +40,7 @@ function* initApp(): Iterable<Effect> {
     if (!bitbucketAuthenticated) {
         // Redirect to Bitbucket Login page
         const path = location.pathname.substring(settings.baseUrl.length);
-        let hash;
+        let hash = '';
         if (location.hash) {
             hash = `#${encodeURIComponent(location.hash.substring(1))}`;
         }
