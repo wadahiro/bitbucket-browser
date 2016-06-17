@@ -16,6 +16,7 @@ interface State {
     password?: string;
     message?: string;
     show?: boolean;
+    authenticating?: boolean;
 }
 
 export class SonarQubeLoginModal extends React.Component<Props, State> {
@@ -26,7 +27,8 @@ export class SonarQubeLoginModal extends React.Component<Props, State> {
     state = {
         login: '',
         password: '',
-        message: ''
+        message: '',
+        authenticating: false
     };
 
     handleForm = (e) => {
@@ -41,28 +43,35 @@ export class SonarQubeLoginModal extends React.Component<Props, State> {
         const { api } = this.props;
         const { login, password } = this.state;
 
-        api.authenticateSoarQube(login, password)
-            .then(authenticated => {
-                console.log('authenticated sonar?', authenticated);
-                if (authenticated) {
-                    this.setState({
-                        show: false,
-                        message: ''
-                    }, () => {
-                        this.props.onAuthenticated();
-                    });
+        this.setState({
+            authenticating: true,
+            message: 'Authenticating...'
+        }, () => {
+            api.authenticateSoarQube(login, password)
+                .then(authenticated => {
+                    console.log('authenticated sonar?', authenticated);
+                    if (authenticated) {
+                        this.setState({
+                            show: false,
+                            authenticating: false,
+                            message: ''
+                        }, () => {
+                            this.props.onAuthenticated();
+                        });
 
-                } else {
-                    this.setState({
-                        message: 'Authentication failed.'
-                    });
-                }
-            })
+                    } else {
+                        this.setState({
+                            authenticating: false,
+                            message: 'Authentication failed.'
+                        });
+                    }
+                });
+        });
     };
 
     render() {
         const { show, onHide, loginLabel } = this.props;
-        const { login, password, message } = this.state;
+        const { login, password, message, authenticating } = this.state;
 
         const footer = <B.Button onClick={this.login} >
             {loginLabel}
@@ -74,11 +83,11 @@ export class SonarQubeLoginModal extends React.Component<Props, State> {
                     <form>
                         <B.Control>
                             <B.Label>Login</B.Label>
-                            <B.InputText name='login' onChange={this.handleForm} />
+                            <B.InputText name='login' disabled={authenticating} onChange={this.handleForm} />
                         </B.Control>
                         <B.Control>
                             <B.Label>Password</B.Label>
-                            <B.InputPassword name='password' onChange={this.handleForm} />
+                            <B.InputPassword name='password' disabled={authenticating} onChange={this.handleForm} />
                         </B.Control>
                         <p>{message}</p>
                     </form>
