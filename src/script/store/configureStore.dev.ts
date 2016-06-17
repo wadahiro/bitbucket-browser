@@ -1,3 +1,5 @@
+declare var module: any;
+
 import { createStore, applyMiddleware, compose } from 'redux';
 import createSagaMiddleware from 'redux-saga'
 
@@ -22,11 +24,12 @@ export default function configureStore(initialState) {
     sagaMiddleware.run(rootSaga);
 
     // Hot reload reducers (requires Webpack or Browserify HMR to be enabled)
-    if (module['hot']) {
-        module['hot'].accept('../reducers', () =>
-            store.replaceReducer(require('../reducers')/*.default if you use Babel 6+ */)
-        );
+    // See https://github.com/erikras/react-redux-universal-hot-example/issues/44#issuecomment-132260397
+    if (module.hot) {
+        module.hot.accept('../reducers', () => {
+            const newReducer = require('../reducers').default;
+            store.replaceReducer(newReducer);
+        });
     }
-
     return store;
 }
