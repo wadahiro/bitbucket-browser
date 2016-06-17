@@ -351,7 +351,9 @@ function* restoreStateFromQueryParameter() {
         }, rootState.filter);
 
         // Restore sidebar opened
-        appState.sidebarOpened = queryParams[SIDEBAR_OPENED].toLowerCase() === 'true' ? true : false;
+        if (queryParams[SIDEBAR_OPENED]) {
+            appState.sidebarOpened = queryParams[SIDEBAR_OPENED].toLowerCase() === 'true' ? true : false;
+        }
 
         yield put(<actions.RestoreStateAction>{
             type: actions.RESTORE_STATE,
