@@ -1,78 +1,53 @@
 import * as React from 'react';
+
 import * as B from '../bulma';
 import { Link } from './Link';
+import { Settings } from '../Settings';
 
-export default class NavigationHeader extends React.Component<any, any> {
-    render() {
-        const leftNav = this.resolveNav(this.props.left);
-        const rightNav = this.resolveNav(this.props.right);
-        const settings = this.resolveSettings(this.props.settings);
-
-        return (
-            <B.Nav>
-                <B.NavLeft>
-                    {leftNav}
-                </B.NavLeft>
-                <B.NavRight>
-                    {rightNav}
-                    <B.NavItem key='settings'>
-                        <B.Dropdown icon='fa fa-cog' position='left'>
-                            {settings}
-                        </B.Dropdown>
-                    </B.NavItem>
-                </B.NavRight>
-            </B.Nav>
-        );
-    }
-
-    resolveNav(navDef) {
-        const nav = navDef.map(x => {
-            const isActive = this.props.active === x.name;
-            const item = resolve(x, isActive);
-            return <B.NavItem key={x.name} isActive={isActive}>{item}</B.NavItem>;
-        });
-        return nav;
-    }
-
-    resolveSettings(def) {
-        const nav = def.map(x => {
-            return resolve(x);
-        });
-        return (
-            <B.DropdownItem>
-                {nav}
-            </B.DropdownItem>
-        );
-    }
+interface Props {
+    settings: Settings;
+    loading: boolean;
+    showMenuButton: boolean;
+    onMenuClick: () => void;
+    onReloadClick: () => void;
 }
 
-function resolve(def, isActive = false) {
-    if (def.link) {
+export class NavigationHeader extends React.Component<Props, any> {
+    render() {
+        const { settings, loading, showMenuButton, onMenuClick, onReloadClick } = this.props;
+
         return (
-            <Link key={def.name} to={def.link} className={isActive ? 'is-active' : ''}>
-                {def.label}
-            </Link>
+            <B.Hero isInfo>
+                <B.Nav>
+                    <B.Container isFluid>
+                        <B.NavLeft>
+                            { showMenuButton &&
+                                <B.NavItemLink onClick={onMenuClick}>
+                                    <B.Icon iconClassName='fa fa-angle-double-right' color={'white'} />
+                                </B.NavItemLink>
+                            }
+                            <B.NavItem isTitle>
+                                {settings && settings.title}
+                                &nbsp;
+                                {loading &&
+                                    <B.Loading />
+                                }
+                            </B.NavItem>
+                        </B.NavLeft>
+
+                        <B.NavToggle>
+                        </B.NavToggle>
+
+                        <B.NavRight isMenu>
+                            <B.NavItem>
+                                <B.Button onClick={onReloadClick} disabled={loading} isSuccess>
+                                    Reload
+                                </B.Button>
+                            </B.NavItem>
+                        </B.NavRight>
+                    </B.Container>
+                </B.Nav>
+            </B.Hero>
         );
-    } else if (def.modal) {
-        if (def.type === 'button') {
-            return (
-                <B.ModalTriggerButton
-                    key={def.name}
-                    isSuccess
-                    modal={def.modal}>
-                    {def.label}
-                </B.ModalTriggerButton>
-            );
-        } else {
-            return (
-                <B.ModalTriggerLink
-                    key={def.name}
-                    modal={def.modal}>
-                    {def.label}
-                </B.ModalTriggerLink>
-            );
-        }
-    } else {
-        return <h1 key={def.name}>{def.label}</h1>;
     }
 }

@@ -10,6 +10,7 @@ import BitbucketTable from '../components/BitbucketTable';
 import { Footer } from '../components/Footer';
 import { Settings } from '../Settings';
 import { SonarQubeLoginModal } from '../components/SonarQubeLoginModal';
+import { NavigationHeader } from '../components/NavigationHeader';
 import { SidebarFilter, SelectOption } from '../components/SidebarFilter';
 import { AppState, FilterState, RootState } from '../reducers';
 
@@ -90,7 +91,7 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.reloadBranchInfos(settings));
     };
 
-    handleToggleSidebar = (e: React.SyntheticEvent) => {
+    handleToggleSidebar = () => {
         this.props.dispatch(Actions.toggleFilter());
     };
 
@@ -133,64 +134,29 @@ class BrowserView extends React.Component<Props, void> {
                 onClose={this.handleToggleSidebar}
                 open={sidebarOpened}
                 >
-                <div>
-                    <B.Hero isInfo>
-                        <B.Nav>
-                            <B.Container isFluid>
-                                <B.NavLeft>
-                                    { !sidebarOpened &&
-                                        <B.NavItemLink onClick={this.handleToggleSidebar}>
-                                            <B.Icon iconClassName='fa fa-angle-double-right' color={'white'} />
-                                        </B.NavItemLink>
-                                    }
-                                    <B.NavItem isTitle>
-                                        {settings && settings.title}
-                                        &nbsp;
-                                        {loading &&
-                                            <B.Loading />
-                                        }
-                                    </B.NavItem>
-                                </B.NavLeft>
+                <NavigationHeader
+                    settings={settings}
+                    loading={loading}
+                    showMenuButton={!sidebarOpened}
+                    onMenuClick={this.handleToggleSidebar}
+                    onReloadClick={this.reloadBranchInfos}
+                    />
 
-                                <B.NavToggle>
-                                </B.NavToggle>
+                <BitbucketTable
+                    settings={settings}
+                    api={api}
+                    showFilter={true}
+                    results={visibleBranchInfos}
+                    pageSize={pageSize}
+                    currentPage={currentPage}
+                    sortColumn={sortColumn}
+                    sortAscending={sortAscending}
+                    handlePageChanged={this.handlePageChanged}
+                    handleSonarQubeAuthenticated={this.handleSonarQubeAuthenticated}
+                    handleSort={this.handleSort}
+                    />
 
-                                <B.NavRight isMenu>
-                                    <B.NavItem>
-                                        <B.Button onClick={this.reloadBranchInfos} disabled={loading} isSuccess>
-                                            Reload
-                                        </B.Button>
-                                    </B.NavItem>
-                                </B.NavRight>
-                            </B.Container>
-                        </B.Nav>
-                    </B.Hero>
-
-                    <B.Section>
-                        <B.Container isFluid>
-                            {
-                                settings &&
-                                <div className='branch-table' style={{ padding: '0px 10px 0px 10px' }}>
-                                    <BitbucketTable
-                                        settings={settings}
-                                        api={api}
-                                        showFilter={true}
-                                        results={visibleBranchInfos}
-                                        pageSize={pageSize}
-                                        currentPage={currentPage}
-                                        sortColumn={sortColumn}
-                                        sortAscending={sortAscending}
-                                        handlePageChanged={this.handlePageChanged}
-                                        handleSonarQubeAuthenticated={this.handleSonarQubeAuthenticated}
-                                        handleSort={this.handleSort}
-                                        />
-                                </div>
-                            }
-                        </B.Container>
-                    </B.Section>
-
-                    <Footer settings={settings} />
-                </div >
+                <Footer settings={settings} />
             </SidebarFilter>
         );
     }

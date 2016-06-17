@@ -4,6 +4,7 @@ import { Loading } from './Loading'
 
 export interface TableProps {
     // basic
+    tableClassName?: string;
     rowKey: string;
     results: {
         [index: string]: string | number | boolean;
@@ -46,6 +47,7 @@ const LOADING = <Loading />;
 
 export class Table extends React.Component<TableProps, void> {
     static defaultProps = {
+        tableClassName: '',
         fixed: false,
         sortColumn: null,
         sortAscending: true,
@@ -55,7 +57,7 @@ export class Table extends React.Component<TableProps, void> {
     };
 
     render() {
-        const { fixed, results, columnMetadata } = this.props;
+        const { tableClassName, fixed, results, columnMetadata } = this.props;
 
         const visibleColumns = columnMetadata.filter(x => x.visible !== false);
 
@@ -67,7 +69,7 @@ export class Table extends React.Component<TableProps, void> {
         return (
             <div>
                 {this.renderPagination() }
-                <table style={tableLayout} className={`table ${resolveModifiers(this.props)} `}>
+                <table style={tableLayout} className={`table ${tableClassName} ${resolveModifiers(this.props)} `}>
                     <thead>
                         <TR>
                             {this.renderThead(visibleColumns) }

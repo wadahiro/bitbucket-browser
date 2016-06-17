@@ -143,22 +143,25 @@ export default class BitbucketDataTable extends React.Component<Props, void> {
             });
 
         return (
-            <div>
-                <B.Columns>
-                    <B.Table
-                        columnMetadata={resolvedColumnMetadata}
-                        rowKey='id'
-                        results={this.props.results}
-                        enableSort={true}
-                        sortColumn={sortColumn}
-                        sortAscending={sortAscending}
-                        handleSort={handleSort}
-                        showPagination={true}
-                        pageSize={pageSize}
-                        currentPage={currentPage}
-                        handlePageChanged={handlePageChanged} />
-                </B.Columns>
-            </div>
+            <B.Section>
+                <B.Container isFluid>
+                    <div className='branch-table' style={{ padding: '0px 10px 0px 10px' }}>
+                        <B.Table
+                            tableClassName='branch-table'
+                            columnMetadata={resolvedColumnMetadata}
+                            rowKey='id'
+                            results={this.props.results}
+                            enableSort={true}
+                            sortColumn={sortColumn}
+                            sortAscending={sortAscending}
+                            handleSort={handleSort}
+                            showPagination={true}
+                            pageSize={pageSize}
+                            currentPage={currentPage}
+                            handlePageChanged={handlePageChanged} />
+                    </div>
+                </B.Container>
+            </B.Section>
         );
     }
 }
