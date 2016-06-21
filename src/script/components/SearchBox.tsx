@@ -50,10 +50,6 @@ export default class SearchBox extends React.Component<Props, void> {
         const branchOptions = _.chain<string[]>(options.branch).uniq().map(x => { return { value: x, label: x } }).value();
         const branchAuthorOptions = _.chain<string[]>(options.branchAuthor).uniq().map(x => { return { value: x, label: x } }).value();
 
-        const style = {
-            padding: '0px 10px 0px 10px'
-        };
-
         const selectStyle = {
             padding: '5px 0px 5px 0px'
         };
@@ -63,7 +59,7 @@ export default class SearchBox extends React.Component<Props, void> {
 
         return (
             <div>
-                <div style={style}>
+                <div>
                     <label className='control-label'>Project</label>
                     <div style={selectStyle}>
                         <Select name='projectIncludes' placeholder={includes} value={filter.projectIncludes} options={projectOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'projectIncludes') } />
@@ -73,7 +69,7 @@ export default class SearchBox extends React.Component<Props, void> {
                     </div>
                 </div>
                 <hr />
-                <div style={style}>
+                <div>
                     <label className='control-label'>Repository</label>
                     <div style={selectStyle}>
                         <Select name='repoIncludes' placeholder={includes} value={filter.repoIncludes} options={repoOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'repoIncludes') } />
@@ -83,7 +79,7 @@ export default class SearchBox extends React.Component<Props, void> {
                     </div>
                 </div>
                 <hr />
-                <div style={style}>
+                <div>
                     <label className='control-label'>Branch</label>
                     <div style={selectStyle}>
                         <Select name='branchIncludes' placeholder={includes} value={filter.branchIncludes} options={branchOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchIncludes') } />
@@ -93,7 +89,7 @@ export default class SearchBox extends React.Component<Props, void> {
                     </div>
                 </div>
                 <hr />
-                <div style={style}>
+                <div>
                     <label className='control-label'>Branch Author</label>
                     <div style={selectStyle}>
                         <Select name='branchAuthorIncludes' placeholder={includes} value={filter.branchAuthorIncludes} options={branchAuthorOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchAuthorIncludes') } />

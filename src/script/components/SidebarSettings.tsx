@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as B from '../bulma';
 import * as API from '../webapis';
 import SearchBox, { SelectOption } from './SearchBox';
+import SelectResultsPerPageBox from './SelectResultsPerPageBox';
 import SelectColumnsBox from './SelectColumnsBox';
 import { Settings } from '../Settings';
 
@@ -18,7 +19,7 @@ interface Props {
     filter: FilterState;
     onFilterChange: (key: string, filter: FilterState) => void;
 
-    onColumnChange: (settings: Settings) => void;
+    onSettingsChange: (settings: Settings) => void;
 
     open: boolean;
     onClose: (e: React.SyntheticEvent) => void;
@@ -31,27 +32,10 @@ export class SidebarSettings extends React.Component<Props, void> {
             data,
             filter,
             onFilterChange,
-            onColumnChange,
+            onSettingsChange,
             open,
             onClose
         } = this.props;
-
-        const sidebarStyle = {
-            width: 350,
-            background: '#f5f7fa',
-            paddingTop: 15,
-            paddingBottom: 15
-        };
-        const headStyle = {
-            marginBottom: 10,
-            marginLeft: 5
-        };
-        const separatorStartStyle = {
-            marginTop: 5
-        };
-        const separatorEndStyle = {
-            marginBottom: 5
-        };
 
         const hasData = data && data.length > 0;
 
@@ -73,35 +57,30 @@ export class SidebarSettings extends React.Component<Props, void> {
                         </div>
                     </nav>
                 </section>
-                { hasData &&
-                    <B.Section style={sidebarStyle}>
-                        <div className='heading' style={headStyle}>
-                            <h2 className="subtitle">
-                                Filters
-                            </h2>
-                        </div>
-                        <hr style={separatorStartStyle} />
+
+                <SettingSection title='Filters'>
+                    { hasData &&
                         <SearchBox
                             data={data}
                             onChange={onFilterChange}
                             filter={filter}
                             />
-                        <hr style={separatorEndStyle} />
-                    </B.Section>
-                }
-                <B.Section style={sidebarStyle}>
-                    <div className='heading' style={headStyle}>
-                        <h2 className="subtitle">
-                            Columns
-                        </h2>
-                    </div>
-                    <hr style={separatorStartStyle} />
+                    }
+                </SettingSection>
+
+                <SettingSection title='Results per page'>
+                    <SelectResultsPerPageBox
+                        settings={settings}
+                        onChange={onSettingsChange}
+                        />
+                </SettingSection>
+
+                <SettingSection title='Columns'>
                     <SelectColumnsBox
                         settings={settings}
-                        onChange={onColumnChange}
+                        onChange={onSettingsChange}
                         />
-                    <hr style={separatorEndStyle} />
-                </B.Section>
+                </SettingSection>
             </div>
         );
         return (
@@ -110,4 +89,39 @@ export class SidebarSettings extends React.Component<Props, void> {
             </Sidebar>
         );
     }
+}
+
+// Utility
+
+const sidebarStyle = {
+    width: 350,
+    background: '#f5f7fa',
+    padding: '15px 0px'
+};
+const headStyle = {
+    marginBottom: 10,
+    marginLeft: 5
+};
+const contenStyle = {
+    padding: '0px 10px'
+};
+const separatorStartStyle = {
+    marginTop: 5
+};
+const separatorEndStyle = {
+    marginBottom: 5
+};
+
+function SettingSection(props): JSX.Element {
+    return <B.Section style={sidebarStyle}>
+        <div className='heading' style={headStyle}>
+            <h2 className="subtitle">
+                {props.title}
+            </h2>
+        </div>
+        <hr style={separatorStartStyle} />
+        <div style={contenStyle}>
+            {props.children}
+        </div>
+    </B.Section>
 }

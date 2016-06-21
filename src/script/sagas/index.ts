@@ -74,6 +74,24 @@ function resolveSettings(settings: Settings): Settings {
     if (settings.items.sonarQubeMetrics && settings.items.sonarQubeMetrics.resolver) {
         settings.items.sonarQubeMetrics.resolver.baseUrl = trimSlash(settings.items.sonarQubeMetrics.resolver.baseUrl);
     }
+
+    // Resolve item's default enabled and visible value
+    Object.keys(settings.items).map(x => {
+        if (settings.items[x].enabled === undefined) {
+            settings.items[x].enabled = true;
+        }
+        if (settings.items[x].visible === undefined) {
+            settings.items[x].visible = true;
+        }
+    });
+
+    // Resolve result per page default setting
+    if (!settings.resultsPerPage) {
+        settings.resultsPerPage = {
+            value: 5,
+            options: [5, 10, 20, 50]
+        }
+    }
     return settings;
 }
 

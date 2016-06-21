@@ -129,7 +129,7 @@ class BrowserView extends React.Component<Props, void> {
                 data={branchInfos}
                 onFilterChange={this.handleFilterChanged}
                 filter={filter}
-                onColumnChange={this.handleSettingsChanged}
+                onSettingsChange={this.handleSettingsChanged}
                 onClose={this.handleToggleSidebar}
                 open={sidebarOpened}
                 >

@@ -2,6 +2,10 @@ export interface Settings {
     title?: string;
     baseUrl?: string;
     items?: Items;
+    resultsPerPage?: {
+        value: number;
+        options: number[];
+    }
     debug?: boolean;
 }
 

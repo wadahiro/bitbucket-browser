@@ -9,7 +9,7 @@ const getBranchInfos = (state: RootState) => state.browser.branchInfos;
 const getCurrentSortColumn = (state: RootState) => state.browser.currentSortColumn;
 const getCurrentSortAscending = (state: RootState) => state.browser.currentSortAscending;
 const getCurrentPage = (state: RootState) => state.browser.currentPage;
-const getResultsPerPage = (state: RootState) => state.browser.resultsPerPage;
+const getResultsPerPage = (state: RootState) => state.app.settings ? state.app.settings .resultsPerPage.value : 0;
 
 export const getFilteredBranchInfos = createSelector<RootState, API.BranchInfo[], API.BranchInfo[], FilterState>(
     getBranchInfos,

@@ -127,7 +127,6 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
 export interface BrowserState {
     branchInfos?: API.BranchInfo[];
 
-    resultsPerPage?: number;
     currentPage?: number;
 
     currentSortColumn?: string;
@@ -137,7 +136,6 @@ export interface BrowserState {
 const initialBrowserState: BrowserState = {
     branchInfos: [],
 
-    resultsPerPage: 5,
     currentPage: 0,
 
     currentSortColumn: null,

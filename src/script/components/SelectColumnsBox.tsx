@@ -44,16 +44,13 @@ export default class SelectColumnsBox extends React.Component<Props, void> {
 
         const columns = Object.keys(settings.items).filter(x => settings.items[x].enabled !== false);
 
-        const style = {
-            padding: '0px 10px 0px 10px'
-        };
-
         return (
             <div>
-                <div style={style}>
+                <div>
                     { columns.map(x => {
                         const col = settings.items[x];
-                        return <B.Checkbox name={x}
+                        return <B.Checkbox key={x}
+                            name={x}
                             label={col.displayName}
                             checked={col.visible !== false}
                             onChange={this.handleCheck} />

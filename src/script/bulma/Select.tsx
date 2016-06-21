@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ModifiersProps, calcClassNames } from './Utils';
 
-export interface SelectProps extends React.HTMLProps<HTMLSelectElement> {
+export interface SelectProps extends React.HTMLProps<HTMLSelectElement>, ModifiersProps {
 }
 
 export interface Option {
