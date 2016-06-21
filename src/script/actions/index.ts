@@ -111,6 +111,21 @@ export function changeFilter(filter: FilterState): ChangeFilterAction {
     };
 }
 
+export const CHANGE_SETTINGS: ActionType<ChangeSettingsAction> = 'CHANGE_SETTINGS';
+interface ChangeSettingsAction extends Action {
+    payload: {
+        settings: Settings;
+    };
+}
+export function changeSettings(settings: Settings): ChangeSettingsAction {
+    return {
+        type: CHANGE_SETTINGS,
+        payload: {
+            settings
+        }
+    };
+}
+
 export const SONARQUBE_AUTHENTICATED: ActionType<SonarQubeAuthenticatedAction> = 'SONARQUBE_AUTHENTICATED';
 interface SonarQubeAuthenticatedAction extends Action {
 }

@@ -115,6 +115,12 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
         });
     }
 
+    if (Actions.isType(action, Actions.CHANGE_SETTINGS)) {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
+            settings: action.payload.settings
+        });
+    }
+
     return state;
 };
 

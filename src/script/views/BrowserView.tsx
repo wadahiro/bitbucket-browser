@@ -11,7 +11,7 @@ import { Footer } from '../components/Footer';
 import { Settings } from '../Settings';
 import { SonarQubeLoginModal } from '../components/SonarQubeLoginModal';
 import { NavigationHeader } from '../components/NavigationHeader';
-import { SidebarFilter, SelectOption } from '../components/SidebarFilter';
+import { SidebarSettings, SelectOption } from '../components/SidebarSettings';
 import { AppState, FilterState, RootState } from '../reducers';
 
 import * as Actions from '../actions';
@@ -83,6 +83,10 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.changeFilter(filter));
     };
 
+    handleSettingsChanged = (settings: Settings) => {
+        this.props.dispatch(Actions.changeSettings(settings));
+    };
+
     handleSonarQubeAuthenticated = () => {
         this.props.dispatch(Actions.sonarQubeAuthenticated());
     };
@@ -120,10 +124,12 @@ class BrowserView extends React.Component<Props, void> {
         }
 
         return (
-            <SidebarFilter
+            <SidebarSettings
+                settings={settings}
                 data={branchInfos}
-                onChange={this.handleFilterChanged}
+                onFilterChange={this.handleFilterChanged}
                 filter={filter}
+                onColumnChange={this.handleSettingsChanged}
                 onClose={this.handleToggleSidebar}
                 open={sidebarOpened}
                 >
@@ -150,7 +156,7 @@ class BrowserView extends React.Component<Props, void> {
                     />
 
                 <Footer settings={settings} />
-            </SidebarFilter>
+            </SidebarSettings>
         );
     }
 }
