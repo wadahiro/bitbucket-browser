@@ -18,7 +18,10 @@ interface Props {
 
 export default class SelectResultsPerPageBox extends React.Component<Props, void> {
     handleChange = (e) => {
-        const newResultsPerPage = e.target.value;
+        let newResultsPerPage = Number(e.target.value);
+        if (Number.isNaN(newResultsPerPage)) {
+            newResultsPerPage = 5; // TODO
+        }
         const { settings, onChange } = this.props;
 
         onChange(Object.assign({}, settings, {

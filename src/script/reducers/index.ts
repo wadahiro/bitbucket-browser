@@ -54,12 +54,18 @@ export const settingsReducer = (state: Settings = initSettings(), action: Action
 export interface AppState {
     api?: API.API;
     loading?: boolean;
+    pending?: Actions.Action[];
+    limit?: number;
+    numOfRunning?: number;
     sonarQubeAuthenticated?: boolean;
 }
 
 const initialAppState: AppState = {
     api: null,
     loading: false,
+    pending: [],
+    limit: 5,
+    numOfRunning: 0,
     sonarQubeAuthenticated: true,
 };
 
@@ -94,6 +100,28 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
     if (Actions.isType(action, Actions.SONARQUBE_AUTHENTICATED)) {
         return Object.assign<AppState, AppState, AppState>({}, state, {
             sonarQubeAuthenticated: true
+        });
+    }
+
+    // Throttling
+    if (Actions.isType(action, Actions.NEW_JOB)) {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
+            pending: state.pending.concat(action)
+        });
+    }
+
+    if (Actions.isType(action, Actions.RUN_JOB)) {
+        const s = Object.assign<AppState, AppState, AppState>({}, state, {
+            pending: state.pending.filter(x => x !== action.payload.job),
+            numOfRunning: state.numOfRunning + 1
+        });
+
+        return s;
+    }
+
+    if (Actions.isType(action, Actions.DONE_JOB)) {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
+            numOfRunning: state.numOfRunning - 1
         });
     }
 
