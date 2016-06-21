@@ -2,10 +2,12 @@ export interface Settings {
     title?: string;
     baseUrl?: string;
     items?: Items;
+    show?: boolean;
     resultsPerPage?: {
         value: number;
         options: number[];
     }
+    filter?: FilterState;
     debug?: boolean;
 }
 
@@ -81,4 +83,15 @@ export interface SonarQubeMetricsResolver {
     baseUrl: string;
     projectBaseKey: string;
     metrics: string;
+}
+
+export interface FilterState {
+    projectIncludes?: string[];
+    projectExcludes?: string[];
+    repoIncludes?: string[];
+    repoExcludes?: string[];
+    branchIncludes?: string[];
+    branchExcludes?: string[];
+    branchAuthorIncludes?: string[];
+    branchAuthorExcludes?: string[];
 }

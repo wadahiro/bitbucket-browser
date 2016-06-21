@@ -4,7 +4,7 @@ const Select = require('react-select');
 
 import * as B from '../bulma';
 import * as API from '../webapis';
-import { FilterState } from '../reducers';
+import { Settings } from '../Settings';
 
 export interface SelectOption {
     label: string;
@@ -12,9 +12,9 @@ export interface SelectOption {
 }
 
 interface Props {
-    filter: FilterState;
+    settings: Settings;
     data: API.BranchInfo[];
-    onChange: (key: string, filer: FilterState) => void;
+    onChange: (settings: Settings) => void;
 }
 
 export default class SearchBox extends React.Component<Props, void> {
@@ -22,15 +22,17 @@ export default class SearchBox extends React.Component<Props, void> {
     // If upgrading react-select to 1.0.0, need to change this arguments and logic
     // https://github.com/JedWatson/react-select/blob/master/CHANGES.md
     onChange = (key, values: string) => {
-        const filter = Object.assign({}, this.props.filter, {
+        const newFilter = Object.assign({}, this.props.settings.filter, {
             [key]: values && values !== '' ? values.split(',') : []
         });
-        this.props.onChange(key, filter);
+        const newSettings = Object.assign({}, this.props.settings, {
+            filter: newFilter
+        });
+        this.props.onChange(newSettings);
     };
 
     render() {
-        const { data } = this.props;
-        const { filter } = this.props;
+        const { data, settings: { filter } } = this.props;
 
         const options = _.reduce<any, any>(data, (s, x) => {
             s.project.push(x.project);

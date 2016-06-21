@@ -4,7 +4,7 @@ import * as B from '../bulma';
 
 import * as actions from '../actions'
 import { getSlicedBranchInfos } from '../selectors'
-import { RootState, AppState, FilterState }from '../reducers'
+import { RootState, AppState }from '../reducers'
 import * as API from '../webapis';
 import { Settings } from '../Settings';
 import { trimSlash } from '../Utils';
@@ -89,7 +89,7 @@ function resolveSettings(settings: Settings): Settings {
     if (!settings.resultsPerPage) {
         settings.resultsPerPage = {
             value: 5,
-            options: [5, 10, 20, 50]
+            options: [5, 10]
         }
     }
     return settings;
@@ -156,7 +156,7 @@ function* handleFetchBranchInfosPerRepo(api: API.API, repo: API.Repo): Iterable<
 }
 
 function* handleFetchPullRequestCount(branchInfosPerRepo: API.BranchInfo[]): Iterable<Effect> {
-    const settings: Settings = yield select((state: RootState) => state.app.settings);
+    const settings: Settings = yield select((state: RootState) => state.settings);
     const api: API.API = yield select((state: RootState) => state.app.api);
 
     const branchInfo = branchInfosPerRepo[0];
@@ -200,7 +200,7 @@ function* handleFetchPullRequestCount(branchInfosPerRepo: API.BranchInfo[]): Ite
 }
 
 function* handleSonarForBitbucketStatus(branchInfo: API.BranchInfo, prIds: number[]): Iterable<Effect> {
-    const settings: Settings = yield select((state: RootState) => state.app.settings);
+    const settings: Settings = yield select((state: RootState) => state.settings);
     const api: API.API = yield select((state: RootState) => state.app.api);
 
     if (!settings.items.sonarForBitbucketStatus.enabled) {
@@ -232,7 +232,7 @@ function* handleSonarForBitbucketStatus(branchInfo: API.BranchInfo, prIds: numbe
 }
 
 function* handleBuildStatus(branchInfo: API.BranchInfo): Iterable<Effect> {
-    const settings: Settings = yield select((state: RootState) => state.app.settings);
+    const settings: Settings = yield select((state: RootState) => state.settings);
     const api: API.API = yield select((state: RootState) => state.app.api);
 
     if (!settings.items.buildStatus.enabled) {
@@ -268,7 +268,7 @@ function* handleBuildStatus(branchInfo: API.BranchInfo): Iterable<Effect> {
 }
 
 function* handleSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
-    const settings: Settings = yield select((state: RootState) => state.app.settings);
+    const settings: Settings = yield select((state: RootState) => state.settings);
     const api: API.API = yield select((state: RootState) => state.app.api);
 
     if (!settings.items.sonarQubeMetrics.enabled) {
@@ -336,7 +336,7 @@ function* watchAndLog() {
 
     const state: RootState = yield select((state: RootState) => state);
 
-    if (state.app.settings && state.app.settings.debug) {
+    if (state.settings && state.settings.debug) {
         yield* takeEvery('*', function* logger(action) {
 
             console.log('Action: ', action);
@@ -345,39 +345,73 @@ function* watchAndLog() {
     }
 }
 
+// constants
 const SIDEBAR_OPENED = 'sidebarOpened';
+const RESULTS_PER_PAGE = 'resultsPerPage';
+const ITEMS = 'columns';
 
 function* restoreStateFromQueryParameter() {
     if (window.location.hash) {
         // Restore app state from query parameters
         const rootState: RootState = yield select((state: RootState) => state);
-        let filterState = rootState.filter;
-        let appState = rootState.app;
+        let settings = rootState.settings;
+        let filter = settings.filter;
 
-        // Restore filterState
         const query = decodeURIComponent(window.location.hash);
         const queryParams = query.substring(1).split('&').reduce((s, x) => {
             const pair = x.split('=');
             s[pair[0]] = pair[1];
             return s;
         }, {});
-        filterState = Object.keys(rootState.filter).reduce((s, x) => {
+
+        // Restore filter
+        const restoredFilter = Object.keys(filter).reduce((s, x) => {
             if (queryParams[x]) {
                 s[x] = queryParams[x].split(',');
             }
             return s;
-        }, rootState.filter);
+        }, filter);
 
-        // Restore sidebar opened
-        if (queryParams[SIDEBAR_OPENED]) {
-            appState.sidebarOpened = queryParams[SIDEBAR_OPENED].toLowerCase() === 'true' ? true : false;
+        // Restore results per page
+        let restoredResultPerPage = settings.resultsPerPage.value;
+        if (queryParams[RESULTS_PER_PAGE]) {
+            const num = Number(queryParams[RESULTS_PER_PAGE]);
+            if (!Number.isNaN(num)) {
+                restoredResultPerPage = num;
+            }
         }
 
-        yield put(<actions.RestoreStateAction>{
-            type: actions.RESTORE_STATE,
+        // Restore visible columns
+        let restoredItems = settings.items;
+        if (queryParams[ITEMS]) {
+            const showColumns: string[] = queryParams[ITEMS].split(',');
+            if (showColumns.length > 0) {
+                Object.keys(restoredItems).forEach(x => {
+                    restoredItems[x].visible = false;
+                });
+                showColumns.forEach(x => {
+                    restoredItems[x].visible = true;
+                });
+            }
+        }
+
+        // Restore sidebar opened
+        let sidebarOpened = settings.show;
+        if (queryParams[SIDEBAR_OPENED]) {
+            sidebarOpened = queryParams[SIDEBAR_OPENED].toLowerCase() === 'true' ? true : false;
+        }
+
+        yield put(<actions.RestoreSettingsAction>{
+            type: actions.RESTORE_SETTINGS,
             payload: {
-                filterState,
-                appState
+                settings: Object.assign({}, settings, {
+                    items: restoredItems,
+                    show: sidebarOpened,
+                    filter: restoredFilter,
+                    resultsPerPage: Object.assign({}, settings.resultsPerPage, {
+                        value: restoredResultPerPage
+                    })
+                })
             }
         });
     }
@@ -385,16 +419,30 @@ function* restoreStateFromQueryParameter() {
 
 function* pollSaveAsQueryParameters() {
     while (true) {
-        const action = yield take([actions.CHANGE_FILTER, actions.TOGGLE_SIDEBAR]);
+        const action = yield take([actions.CHANGE_SETTINGS, actions.TOGGLE_SETTINGS]);
 
-        const filterState: FilterState = yield select((state: RootState) => state.filter);
-        const sidebarOpened: boolean = yield select((state: RootState) => state.app.sidebarOpened);
+        const settings: Settings = yield select((state: RootState) => state.settings);
 
         // Save to URL
-        const queryParameters = Object.keys(filterState).map(x => {
-            return `${x}=${filterState[x]}`
+
+        // Save filter
+        const queryParameters = Object.keys(settings.filter).map(x => {
+            return `${x}=${settings.filter[x]}`
         });
-        queryParameters.push(`${SIDEBAR_OPENED}=${sidebarOpened}`);
+
+        // Save resutls per page
+        queryParameters.push(`${RESULTS_PER_PAGE}=${settings.resultsPerPage.value}`);
+
+        // Save visible columns
+        const itemKeys = Object.keys(settings.items);
+        const allShowed = itemKeys.find(x => settings.items[x].enabled && settings.items[x].visible === false) === undefined;
+        if (!allShowed) {
+            const columns = itemKeys.filter(x => settings.items[x].enabled && settings.items[x].visible);
+            queryParameters.push(`${ITEMS}=${columns.join(',')}`);
+        }
+
+        // Save sidebar opened or closed
+        queryParameters.push(`${SIDEBAR_OPENED}=${settings.show}`);
 
         window.location.hash = queryParameters.join('&');
     }

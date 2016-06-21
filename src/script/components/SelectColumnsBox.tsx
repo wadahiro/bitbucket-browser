@@ -5,7 +5,6 @@ const Select = require('react-select');
 import * as B from '../bulma';
 import * as API from '../webapis';
 import { Settings } from '../Settings';
-import { FilterState } from '../reducers';
 
 export interface SelectOption {
     label: string;

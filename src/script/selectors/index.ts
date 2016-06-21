@@ -2,20 +2,21 @@ import * as _ from 'lodash';
 import { createSelector } from 'reselect';
 
 import * as API from '../webapis';
-import { RootState, BrowserState, FilterState } from '../reducers';
+import { RootState, BrowserState } from '../reducers';
+import { Settings } from '../Settings';
 
-const getFilterState = (state: RootState) => state.filter;
+const getSettings = (state: RootState) => state.settings;
 const getBranchInfos = (state: RootState) => state.browser.branchInfos;
 const getCurrentSortColumn = (state: RootState) => state.browser.currentSortColumn;
 const getCurrentSortAscending = (state: RootState) => state.browser.currentSortAscending;
 const getCurrentPage = (state: RootState) => state.browser.currentPage;
-const getResultsPerPage = (state: RootState) => state.app.settings ? state.app.settings .resultsPerPage.value : 0;
+const getResultsPerPage = (state: RootState) => state.settings.resultsPerPage.value;
 
-export const getFilteredBranchInfos = createSelector<RootState, API.BranchInfo[], API.BranchInfo[], FilterState>(
+export const getFilteredBranchInfos = createSelector<RootState, API.BranchInfo[], API.BranchInfo[], Settings>(
     getBranchInfos,
-    getFilterState,
-    (branchInfos, filterState) => {
-        const filtered = filterBranchInfo(branchInfos, filterState);
+    getSettings,
+    (branchInfos, settings) => {
+        const filtered = filterBranchInfo(branchInfos, settings);
         return filtered;
     }
 );
@@ -61,7 +62,9 @@ export const getSlicedBranchInfos = createSelector<RootState, API.BranchInfo[], 
 );
 
 // Utilities
-function filterBranchInfo(data: API.BranchInfo[], filter: FilterState) {
+function filterBranchInfo(data: API.BranchInfo[], settings: Settings) {
+    const filter = settings.filter;
+
     const projectIncludes = filter.projectIncludes;
     const projectExcludes = filter.projectExcludes;
 

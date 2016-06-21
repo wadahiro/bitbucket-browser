@@ -6,8 +6,6 @@ import SelectResultsPerPageBox from './SelectResultsPerPageBox';
 import SelectColumnsBox from './SelectColumnsBox';
 import { Settings } from '../Settings';
 
-import { FilterState } from '../reducers';
-
 const Sidebar = require('react-sidebar').default;
 
 export type SelectOption = SelectOption;
@@ -16,12 +14,8 @@ interface Props {
     settings: Settings;
     data: API.BranchInfo[];
 
-    filter: FilterState;
-    onFilterChange: (key: string, filter: FilterState) => void;
-
     onSettingsChange: (settings: Settings) => void;
 
-    open: boolean;
     onClose: (e: React.SyntheticEvent) => void;
 }
 
@@ -30,10 +24,7 @@ export class SidebarSettings extends React.Component<Props, void> {
         const {
             settings,
             data,
-            filter,
-            onFilterChange,
             onSettingsChange,
-            open,
             onClose
         } = this.props;
 
@@ -61,9 +52,9 @@ export class SidebarSettings extends React.Component<Props, void> {
                 <SettingSection title='Filters'>
                     { hasData &&
                         <SearchBox
+                            settings={settings}
                             data={data}
-                            onChange={onFilterChange}
-                            filter={filter}
+                            onChange={onSettingsChange}
                             />
                     }
                 </SettingSection>
@@ -84,7 +75,7 @@ export class SidebarSettings extends React.Component<Props, void> {
             </div>
         );
         return (
-            <Sidebar sidebar={sidebarContent} docked={open}>
+            <Sidebar sidebar={sidebarContent} docked={settings.show}>
                 {this.props.children}
             </Sidebar>
         );

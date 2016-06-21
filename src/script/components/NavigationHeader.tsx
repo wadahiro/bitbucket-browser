@@ -2,19 +2,22 @@ import * as React from 'react';
 
 import * as B from '../bulma';
 import { Link } from './Link';
-import { Settings } from '../Settings';
 
 interface Props {
-    settings: Settings;
+    title: string;
     loading: boolean;
     showMenuButton: boolean;
     onMenuClick: () => void;
     onReloadClick: () => void;
 }
 
-export class NavigationHeader extends React.Component<Props, any> {
+export class NavigationHeader extends React.Component<Props, void> {
+    static defaultProps = {
+        title: ''
+    };
+
     render() {
-        const { settings, loading, showMenuButton, onMenuClick, onReloadClick } = this.props;
+        const { title, loading, showMenuButton, onMenuClick, onReloadClick } = this.props;
 
         return (
             <B.Hero isInfo>
@@ -27,7 +30,7 @@ export class NavigationHeader extends React.Component<Props, any> {
                                 </B.NavItemLink>
                             }
                             <B.NavItem isTitle>
-                                {settings && settings.title}
+                                {title}
                                 &nbsp;
                                 {loading &&
                                     <B.Loading />
