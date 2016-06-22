@@ -70,7 +70,7 @@ export default class SearchBox extends React.Component<Props, void> {
                         <Select name='projectExcludes' placeholder={excludes} value={filter.projectExcludes} options={projectOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'projectExcludes') } />
                     </div>
                 </div>
-                <hr />
+                <Separator />
                 <div>
                     <label className='control-label'>Repository</label>
                     <div style={selectStyle}>
@@ -80,7 +80,7 @@ export default class SearchBox extends React.Component<Props, void> {
                         <Select name='repoExcludes' placeholder={excludes} value={filter.repoExcludes} options={repoOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'repoExcludes') } />
                     </div>
                 </div>
-                <hr />
+                <Separator />
                 <div>
                     <label className='control-label'>Branch</label>
                     <div style={selectStyle}>
@@ -90,7 +90,7 @@ export default class SearchBox extends React.Component<Props, void> {
                         <Select name='branchExcludes' placeholder={excludes} value={filter.branchExcludes} options={branchOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchExcludes') } />
                     </div>
                 </div>
-                <hr />
+                <Separator />
                 <div>
                     <label className='control-label'>Branch Author</label>
                     <div style={selectStyle}>
@@ -104,3 +104,9 @@ export default class SearchBox extends React.Component<Props, void> {
         );
     }
 }
+
+const separatorStyle = {
+    marginTop: 5,
+    marginBottom: 10
+};
+const Separator = () => <hr style={separatorStyle} />;

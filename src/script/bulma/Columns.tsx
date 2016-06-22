@@ -1,16 +1,15 @@
 import * as React from 'react';
+import { ColumnsTypeProps, calcGridClassNames } from './Utils';
 
-export class Columns extends React.Component<any, any> {
-    static defaultProps = {
-        type: null,
-    }
-    
+interface Props extends React.HTMLProps<HTMLDivElement>, ColumnsTypeProps {
+}
+
+export class Columns extends React.Component<Props, void> {
     render() {
-        const { type } = this.props;
-        const isType = type ? `is-${type}` : ''
-        
+        const className = calcGridClassNames(this.props);
+
         return (
-            <div className={`columns ${isType}`}>
+            <div {...this.props} className={`columns ${className}`}>
                 { this.props.children }
             </div>
         );

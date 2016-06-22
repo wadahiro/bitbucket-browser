@@ -87,20 +87,22 @@ export class SidebarSettings extends React.Component<Props, void> {
 const sidebarStyle = {
     width: 350,
     background: '#f5f7fa',
-    padding: '15px 0px'
+    padding: '5px 0px 5px 0px'
 };
 const headStyle = {
-    marginBottom: 10,
+    marginTop: 5,
+    marginBottom: 5,
     marginLeft: 5
 };
 const contenStyle = {
     padding: '0px 10px'
 };
 const separatorStartStyle = {
-    marginTop: 5
+    marginTop: 0,
+    marginBottom: 10
 };
 const separatorEndStyle = {
-    marginBottom: 5
+    marginBottom: 10
 };
 
 function SettingSection(props): JSX.Element {
@@ -114,5 +116,6 @@ function SettingSection(props): JSX.Element {
         <div style={contenStyle}>
             {props.children}
         </div>
+        <div style={separatorEndStyle} />
     </B.Section>
 }

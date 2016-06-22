@@ -1,19 +1,15 @@
 import * as React from 'react';
+import { ColumnTypeProps, calcGridClassNames } from './Utils';
 
-export class Column extends React.Component<any, any> {
-    static defaultProps = {
-        size: 0,
-        offset: 0
-    }
+interface Props extends React.HTMLProps<HTMLDivElement>, ColumnTypeProps {
+}
 
+export class Column extends React.Component<Props, void> {
     render() {
-        const { size, offset, type, style } = this.props;
-
-        const isSize = `is-${size}`;
-        const isOffset = `is-offset-${offset}`;
+        const className = calcGridClassNames(this.props);
 
         return (
-            <div className={`column ${isSize} ${isOffset}`} style={style}>
+            <div {...this.props} className={`column ${className}`}>
                 { this.props.children }
             </div>
         );
