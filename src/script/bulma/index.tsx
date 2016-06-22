@@ -1,5 +1,6 @@
 export * from './Container';
 export * from './Content';
+export * from './Card';
 export * from './Section';
 export * from './Footer';
 export * from './Feed';

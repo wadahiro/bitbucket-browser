@@ -7,16 +7,18 @@ export interface ButtonSyntaxProps extends SyntaxProps {
     isLink?: boolean;
 }
 
-export interface SyntaxProps {
+export interface SizeProps {
+    isSmall?: boolean;
+    isMedium?: boolean;
+    isLarge?: boolean;
+}
+
+export interface SyntaxProps extends SizeProps {
     isPrimary?: boolean;
     isInfo?: boolean;
     isSuccess?: boolean;
     isWarning?: boolean;
     isDanger?: boolean;
-
-    isSmall?: boolean;
-    isMedium?: boolean;
-    isLarge?: boolean;
 
     isOutlined?: boolean;
     isLoading?: boolean;
@@ -133,13 +135,23 @@ export interface ColumnTypeProps {
 export type ClassName = ModifiersProps | ActiveProps | TitleProps | ButtonSyntaxProps;
 export type GridClassName = ColumnsTypeProps | ColumnTypeProps;
 
+
 export function calcClassNames(props: ClassName = {}) {
     const classNames: string[] = [];
 
     handleButtonProps(classNames, props);
     handleTitleProps(classNames, props);
     handleActiveProps(classNames, props);
+    handleSizeProps(classNames, props);
     handleModifiersProps(classNames, props);
+
+    return classNames.join(' ');
+}
+
+export function calcSizeClassNames(props: SizeProps = {}) {
+    const classNames: string[] = [];
+
+    handleSizeProps(classNames, props);
 
     return classNames.join(' ');
 }
@@ -208,6 +220,16 @@ function handleActiveProps(classNames: string[], props: ActiveProps) {
     }
 }
 
+function handleSizeProps(classNames: string[], props: SizeProps) {
+    if (props.isSmall) {
+        classNames.push('is-small');
+    } else if (props.isMedium) {
+        classNames.push('is-medium');
+    } else if (props.isLarge) {
+        classNames.push('is-large');
+    }
+}
+
 function handleModifiersProps(classNames: string[], props: ModifiersProps) {
     if (props.isPrimary) {
         classNames.push('is-primary');
@@ -219,14 +241,6 @@ function handleModifiersProps(classNames: string[], props: ModifiersProps) {
         classNames.push('is-warning');
     } else if (props.isDanger) {
         classNames.push('is-danger');
-    }
-
-    if (props.isSmall) {
-        classNames.push('is-small');
-    } else if (props.isMedium) {
-        classNames.push('is-medium');
-    } else if (props.isLarge) {
-        classNames.push('is-large');
     }
 
     if (props.isOutlined) {

@@ -49,17 +49,19 @@ export class SidebarSettings extends React.Component<Props, void> {
                     </nav>
                 </section>
 
-                <SettingSection title='Filters'>
-                    { hasData &&
+                <SettingSection title='Filters' initialOpened={true}>
+                    { hasData ?
                         <SearchBox
                             settings={settings}
                             data={data}
                             onChange={onSettingsChange}
                             />
+                        :
+                        <B.Loading />
                     }
                 </SettingSection>
 
-                <SettingSection title='Results per page'>
+                <SettingSection title='Results per page' initialOpened={true}>
                     <SelectResultsPerPageBox
                         settings={settings}
                         onChange={onSettingsChange}
@@ -84,38 +86,48 @@ export class SidebarSettings extends React.Component<Props, void> {
 
 // Utility
 
-const sidebarStyle = {
+const cardStyle = {
     width: 350,
+    padding: '0px 0px 0px 0px'
+};
+const cardHeaderStyle = {
     background: '#f5f7fa',
-    padding: '5px 0px 5px 0px'
-};
-const headStyle = {
-    marginTop: 5,
-    marginBottom: 5,
-    marginLeft: 5
-};
-const contenStyle = {
-    padding: '0px 10px'
-};
-const separatorStartStyle = {
     marginTop: 0,
-    marginBottom: 10
+    marginBottom: 0,
+    marginLeft: 0
 };
-const separatorEndStyle = {
-    marginBottom: 10
+const cardContentStyle = {
+    padding: '10px 10px'
 };
+interface SectionProps {
+    initialOpened?: boolean;
+    title: string;
+}
+interface SectionState {
+    opened: boolean;
+}
 
-function SettingSection(props): JSX.Element {
-    return <B.Section style={sidebarStyle}>
-        <div className='heading' style={headStyle}>
-            <h2 className="subtitle">
-                {props.title}
-            </h2>
-        </div>
-        <hr style={separatorStartStyle} />
-        <div style={contenStyle}>
-            {props.children}
-        </div>
-        <div style={separatorEndStyle} />
-    </B.Section>
+class SettingSection extends React.Component<SectionProps, SectionState> {
+    state = {
+        opened: this.props.initialOpened || false
+    };
+
+    handleToggel = (e: React.SyntheticEvent) => {
+        this.setState({
+            opened: !this.state.opened
+        });
+    };
+
+    render() {
+        const icon = this.state.opened ? 'fa fa-angle-down' : 'fa fa-angle-right';
+
+        return <B.Card isFullWidth style={cardStyle}>
+            <B.CardHeader title={this.props.title} style={cardHeaderStyle} iconClassName={icon} onToggle={this.handleToggel} />
+            { this.state.opened &&
+                <B.CardContent style={cardContentStyle}>
+                    {this.props.children}
+                </B.CardContent>
+            }
+        </B.Card>
+    }
 }
