@@ -128,10 +128,10 @@ export default class BitbucketDataTable extends React.Component<Props, void> {
                 const item = settings.items[x.name];
                 x.label = item.displayName;
 
-                const meta = resolveCustomComponent(x);
+                const meta = resolveCustomComponent(settings, x);
 
                 // hack
-                meta._api = api;
+                meta['_api'] = api;
 
                 if (meta.name === 'sonarQubeMetrics') {
                     meta.renderer = SonarQubeMetricsFormatter(api, handleSonarQubeAuthenticated);
@@ -166,9 +166,12 @@ export default class BitbucketDataTable extends React.Component<Props, void> {
     }
 }
 
-function resolveCustomComponent(colMeta) {
+function resolveCustomComponent(settings: Settings, colMeta: B.ColumnMetadata) {
     if (!colMeta.renderer) {
         colMeta.renderer = DefaultFormatter;
+    }
+    if (settings.items[colMeta.name]) {
+        colMeta.visible = settings.items[colMeta.name].visible !== false;
     }
     return colMeta;
 }

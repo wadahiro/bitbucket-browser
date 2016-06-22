@@ -11,8 +11,8 @@ import { Footer } from '../components/Footer';
 import { Settings } from '../Settings';
 import { SonarQubeLoginModal } from '../components/SonarQubeLoginModal';
 import { NavigationHeader } from '../components/NavigationHeader';
-import { SidebarFilter, SelectOption } from '../components/SidebarFilter';
-import { AppState, FilterState, RootState } from '../reducers';
+import { SidebarSettings, SelectOption } from '../components/SidebarSettings';
+import { AppState, RootState } from '../reducers';
 
 import * as Actions from '../actions';
 import { getSlicedBranchInfos, getPageSize, getFixedCurrentPage } from '../selectors';
@@ -27,12 +27,8 @@ interface Props {
 
     sonarQubeAuthenticated?: boolean;
 
-    sidebarOpened?: boolean;
-
     branchInfos?: API.BranchInfo[];
     visibleBranchInfos?: API.BranchInfo[];
-
-    filter?: FilterState;
 
     sortColumn?: string;
     sortAscending?: boolean;
@@ -43,15 +39,11 @@ interface Props {
 
 function mapStateToProps(state: RootState, props: Props): Props {
     return {
-        settings: state.app.settings,
+        settings: state.settings,
         api: state.app.api,
         loading: state.app.loading,
 
         sonarQubeAuthenticated: state.app.sonarQubeAuthenticated,
-
-        sidebarOpened: state.app.sidebarOpened,
-
-        filter: state.filter,
 
         branchInfos: state.browser.branchInfos,
         visibleBranchInfos: getSlicedBranchInfos(state),
@@ -79,8 +71,8 @@ class BrowserView extends React.Component<Props, void> {
         });
     }
 
-    handleFilterChanged = (key: string, filter: FilterState) => {
-        this.props.dispatch(Actions.changeFilter(filter));
+    handleSettingsChanged = (settings: Settings) => {
+        this.props.dispatch(Actions.changeSettings(settings));
     };
 
     handleSonarQubeAuthenticated = () => {
@@ -93,7 +85,7 @@ class BrowserView extends React.Component<Props, void> {
     };
 
     handleToggleSidebar = () => {
-        this.props.dispatch(Actions.toggleFilter());
+        this.props.dispatch(Actions.toggleSettings());
     };
 
     handlePageChanged = (nextPage: number) => {
@@ -108,10 +100,8 @@ class BrowserView extends React.Component<Props, void> {
     render() {
         const { settings, api,
             loading,
-            sidebarOpened,
             branchInfos,
             visibleBranchInfos,
-            filter,
             sortColumn, sortAscending,
             pageSize, currentPage } = this.props;
 
@@ -120,17 +110,16 @@ class BrowserView extends React.Component<Props, void> {
         }
 
         return (
-            <SidebarFilter
+            <SidebarSettings
+                settings={settings}
                 data={branchInfos}
-                onChange={this.handleFilterChanged}
-                filter={filter}
+                onSettingsChange={this.handleSettingsChanged}
                 onClose={this.handleToggleSidebar}
-                open={sidebarOpened}
                 >
                 <NavigationHeader
-                    settings={settings}
+                    title={settings.title}
                     loading={loading}
-                    showMenuButton={!sidebarOpened}
+                    showMenuButton={!settings.show}
                     onMenuClick={this.handleToggleSidebar}
                     onReloadClick={this.reloadBranchInfos}
                     />
@@ -150,7 +139,7 @@ class BrowserView extends React.Component<Props, void> {
                     />
 
                 <Footer settings={settings} />
-            </SidebarFilter>
+            </SidebarSettings>
         );
     }
 }

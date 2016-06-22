@@ -2,21 +2,11 @@ import { combineReducers } from 'redux';
 import * as B from '../bulma';
 
 import * as API from '../webapis';
-import { Settings } from '../Settings';
+import { Settings, Items, FilterState } from '../Settings';
 import * as Actions from '../actions';
 
-export interface FilterState {
-    projectIncludes?: string[];
-    projectExcludes?: string[];
-    repoIncludes?: string[];
-    repoExcludes?: string[];
-    branchIncludes?: string[];
-    branchExcludes?: string[];
-    branchAuthorIncludes?: string[];
-    branchAuthorExcludes?: string[];
-}
 
-function initFilterState(): FilterState {
+function initSettings(): Settings {
     const filterState: FilterState = {
         projectIncludes: [],
         projectExcludes: [],
@@ -27,19 +17,34 @@ function initFilterState(): FilterState {
         branchAuthorIncludes: [],
         branchAuthorExcludes: []
     };
-    return filterState;
+    return {
+        items: {} as any,
+        show: false,
+        filter: filterState,
+        resultsPerPage: {
+            value: 0,
+            options: []
+        }
+    };
 }
 
-export const filterReducer = (state: FilterState = initFilterState(), action: Actions.Action) => {
-    if (Actions.isType(action, Actions.RESTORE_STATE)) {
-        const payload = action.payload;
-
-        return Object.assign<FilterState, FilterState, FilterState>({}, state, payload.filterState);
+export const settingsReducer = (state: Settings = initSettings(), action: Actions.Action): Settings => {
+    if (Actions.isType(action, Actions.FETCH_SETTINGS_SUCCEEDED)) {
+        return Object.assign<Settings, Settings, Settings>({}, state, action.payload.settings);
     }
 
-    if (Actions.isType(action, Actions.CHANGE_FILTER)) {
-        const filter = action.payload.filter;
-        return Object.assign<FilterState, FilterState, FilterState>({}, state, filter);
+    if (Actions.isType(action, Actions.RESTORE_SETTINGS)) {
+        return Object.assign<Settings, Settings, Settings>({}, state, action.payload.settings);
+    }
+
+    if (Actions.isType(action, Actions.TOGGLE_SETTINGS)) {
+        return Object.assign<Settings, Settings, Settings>({}, state, {
+            show: !state.show
+        });
+    }
+
+    if (Actions.isType(action, Actions.CHANGE_SETTINGS)) {
+        return Object.assign<Settings, Settings, Settings>({}, state, action.payload.settings);
     }
 
     return state;
@@ -47,33 +52,24 @@ export const filterReducer = (state: FilterState = initFilterState(), action: Ac
 
 
 export interface AppState {
-    settings?: Settings;
     api?: API.API;
     loading?: boolean;
-
+    pending?: Actions.Action[];
+    limit?: number;
+    numOfRunning?: number;
     sonarQubeAuthenticated?: boolean;
-
-    sidebarOpened?: boolean;
 }
 
 const initialAppState: AppState = {
-    settings: null,
     api: null,
     loading: false,
-
+    pending: [],
+    limit: 5,
+    numOfRunning: 0,
     sonarQubeAuthenticated: true,
-
-    sidebarOpened: false
 };
 
 export const appStateReducer = (state: AppState = initialAppState, action: Actions.Action) => {
-
-    if (Actions.isType(action, Actions.RESTORE_STATE)) {
-        const payload = action.payload;
-
-        return Object.assign<AppState, AppState, AppState>({}, state, payload.appState);
-    }
-
     if (Actions.isType(action, Actions.INIT_APP_SUCCEEDED)) {
         const payload = action.payload;
 
@@ -82,11 +78,9 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
 
     if (Actions.isType(action, Actions.FETCH_SETTINGS_SUCCEEDED)) {
         const { settings } = action.payload;
-
         const api = new API.API(settings);
 
         return Object.assign<AppState, AppState, AppState>({}, state, {
-            settings,
             api
         });
     }
@@ -109,19 +103,12 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
         });
     }
 
-    if (Actions.isType(action, Actions.TOGGLE_SIDEBAR)) {
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            sidebarOpened: !state.sidebarOpened
-        });
-    }
-
     return state;
 };
 
 export interface BrowserState {
     branchInfos?: API.BranchInfo[];
 
-    resultsPerPage?: number;
     currentPage?: number;
 
     currentSortColumn?: string;
@@ -131,7 +118,6 @@ export interface BrowserState {
 const initialBrowserState: BrowserState = {
     branchInfos: [],
 
-    resultsPerPage: 5,
     currentPage: 0,
 
     currentSortColumn: null,
@@ -201,12 +187,12 @@ export const browserStateReducer = (state: BrowserState = initialBrowserState, a
 
 export default combineReducers({
     app: appStateReducer,
-    browser: browserStateReducer,
-    filter: filterReducer
+    settings: settingsReducer,
+    browser: browserStateReducer
 });
 
 export interface RootState {
     app: AppState;
+    settings: Settings;
     browser: BrowserState;
-    filter: FilterState;
 }

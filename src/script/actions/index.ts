@@ -4,7 +4,7 @@ import * as B from '../bulma';
 
 import * as API from '../webapis';
 import { Settings } from '../Settings';
-import { AppState, FilterState } from '../reducers';
+import { AppState } from '../reducers';
 
 interface ActionType<TAction> extends String { }
 
@@ -49,20 +49,19 @@ export function initApp(): InitAppAction {
     };
 }
 
-export const RESTORE_STATE: ActionType<RestoreStateAction> = 'RESTORE_STATE';
-export interface RestoreStateAction extends Action {
+export const RESTORE_SETTINGS: ActionType<RestoreSettingsAction> = 'RESTORE_SETTINGS';
+export interface RestoreSettingsAction extends Action {
     payload: {
-        filterState: FilterState;
-        appState: AppState;
+        settings: Settings;
     }
 }
 
-export const TOGGLE_SIDEBAR: ActionType<ToggleSidebarAction> = 'TOGGLE_SIDEBAR';
-interface ToggleSidebarAction extends Action {
+export const TOGGLE_SETTINGS: ActionType<ToggleSettingsAction> = 'TOGGLE_SETTINGS';
+interface ToggleSettingsAction extends Action {
 }
-export function toggleFilter(): ToggleSidebarAction {
+export function toggleSettings(): ToggleSettingsAction {
     return {
-        type: TOGGLE_SIDEBAR
+        type: TOGGLE_SETTINGS
     };
 }
 
@@ -96,17 +95,17 @@ export function changeSortColumn(nextSortColumn: string): ChangeSortColumnAction
     };
 }
 
-export const CHANGE_FILTER: ActionType<ChangeFilterAction> = 'CHANGE_FILTER';
-interface ChangeFilterAction extends Action {
+export const CHANGE_SETTINGS: ActionType<ChangeSettingsAction> = 'CHANGE_SETTINGS';
+interface ChangeSettingsAction extends Action {
     payload: {
-        filter: FilterState;
+        settings: Settings;
     };
 }
-export function changeFilter(filter: FilterState): ChangeFilterAction {
+export function changeSettings(settings: Settings): ChangeSettingsAction {
     return {
-        type: CHANGE_FILTER,
+        type: CHANGE_SETTINGS,
         payload: {
-            filter
+            settings
         }
     };
 }
@@ -172,4 +171,3 @@ export interface UpdateBranchInfoAction extends Action {
         branchInfo: API.BranchInfo;
     }
 }
-

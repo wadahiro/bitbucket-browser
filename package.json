@@ -1,6 +1,6 @@
 {
   "name": "bitbucket-browser",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "",
   "main": "public/js/app.js",
   "author": "",
@@ -51,7 +51,7 @@
     "react-select": "^0.9.1",
     "react-sidebar": "^2.1.2",
     "redux": "^3.5.2",
-    "redux-saga": "^0.10.4",
+    "redux-saga": "^0.10.5",
     "reselect": "^2.5.1",
     "whatwg-fetch": "^0.10.1"
   }

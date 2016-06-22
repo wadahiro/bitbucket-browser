@@ -12,8 +12,8 @@ export class Checkbox extends React.Component<CheckboxProps, void> {
         return (
             <p className='control'>
                 <label className={`checkbox ${className}`}>
-                    <input {...this.props} type='checkbox'  />
-                    {label}
+                    <input {...this.props} type='checkbox' />
+                    &nbsp;{label}
                 </label>
             </p>
         );

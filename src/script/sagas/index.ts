@@ -1,13 +1,19 @@
-import { takeEvery } from 'redux-saga'
-import { take, put, call, fork, spawn, join, select, Effect } from 'redux-saga/effects'
+import { Task } from 'redux-saga'
+import { race, take, call, apply, fork, spawn, join, select, Effect } from 'redux-saga/effects'
 import * as B from '../bulma';
 
 import * as actions from '../actions'
 import { getSlicedBranchInfos } from '../selectors'
-import { RootState, AppState, FilterState }from '../reducers'
+import { RootState, AppState }from '../reducers'
 import * as API from '../webapis';
 import { Settings } from '../Settings';
 import { trimSlash } from '../Utils';
+
+// TODO waiting for redux-saga.d.ts updated
+const channel = require('redux-saga').channel;
+const takeEvery = require('redux-saga').takeEvery;
+const put = require('redux-saga/effects').put;
+
 
 async function fetchSettings(): Promise<Settings> {
     const response = await fetch('./settings.json', {
@@ -74,6 +80,24 @@ function resolveSettings(settings: Settings): Settings {
     if (settings.items.sonarQubeMetrics && settings.items.sonarQubeMetrics.resolver) {
         settings.items.sonarQubeMetrics.resolver.baseUrl = trimSlash(settings.items.sonarQubeMetrics.resolver.baseUrl);
     }
+
+    // Resolve item's default enabled and visible value
+    Object.keys(settings.items).map(x => {
+        if (settings.items[x].enabled === undefined) {
+            settings.items[x].enabled = true;
+        }
+        if (settings.items[x].visible === undefined) {
+            settings.items[x].visible = true;
+        }
+    });
+
+    // Resolve result per page default setting
+    if (!settings.resultsPerPage) {
+        settings.resultsPerPage = {
+            value: 10,
+            options: [5, 10, 15, 20, 25]
+        }
+    }
     return settings;
 }
 
@@ -108,7 +132,6 @@ function* pollFetchBranchInfosRequested(action: actions.FetchBranchInfosAction):
 function* handleFetchBranchInfoAll(repos: API.Repo[]): Iterable<Effect> {
     const api: API.API = yield select((state: RootState) => state.app.api);
 
-
     for (let i = 0; i < repos.length; i++) {
         const repo = repos[i];
         yield fork(handleFetchBranchInfosPerRepo, api, repo);
@@ -138,7 +161,7 @@ function* handleFetchBranchInfosPerRepo(api: API.API, repo: API.Repo): Iterable<
 }
 
 function* handleFetchPullRequestCount(branchInfosPerRepo: API.BranchInfo[]): Iterable<Effect> {
-    const settings: Settings = yield select((state: RootState) => state.app.settings);
+    const settings: Settings = yield select((state: RootState) => state.settings);
     const api: API.API = yield select((state: RootState) => state.app.api);
 
     const branchInfo = branchInfosPerRepo[0];
@@ -147,7 +170,7 @@ function* handleFetchPullRequestCount(branchInfosPerRepo: API.BranchInfo[]): Ite
     const actionTypes = branchInfosPerRepo.map(x => `${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${x.id}`);
     yield take(actionTypes);
 
-    const prCountPerRepo: API.PullRequestCount = yield call([api, api.fetchPullRequests], branchInfosPerRepo[0]);
+    const prCountPerRepo: API.PullRequestCount = yield request(api, api.fetchPullRequests, branchInfosPerRepo[0]);
 
     for (let i = 0; i < branchInfosPerRepo.length; i++) {
         const branchInfo = branchInfosPerRepo[i];
@@ -182,7 +205,7 @@ function* handleFetchPullRequestCount(branchInfosPerRepo: API.BranchInfo[]): Ite
 }
 
 function* handleSonarForBitbucketStatus(branchInfo: API.BranchInfo, prIds: number[]): Iterable<Effect> {
-    const settings: Settings = yield select((state: RootState) => state.app.settings);
+    const settings: Settings = yield select((state: RootState) => state.settings);
     const api: API.API = yield select((state: RootState) => state.app.api);
 
     if (!settings.items.sonarForBitbucketStatus.enabled) {
@@ -196,7 +219,7 @@ function* handleSonarForBitbucketStatus(branchInfo: API.BranchInfo, prIds: numbe
             values: []
         };
     } else {
-        const sonarForBitbucketStatus: API.SonarForBitbucketStatus = yield call([api, api.fetchSonarForBitbucketStatus], branchInfo.repoId, prIds);
+        const sonarForBitbucketStatus: API.SonarForBitbucketStatus = yield request(api, api.fetchSonarForBitbucketStatus, branchInfo.repoId, prIds);
 
         yield put(<actions.UpdateBranchInfoAction>{
             type: actions.UPDATE_BRANCH_INFO,
@@ -214,7 +237,7 @@ function* handleSonarForBitbucketStatus(branchInfo: API.BranchInfo, prIds: numbe
 }
 
 function* handleBuildStatus(branchInfo: API.BranchInfo): Iterable<Effect> {
-    const settings: Settings = yield select((state: RootState) => state.app.settings);
+    const settings: Settings = yield select((state: RootState) => state.settings);
     const api: API.API = yield select((state: RootState) => state.app.api);
 
     if (!settings.items.buildStatus.enabled) {
@@ -232,7 +255,7 @@ function* handleBuildStatus(branchInfo: API.BranchInfo): Iterable<Effect> {
             values: []
         };
     } else {
-        buildStatus = yield call([api, api.fetchBuildStatus], latestCommitHash);
+        buildStatus = yield request(api, api.fetchBuildStatus, latestCommitHash);
     }
 
     yield put(<actions.UpdateBranchInfoAction>{
@@ -250,7 +273,7 @@ function* handleBuildStatus(branchInfo: API.BranchInfo): Iterable<Effect> {
 }
 
 function* handleSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
-    const settings: Settings = yield select((state: RootState) => state.app.settings);
+    const settings: Settings = yield select((state: RootState) => state.settings);
     const api: API.API = yield select((state: RootState) => state.app.api);
 
     if (!settings.items.sonarQubeMetrics.enabled) {
@@ -297,7 +320,7 @@ function* updateSonarQubeMetrics(branchInfo: API.BranchInfo) {
     const api: API.API = yield select((state: RootState) => state.app.api);
     const { id, repo, branch } = branchInfo;
 
-    const sonarQubeMetrics: API.SonarQubeMetrics = yield call([api, api.fetchSonarQubeMetricsByKey], repo, branch);
+    const sonarQubeMetrics: API.SonarQubeMetrics = yield request(api, api.fetchSonarQubeMetricsByKey, repo, branch);
 
     yield put(<actions.UpdateBranchInfoAction>{
         type: actions.UPDATE_BRANCH_INFO,
@@ -318,7 +341,7 @@ function* watchAndLog() {
 
     const state: RootState = yield select((state: RootState) => state);
 
-    if (state.app.settings && state.app.settings.debug) {
+    if (state.settings && state.settings.debug) {
         yield* takeEvery('*', function* logger(action) {
 
             console.log('Action: ', action);
@@ -327,39 +350,73 @@ function* watchAndLog() {
     }
 }
 
+// constants
 const SIDEBAR_OPENED = 'sidebarOpened';
+const RESULTS_PER_PAGE = 'resultsPerPage';
+const ITEMS = 'columns';
 
 function* restoreStateFromQueryParameter() {
     if (window.location.hash) {
         // Restore app state from query parameters
         const rootState: RootState = yield select((state: RootState) => state);
-        let filterState = rootState.filter;
-        let appState = rootState.app;
+        let settings = rootState.settings;
+        let filter = settings.filter;
 
-        // Restore filterState
         const query = decodeURIComponent(window.location.hash);
         const queryParams = query.substring(1).split('&').reduce((s, x) => {
             const pair = x.split('=');
             s[pair[0]] = pair[1];
             return s;
         }, {});
-        filterState = Object.keys(rootState.filter).reduce((s, x) => {
+
+        // Restore filter
+        const restoredFilter = Object.keys(filter).reduce((s, x) => {
             if (queryParams[x]) {
                 s[x] = queryParams[x].split(',');
             }
             return s;
-        }, rootState.filter);
+        }, filter);
 
-        // Restore sidebar opened
-        if (queryParams[SIDEBAR_OPENED]) {
-            appState.sidebarOpened = queryParams[SIDEBAR_OPENED].toLowerCase() === 'true' ? true : false;
+        // Restore results per page
+        let restoredResultPerPage = settings.resultsPerPage.value;
+        if (queryParams[RESULTS_PER_PAGE]) {
+            const num = Number(queryParams[RESULTS_PER_PAGE]);
+            if (!Number.isNaN(num) && settings.resultsPerPage.options.find(x => x === num)) {
+                restoredResultPerPage = num;
+            }
         }
 
-        yield put(<actions.RestoreStateAction>{
-            type: actions.RESTORE_STATE,
+        // Restore visible columns
+        let restoredItems = settings.items;
+        if (queryParams[ITEMS]) {
+            const showColumns: string[] = queryParams[ITEMS].split(',');
+            if (showColumns.length > 0) {
+                Object.keys(restoredItems).forEach(x => {
+                    restoredItems[x].visible = false;
+                });
+                showColumns.forEach(x => {
+                    restoredItems[x].visible = true;
+                });
+            }
+        }
+
+        // Restore sidebar opened
+        let sidebarOpened = settings.show;
+        if (queryParams[SIDEBAR_OPENED]) {
+            sidebarOpened = queryParams[SIDEBAR_OPENED].toLowerCase() === 'true' ? true : false;
+        }
+
+        yield put(<actions.RestoreSettingsAction>{
+            type: actions.RESTORE_SETTINGS,
             payload: {
-                filterState,
-                appState
+                settings: Object.assign({}, settings, {
+                    items: restoredItems,
+                    show: sidebarOpened,
+                    filter: restoredFilter,
+                    resultsPerPage: Object.assign({}, settings.resultsPerPage, {
+                        value: restoredResultPerPage
+                    })
+                })
             }
         });
     }
@@ -367,23 +424,120 @@ function* restoreStateFromQueryParameter() {
 
 function* pollSaveAsQueryParameters() {
     while (true) {
-        const action = yield take([actions.CHANGE_FILTER, actions.TOGGLE_SIDEBAR]);
+        const action = yield take([actions.CHANGE_SETTINGS, actions.TOGGLE_SETTINGS]);
 
-        const filterState: FilterState = yield select((state: RootState) => state.filter);
-        const sidebarOpened: boolean = yield select((state: RootState) => state.app.sidebarOpened);
+        const settings: Settings = yield select((state: RootState) => state.settings);
 
         // Save to URL
-        const queryParameters = Object.keys(filterState).map(x => {
-            return `${x}=${filterState[x]}`
+
+        // Save filter
+        const queryParameters = Object.keys(settings.filter).map(x => {
+            return `${x}=${settings.filter[x]}`
         });
-        queryParameters.push(`${SIDEBAR_OPENED}=${sidebarOpened}`);
+
+        // Save resutls per page
+        queryParameters.push(`${RESULTS_PER_PAGE}=${settings.resultsPerPage.value}`);
+
+        // Save visible columns
+        const itemKeys = Object.keys(settings.items);
+        const allShowed = itemKeys.find(x => settings.items[x].enabled && settings.items[x].visible === false) === undefined;
+        if (!allShowed) {
+            const columns = itemKeys.filter(x => settings.items[x].enabled && settings.items[x].visible);
+            queryParameters.push(`${ITEMS}=${columns.join(',')}`);
+        }
+
+        // Save sidebar opened or closed
+        queryParameters.push(`${SIDEBAR_OPENED}=${settings.show}`);
 
         window.location.hash = queryParameters.join('&');
     }
 }
 
+// Concurrent API Request Limits
+const newId = (() => {
+    let n = 0;
+    return () => n++;
+})();
+
+function* request(context, func, ...args) {
+    const id = newId();
+
+    // console.log('call', id)
+
+    yield put(<RequestAction>{
+        type: REQUEST,
+        payload: {
+            id,
+            context,
+            func,
+            args
+        }
+    });
+
+    // console.log('wait...', id)
+
+    const action: ResponseAction = yield take(`${RESPONSE}:${id}`);
+
+    // console.log('take', id, action)
+
+    return action.payload.result;
+}
+
+const REQUEST = 'redux-saga/REQUEST';
+interface RequestAction {
+    type: string;
+    payload: {
+        id: number;
+        context: any;
+        func: any;
+        args: any[];
+    }
+}
+
+const RESPONSE = 'redux-saga/RESPONSE';
+interface ResponseAction {
+    type: string;
+    payload: {
+        result: any;
+    }
+}
+
+function* watchRequests() {
+    // create a channel to queue incoming requests
+    const chan = yield call(channel);
+
+    // create 5 worker 'threads'
+    for (let i = 0; i < 5; i++) {
+        yield fork(handleRequest, chan);
+    }
+
+    yield* takeEvery(REQUEST, function* (action: RequestAction) {
+        // console.log('dispatch to worker', action.payload.id)
+        yield put(chan, action);
+    });
+}
+
+function* handleRequest(chan) {
+    while (true) {
+        const req: RequestAction = yield take(chan);
+
+        // console.log('run worker', req.payload.id)
+
+        const result = yield apply(req.payload.context, req.payload.func, req.payload.args);
+
+        yield put(<ResponseAction>{
+            type: `${RESPONSE}:${req.payload.id}`,
+            payload: {
+                result
+            }
+        });
+        // console.log('end worker', req.payload.id)
+    }
+}
+
 export default function* root(): Iterable<Effect> {
     yield fork(watchAndLog);
+    yield fork(watchRequests);
     yield fork(initApp);
     yield fork(pollFetchBranchInfosRequested);
     yield fork(pollReloadBranchInfos);

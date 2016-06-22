@@ -4,7 +4,7 @@ const Select = require('react-select');
 
 import * as B from '../bulma';
 import * as API from '../webapis';
-import { FilterState } from '../reducers';
+import { Settings } from '../Settings';
 
 export interface SelectOption {
     label: string;
@@ -12,9 +12,9 @@ export interface SelectOption {
 }
 
 interface Props {
-    filter: FilterState;
+    settings: Settings;
     data: API.BranchInfo[];
-    onChange: (key: string, filer: FilterState) => void;
+    onChange: (settings: Settings) => void;
 }
 
 export default class SearchBox extends React.Component<Props, void> {
@@ -22,15 +22,17 @@ export default class SearchBox extends React.Component<Props, void> {
     // If upgrading react-select to 1.0.0, need to change this arguments and logic
     // https://github.com/JedWatson/react-select/blob/master/CHANGES.md
     onChange = (key, values: string) => {
-        const filter = Object.assign({}, this.props.filter, {
+        const newFilter = Object.assign({}, this.props.settings.filter, {
             [key]: values && values !== '' ? values.split(',') : []
         });
-        this.props.onChange(key, filter);
+        const newSettings = Object.assign({}, this.props.settings, {
+            filter: newFilter
+        });
+        this.props.onChange(newSettings);
     };
 
     render() {
-        const { data } = this.props;
-        const { filter } = this.props;
+        const { data, settings: { filter } } = this.props;
 
         const options = _.reduce<any, any>(data, (s, x) => {
             s.project.push(x.project);
@@ -50,10 +52,6 @@ export default class SearchBox extends React.Component<Props, void> {
         const branchOptions = _.chain<string[]>(options.branch).uniq().map(x => { return { value: x, label: x } }).value();
         const branchAuthorOptions = _.chain<string[]>(options.branchAuthor).uniq().map(x => { return { value: x, label: x } }).value();
 
-        const style = {
-            padding: '0px 10px 0px 10px'
-        };
-
         const selectStyle = {
             padding: '5px 0px 5px 0px'
         };
@@ -63,7 +61,7 @@ export default class SearchBox extends React.Component<Props, void> {
 
         return (
             <div>
-                <div style={style}>
+                <div>
                     <label className='control-label'>Project</label>
                     <div style={selectStyle}>
                         <Select name='projectIncludes' placeholder={includes} value={filter.projectIncludes} options={projectOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'projectIncludes') } />
@@ -73,7 +71,7 @@ export default class SearchBox extends React.Component<Props, void> {
                     </div>
                 </div>
                 <hr />
-                <div style={style}>
+                <div>
                     <label className='control-label'>Repository</label>
                     <div style={selectStyle}>
                         <Select name='repoIncludes' placeholder={includes} value={filter.repoIncludes} options={repoOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'repoIncludes') } />
@@ -83,7 +81,7 @@ export default class SearchBox extends React.Component<Props, void> {
                     </div>
                 </div>
                 <hr />
-                <div style={style}>
+                <div>
                     <label className='control-label'>Branch</label>
                     <div style={selectStyle}>
                         <Select name='branchIncludes' placeholder={includes} value={filter.branchIncludes} options={branchOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchIncludes') } />
@@ -93,7 +91,7 @@ export default class SearchBox extends React.Component<Props, void> {
                     </div>
                 </div>
                 <hr />
-                <div style={style}>
+                <div>
                     <label className='control-label'>Branch Author</label>
                     <div style={selectStyle}>
                         <Select name='branchAuthorIncludes' placeholder={includes} value={filter.branchAuthorIncludes} options={branchAuthorOptions} multi={true} allowCreate={true} onChange={this.onChange.bind(null, 'branchAuthorIncludes') } />

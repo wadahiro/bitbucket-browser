@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Pagination } from './Pagination'
 import { Loading } from './Loading'
+import { Select } from './Select';
 
 export interface TableProps {
     // basic
@@ -52,7 +53,6 @@ export class Table extends React.Component<TableProps, void> {
         sortColumn: null,
         sortAscending: true,
         showPagination: false,
-        resultsPerPage: 5,
         results: []
     };
 
