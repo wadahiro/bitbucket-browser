@@ -1,5 +1,5 @@
-import { takeEvery, Task } from 'redux-saga'
-import { take, put, call, apply, fork, spawn, join, select, Effect } from 'redux-saga/effects'
+import { Task } from 'redux-saga'
+import { race, take, call, apply, fork, spawn, join, select, Effect } from 'redux-saga/effects'
 import * as B from '../bulma';
 
 import * as actions from '../actions'
@@ -8,6 +8,12 @@ import { RootState, AppState }from '../reducers'
 import * as API from '../webapis';
 import { Settings } from '../Settings';
 import { trimSlash } from '../Utils';
+
+// TODO waiting for redux-saga.d.ts updated
+const channel = require('redux-saga').channel;
+const takeEvery = require('redux-saga').takeEvery;
+const put = require('redux-saga/effects').put;
+
 
 async function fetchSettings(): Promise<Settings> {
     const response = await fetch('./settings.json', {
@@ -164,12 +170,7 @@ function* handleFetchPullRequestCount(branchInfosPerRepo: API.BranchInfo[]): Ite
     const actionTypes = branchInfosPerRepo.map(x => `${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${x.id}`);
     yield take(actionTypes);
 
-    // const prCountPerRepo: API.PullRequestCount = yield call([api, api.fetchPullRequests], branchInfosPerRepo[0]);
-    const task: Task<API.PullRequestCount> = yield fork(callApi, api, api.fetchPullRequests, branchInfosPerRepo[0]);
-
-    yield join(task);
-
-    const prCountPerRepo = task.result();
+    const prCountPerRepo: API.PullRequestCount = yield request(api, api.fetchPullRequests, branchInfosPerRepo[0]);
 
     for (let i = 0; i < branchInfosPerRepo.length; i++) {
         const branchInfo = branchInfosPerRepo[i];
@@ -218,12 +219,7 @@ function* handleSonarForBitbucketStatus(branchInfo: API.BranchInfo, prIds: numbe
             values: []
         };
     } else {
-        // const sonarForBitbucketStatus: API.SonarForBitbucketStatus = yield call([api, api.fetchSonarForBitbucketStatus], branchInfo.repoId, prIds);
-        const task: Task<API.SonarForBitbucketStatus> = yield fork(callApi, api, api.fetchSonarForBitbucketStatus, branchInfo.repoId, prIds);
-
-        yield join(task);
-
-        sonarForBitbucketStatus = task.result();
+        const sonarForBitbucketStatus: API.SonarForBitbucketStatus = yield request(api, api.fetchSonarForBitbucketStatus, branchInfo.repoId, prIds);
 
         yield put(<actions.UpdateBranchInfoAction>{
             type: actions.UPDATE_BRANCH_INFO,
@@ -259,12 +255,7 @@ function* handleBuildStatus(branchInfo: API.BranchInfo): Iterable<Effect> {
             values: []
         };
     } else {
-        // buildStatus = yield call([api, api.fetchBuildStatus], latestCommitHash);
-        const task: Task<API.BuildStatus> = yield fork(callApi, api, api.fetchBuildStatus, latestCommitHash);
-
-        yield join(task);
-
-        buildStatus = task.result();
+        buildStatus = yield request(api, api.fetchBuildStatus, latestCommitHash);
     }
 
     yield put(<actions.UpdateBranchInfoAction>{
@@ -329,12 +320,7 @@ function* updateSonarQubeMetrics(branchInfo: API.BranchInfo) {
     const api: API.API = yield select((state: RootState) => state.app.api);
     const { id, repo, branch } = branchInfo;
 
-    // const sonarQubeMetrics: API.SonarQubeMetrics = yield call([api, api.fetchSonarQubeMetricsByKey], repo, branch);
-    const task: Task<API.SonarQubeMetrics> = yield fork(callApi, api, api.fetchSonarQubeMetricsByKey, repo, branch);
-
-    yield join(task);
-
-    const sonarQubeMetrics = task.result();
+    const sonarQubeMetrics: API.SonarQubeMetrics = yield request(api, api.fetchSonarQubeMetricsByKey, repo, branch);
 
     yield put(<actions.UpdateBranchInfoAction>{
         type: actions.UPDATE_BRANCH_INFO,
@@ -348,84 +334,6 @@ function* updateSonarQubeMetrics(branchInfo: API.BranchInfo) {
             }
         }
     });
-}
-
-const newId = (() => {
-    let n = 0;
-    return () => n++;
-})();
-
-function* callApi(context, func, ...args) {
-    const id = newId();
-
-    yield put(<actions.NewJobAction>{
-        type: actions.NEW_JOB,
-        payload: {
-            id,
-            context,
-            func,
-            args
-        }
-    });
-
-    const action: actions.SuccessJobAction = yield take(`${actions.SUCCESS_JOB}:${id}`);
-
-    return action.payload.result;
-}
-
-function* handleThrottle() {
-    while (true) {
-        yield take([actions.NEW_JOB, actions.RUN_JOB, actions.DONE_JOB]);
-
-        while (true) {
-            const jobs: actions.NewJobAction[] = yield select((state: RootState) => state.app.pending);
-            if (jobs.length === 0) {
-                break; // No pending jobs
-            }
-
-            const appState: AppState = yield select((state: RootState) => state.app);
-
-            if (appState.limit <= appState.numOfRunning) {
-                break; // No rooms to run job
-            }
-
-            const job = jobs[0];
-
-            yield fork(function* () {
-                try {
-                    const result = yield apply(job.payload.context, job.payload.func, job.payload.args);
-
-                    yield put(<actions.SuccessJobAction>{
-                        type: `${actions.SUCCESS_JOB}:${job.payload.id}`,
-                        payload: {
-                            result
-                        }
-                    });
-                } catch (e) {
-                    yield put(<actions.FailureJobAction>{
-                        type: `${actions.FAILURE_JOB}:${job.payload.id}`,
-                        payload: {
-                            error: e
-                        }
-                    });
-                }
-
-                yield put(<actions.DoneJobAction>{
-                    type: actions.DONE_JOB,
-                    payload: {
-                        job
-                    }
-                });
-            });
-
-            yield put(<actions.RunJobAction>{
-                type: actions.RUN_JOB,
-                payload: {
-                    job
-                }
-            });
-        }
-    }
 }
 
 function* watchAndLog() {
@@ -545,11 +453,93 @@ function* pollSaveAsQueryParameters() {
     }
 }
 
+// Concurrent API Request Limits
+const newId = (() => {
+    let n = 0;
+    return () => n++;
+})();
+
+function* request(context, func, ...args) {
+    const id = newId();
+
+    // console.log('call', id)
+
+    yield put(<RequestAction>{
+        type: REQUEST,
+        payload: {
+            id,
+            context,
+            func,
+            args
+        }
+    });
+
+    // console.log('wait...', id)
+
+    const action: ResponseAction = yield take(`${RESPONSE}:${id}`);
+
+    // console.log('take', id, action)
+
+    return action.payload.result;
+}
+
+const REQUEST = 'redux-saga/REQUEST';
+interface RequestAction {
+    type: string;
+    payload: {
+        id: number;
+        context: any;
+        func: any;
+        args: any[];
+    }
+}
+
+const RESPONSE = 'redux-saga/RESPONSE';
+interface ResponseAction {
+    type: string;
+    payload: {
+        result: any;
+    }
+}
+
+function* watchRequests() {
+    // create a channel to queue incoming requests
+    const chan = yield call(channel);
+
+    // create 5 worker 'threads'
+    for (let i = 0; i < 5; i++) {
+        yield fork(handleRequest, chan);
+    }
+
+    yield* takeEvery(REQUEST, function* (action: RequestAction) {
+        // console.log('dispatch to worker', action.payload.id)
+        yield put(chan, action);
+    });
+}
+
+function* handleRequest(chan) {
+    while (true) {
+        const req: RequestAction = yield take(chan);
+
+        // console.log('run worker', req.payload.id)
+
+        const result = yield apply(req.payload.context, req.payload.func, req.payload.args);
+
+        yield put(<ResponseAction>{
+            type: `${RESPONSE}:${req.payload.id}`,
+            payload: {
+                result
+            }
+        });
+        // console.log('end worker', req.payload.id)
+    }
+}
+
 export default function* root(): Iterable<Effect> {
     yield fork(watchAndLog);
+    yield fork(watchRequests);
     yield fork(initApp);
     yield fork(pollFetchBranchInfosRequested);
     yield fork(pollReloadBranchInfos);
     yield fork(pollSaveAsQueryParameters);
-    yield fork(handleThrottle);
 }

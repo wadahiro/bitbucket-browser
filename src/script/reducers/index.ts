@@ -103,28 +103,6 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
         });
     }
 
-    // Throttling
-    if (Actions.isType(action, Actions.NEW_JOB)) {
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            pending: state.pending.concat(action)
-        });
-    }
-
-    if (Actions.isType(action, Actions.RUN_JOB)) {
-        const s = Object.assign<AppState, AppState, AppState>({}, state, {
-            pending: state.pending.filter(x => x !== action.payload.job),
-            numOfRunning: state.numOfRunning + 1
-        });
-
-        return s;
-    }
-
-    if (Actions.isType(action, Actions.DONE_JOB)) {
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            numOfRunning: state.numOfRunning - 1
-        });
-    }
-
     return state;
 };
 
