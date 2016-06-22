@@ -127,8 +127,13 @@ function filterBranchInfo(data: API.BranchInfo[], settings: Settings) {
 
 function match(patterns: string[] = [], target: string) {
     const found = patterns.find(pattern => {
-        const re = new RegExp(pattern);
-        return re.test(target);
+        try {
+            const re = new RegExp(pattern);
+            return re.test(target);
+        } catch (e) {
+            // console.info('Invalid filter regex pattern', pattern);
+            return false;
+        }
     });
     return found === undefined ? false : true;
 }
