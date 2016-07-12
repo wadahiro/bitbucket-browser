@@ -79,6 +79,10 @@ class BrowserView extends React.Component<Props, void> {
         this.props.dispatch(Actions.sonarQubeAuthenticated());
     };
 
+    handleJiraAuthenticated = () => {
+        this.props.dispatch(Actions.jiraAuthenticated());
+    };
+
     reloadBranchInfos = () => {
         const { settings } = this.props;
         this.props.dispatch(Actions.reloadBranchInfos(settings));
@@ -135,6 +139,7 @@ class BrowserView extends React.Component<Props, void> {
                     sortAscending={sortAscending}
                     handlePageChanged={this.handlePageChanged}
                     handleSonarQubeAuthenticated={this.handleSonarQubeAuthenticated}
+                    handleJiraAuthenticated={this.handleJiraAuthenticated}
                     handleSort={this.handleSort}
                     />
 

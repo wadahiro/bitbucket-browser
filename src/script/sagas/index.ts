@@ -52,12 +52,20 @@ function* initApp(): Iterable<Effect> {
         // Restore app state
         yield fork(restoreStateFromQueryParameter);
 
-        const sonarQubeAuthenticated = yield call([api, api.isAuthenticatedSonarQube]);
+        let sonarQubeAuthenticated = false;
+        let jiraAuthenticated = false;
+        if (settings.items.sonarQubeMetrics.enabled) {
+            sonarQubeAuthenticated = yield call([api, api.isAuthenticatedSonarQube]);
+        }
+        if (settings.items.jiraIssue.enabled) {
+            jiraAuthenticated = yield call([api, api.isAuthenticatedJira]);
+        }
 
         yield put(<actions.InitAppAction>{
             type: actions.INIT_APP_SUCCEEDED,
             payload: {
-                sonarQubeAuthenticated
+                sonarQubeAuthenticated,
+                jiraAuthenticated
             }
         });
 
@@ -74,9 +82,9 @@ function resolveSettings(settings: Settings): Settings {
 
     // Fix baseUrls
     settings.baseUrl = trimSlash(settings.baseUrl);
-    if (settings.items.sonarQubeMetrics && settings.items.sonarQubeMetrics.resolver) {
-        settings.items.sonarQubeMetrics.resolver.baseUrl = trimSlash(settings.items.sonarQubeMetrics.resolver.baseUrl);
-    }
+    fixResolverBaseUrl(settings.items.sonarQubeMetrics);
+    fixResolverBaseUrl(settings.items.branchNameLink);
+    fixResolverBaseUrl(settings.items.jiraIssue);
 
     // Resolve item's default enabled and visible value
     Object.keys(settings.items).map(x => {
@@ -96,6 +104,12 @@ function resolveSettings(settings: Settings): Settings {
         }
     }
     return settings;
+}
+
+function fixResolverBaseUrl(item) {
+    if (item && item.resolver && item.resolver.baseUrl) {
+        item.resolver.baseUrl = trimSlash(item.resolver.baseUrl);
+    }
 }
 
 function* pollReloadBranchInfos(action: actions.ReloadBranchInfosAction): Iterable<Effect> {
@@ -153,6 +167,7 @@ function* handleFetchBranchInfosPerRepo(api: API.API, repo: API.Repo): Iterable<
         for (let i = 0; i < branchInfos.length; i++) {
             yield spawn(handleBuildStatus, branchInfos[i]);
             yield spawn(handleSonarQubeMetrics, branchInfos[i]);
+            yield spawn(handleJiraIssue, branchInfos[i]);
         }
     }
 }
@@ -313,7 +328,7 @@ function* handleSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
     }
 }
 
-function* updateSonarQubeMetrics(branchInfo: API.BranchInfo) {
+function* updateSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
     const api: API.API = yield select((state: RootState) => state.app.api);
     const { id, repo, branch } = branchInfo;
 
@@ -326,6 +341,90 @@ function* updateSonarQubeMetrics(branchInfo: API.BranchInfo) {
                 id,
                 sonarQubeMetrics: {
                     value: sonarQubeMetrics,
+                    completed: true
+                }
+            }
+        }
+    });
+}
+
+function* handleJiraIssue(branchInfo: API.BranchInfo): Iterable<Effect> {
+    const settings: Settings = yield select((state: RootState) => state.settings);
+    const api: API.API = yield select((state: RootState) => state.app.api);
+
+    if (!settings.items.jiraIssue.enabled) {
+        return;
+    }
+
+    const { id, branch } = branchInfo;
+
+    const matched = branch.match(settings.items.jiraIssue.resolver.pattern);
+
+    if (!matched) {
+        yield put(<actions.UpdateBranchInfoAction>{
+            type: actions.UPDATE_BRANCH_INFO,
+            payload: {
+                branchInfo: {
+                    id,
+                    jiraIssue: {
+                        value: null,
+                        completed: true
+                    }
+                }
+            }
+        });
+        return;
+    }
+
+    // wait for showing this branchInfo details
+    yield take(`${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${id}`);
+
+    const jiraAuthenticated: boolean = yield select((state: RootState) => state.app.jiraAuthenticated);
+
+    if (jiraAuthenticated) {
+        yield fork(updateJiraIssue, branchInfo, matched[0]);
+
+    } else {
+        const jiraIssue: API.JiraIssue = {
+            status: 401,
+            errorMessages: ['Unauthorized'],
+            errors: null,
+            key: matched[0]
+        };
+
+        yield put(<actions.UpdateBranchInfoAction>{
+            type: actions.UPDATE_BRANCH_INFO,
+            payload: {
+                branchInfo: {
+                    id,
+                    jiraIssue: {
+                        value: jiraIssue,
+                        completed: true
+                    }
+                }
+            }
+        });
+
+        yield take(actions.JIRA_AUTHENTICATED);
+
+        // Retry after authenticated
+        yield fork(updateJiraIssue, branchInfo, matched[0]);
+    }
+}
+
+function* updateJiraIssue(branchInfo: API.BranchInfo, issueId: string): Iterable<Effect> {
+    const api: API.API = yield select((state: RootState) => state.app.api);
+    const { id, repo, branch } = branchInfo;
+
+    const jiraIssue: API.JiraIssue = yield request(api, api.fetchJiraIssue, issueId);
+
+    yield put(<actions.UpdateBranchInfoAction>{
+        type: actions.UPDATE_BRANCH_INFO,
+        payload: {
+            branchInfo: {
+                id,
+                jiraIssue: {
+                    value: jiraIssue,
                     completed: true
                 }
             }
@@ -352,7 +451,7 @@ const SIDEBAR_OPENED = 'sidebarOpened';
 const RESULTS_PER_PAGE = 'resultsPerPage';
 const ITEMS = 'columns';
 
-function* restoreStateFromQueryParameter(): any {
+function* restoreStateFromQueryParameter(): Iterable<Effect> {
     if (window.location.hash) {
         // Restore app state from query parameters
         const rootState: RootState = yield select((state: RootState) => state);
@@ -419,7 +518,7 @@ function* restoreStateFromQueryParameter(): any {
     }
 }
 
-function* pollSaveAsQueryParameters() {
+function* pollSaveAsQueryParameters(): Iterable<Effect> {
     while (true) {
         const action = yield take([actions.CHANGE_SETTINGS, actions.TOGGLE_SETTINGS]);
 

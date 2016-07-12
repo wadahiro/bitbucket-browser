@@ -39,7 +39,7 @@ interface SonarQubeApiOptions {
 
 export class SonarQubeApi {
     baseUrl: string;
-    
+
     constructor(options) {
         this.baseUrl = trimSlash(options.baseUrl);
     }
@@ -52,11 +52,11 @@ export class SonarQubeApi {
         // const result: AuthenticationResponse = await response.json();
         // return result.validate;
 
-        const response = await fetch(`${this.baseUrl}/api/user_properties?format=json`, {
-            credentials: 'same-origin'
-        });
-
         try {
+            const response = await fetch(`${this.baseUrl}/api/user_properties?format=json`, {
+                credentials: 'same-origin'
+            });
+
             if (response.status === 200) {
                 await response.json();
                 return true;
