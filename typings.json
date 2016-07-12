@@ -3,7 +3,7 @@
   "devDependencies": {},
   "globalDependencies": {
     "lodash": "github:DefinitelyTyped/DefinitelyTyped/lodash/lodash.d.ts#c8630523ef2ee3fb42fe65cc17af5b1b56e611bc",
-    "node": "registry:dt/node#6.0.0+20160514165920",
+    "node": "registry:dt/node#6.0.0+20160709114037",
     "react": "registry:dt/react#0.14.0+20160423065914",
     "react-dom": "registry:dt/react-dom#0.14.0+20160412154040",
     "react-redux": "registry:dt/react-redux#4.4.0+20160501125835",
@@ -12,8 +12,7 @@
     "redux-devtools": "registry:dt/redux-devtools#3.0.0+20151215130854",
     "redux-devtools-dock-monitor": "registry:dt/redux-devtools-dock-monitor#1.0.1+20151216103641",
     "redux-devtools-log-monitor": "registry:dt/redux-devtools-log-monitor#1.0.1+20151216103641",
-    "redux-saga": "registry:dt/redux-saga#0.9.1+20160316155526",
     "reselect": "registry:dt/reselect#2.0.2+20160319031821",
-    "whatwg-fetch": "registry:dt/whatwg-fetch#0.0.0+20160412133644"
+    "whatwg-fetch": "registry:dt/whatwg-fetch#0.0.0+20160524142046"
   }
 }
