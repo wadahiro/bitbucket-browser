@@ -1,5 +1,5 @@
-import { Task } from 'redux-saga'
-import { race, take, call, apply, fork, spawn, join, select, Effect } from 'redux-saga/effects'
+import { Task, channel, takeEvery } from 'redux-saga'
+import { race, call, apply, fork, spawn, join, select, Effect, put } from 'redux-saga/effects'
 import * as B from '../bulma';
 
 import * as actions from '../actions'
@@ -9,11 +9,8 @@ import * as API from '../webapis';
 import { Settings } from '../Settings';
 import { trimSlash } from '../Utils';
 
-// TODO waiting for redux-saga.d.ts updated
-const channel = require('redux-saga').channel;
-const takeEvery = require('redux-saga').takeEvery;
-const put = require('redux-saga/effects').put;
-
+// TODO
+const { take } = require('redux-saga').effects;
 
 async function fetchSettings(): Promise<Settings> {
     const response = await fetch('./settings.json', {
@@ -355,7 +352,7 @@ const SIDEBAR_OPENED = 'sidebarOpened';
 const RESULTS_PER_PAGE = 'resultsPerPage';
 const ITEMS = 'columns';
 
-function* restoreStateFromQueryParameter() {
+function* restoreStateFromQueryParameter(): any {
     if (window.location.hash) {
         // Restore app state from query parameters
         const rootState: RootState = yield select((state: RootState) => state);
@@ -459,7 +456,7 @@ const newId = (() => {
     return () => n++;
 })();
 
-function* request(context, func, ...args) {
+function* request(context, func, ...args): any {
     const id = newId();
 
     // console.log('call', id)
