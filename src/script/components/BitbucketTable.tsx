@@ -526,19 +526,22 @@ function JiraIssueFormatter(settings: Settings, api: API.API, onAuthenticated: (
             // Show needing authentication
             if (jiraIssue.status === 401) {
                 return (
-                    <B.ModalTriggerLink modal={<JiraLoginModal api={api} onAuthenticated={onAuthenticated} />}>
-                        <UnauthorizedIcon type='danger' />
-                        Unauthorized.&nbsp; Please click me.
-                    </B.ModalTriggerLink>
+                    <div>
+                        <h3><a href={api.createJiraIssueUrl(jiraIssue) } target='_blank'>{jiraIssue.key}</a></h3>
+                        <br/>
+                        <B.ModalTriggerLink modal={<JiraLoginModal api={api} onAuthenticated={onAuthenticated} />}>
+                            <UnauthorizedIcon type='danger' />
+                            Unauthorized.&nbsp; Please click me.
+                        </B.ModalTriggerLink>
+                    </div>
                 );
             }
 
-            // Not Found
-            if (jiraIssue.status === 404) {
+            if (jiraIssue.key !== null) {
+                return <a href={api.createJiraIssueUrl(jiraIssue) } target='_blank'>{jiraIssue.key}</a>
+            } else {
                 return NONE;
             }
-
-            // TODO other errors
 
         } else {
             const style = {
@@ -562,7 +565,7 @@ function JiraIssueFormatter(settings: Settings, api: API.API, onAuthenticated: (
                             return (
                                 <tr key={x.key}>
                                     <td>{x.displayName}</td>
-                                    <td>{_toJiraDisplayValue(x, fields)}</td>
+                                    <td>{_toJiraDisplayValue(x, fields) }</td>
                                 </tr>
                             );
                         }) }
@@ -583,7 +586,7 @@ function _toJiraDisplayValue(option: JiraIssueResolverField, fields: any): strin
             return s;
         }
     }, fields);
-    
+
     if (value !== undefined) {
         if (option.datePattern && typeof value === 'string') {
             return formatDateString(value, option.datePattern);

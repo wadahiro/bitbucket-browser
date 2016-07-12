@@ -385,7 +385,7 @@ export class API {
         return url;
     }
 
-    createJiraIssueUrl(jiraIssue: JAPI.JiraIssueResponse) {
+    createJiraIssueUrl(jiraIssue: JiraIssue) {
         const url = `${this.settings.items.jiraIssue.resolver.linkBaseUrl}/brwose?/index/${jiraIssue.key}`;
         return url;
     }

@@ -388,7 +388,8 @@ function* handleJiraIssue(branchInfo: API.BranchInfo): Iterable<Effect> {
         const jiraIssue: API.JiraIssue = {
             status: 401,
             errorMessages: ['Unauthorized'],
-            errors: null
+            errors: null,
+            key: matched[0]
         };
 
         yield put(<actions.UpdateBranchInfoAction>{
@@ -407,7 +408,7 @@ function* handleJiraIssue(branchInfo: API.BranchInfo): Iterable<Effect> {
         yield take(actions.JIRA_AUTHENTICATED);
 
         // Retry after authenticated
-        yield fork(updateJiraIssue, branchInfo);
+        yield fork(updateJiraIssue, branchInfo, matched[0]);
     }
 }
 

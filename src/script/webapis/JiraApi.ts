@@ -4,6 +4,7 @@ export interface ErrorResponse {
     errorMessages: string[];
     errors: any;
     status: number; // Add for handling
+    key: string; // Add for handling
 }
 
 export function isErrorResponse(response: any): response is ErrorResponse {
@@ -96,14 +97,10 @@ export class JiraApi {
 
     async authenticate(loginId: string, password: string): Promise<boolean> {
         const response = await fetch(`${this.baseUrl}/rest/auth/1/session`, {
-            method: 'POST',
+            credentials: 'same-origin',
             headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                username: loginId,
-                password
-            })
+                'Authorization': `Basic ${new Buffer(`${loginId}:${password}`).toString('base64')}`
+            }
         });
 
         return await this.isAuthenticated();
@@ -119,6 +116,7 @@ export class JiraApi {
         if (isErrorResponse(json)) {
             // Add error status here
             json.status = response.status;
+            json.key = issueId;
             throw json;
         }
 
