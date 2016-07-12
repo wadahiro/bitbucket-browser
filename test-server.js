@@ -54,7 +54,7 @@ function mkProjects(num) {
     return projects;
 }
 
-const projects = mkProjects(10);
+const projects = mkProjects(2);
 
 app.get(contextPath + '/rest/api/1.0/repos', function (req, res) {
     setTimeout(function () {
@@ -475,6 +475,41 @@ app.get('/sonar/api/resources', function (req, res) {
 });
 
 
+// JIRA api response
+
+app.get('/jira/rest/auth/1/session', function (req, res) {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.json({
+    });
+});
+
+app.post('/jira/rest/auth/1/session', function (req, res) {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.json({
+    });
+});
+
+
+app.get('/jira/rest/api/2/issue/:id', function (req, res) {
+    var key = req.params.id
+    res.setHeader('Cache-Control', 'no-cache');
+    res.json({
+        id: 0,
+        key: key,
+        name: key,
+        date: '2016-04-07T19:23:08+0900',
+        fields: {
+            summary: 'Sample issue',
+            created: '2016-07-07T18:03:40.000+0900',
+            updated: '2016-07-07T20:30:00.000+0900',
+            status: {
+                id: '1',
+                name: 'Open',
+                description: ''
+            }
+        }
+    });
+});
 
 
 app.listen(app.get('port'), function () {

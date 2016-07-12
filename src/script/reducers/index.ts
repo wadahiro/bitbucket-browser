@@ -58,6 +58,7 @@ export interface AppState {
     limit?: number;
     numOfRunning?: number;
     sonarQubeAuthenticated?: boolean;
+    jiraAuthenticated?: boolean;
 }
 
 const initialAppState: AppState = {
@@ -67,6 +68,7 @@ const initialAppState: AppState = {
     limit: 5,
     numOfRunning: 0,
     sonarQubeAuthenticated: true,
+    jiraAuthenticated: true
 };
 
 export const appStateReducer = (state: AppState = initialAppState, action: Actions.Action) => {
@@ -100,6 +102,12 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
     if (Actions.isType(action, Actions.SONARQUBE_AUTHENTICATED)) {
         return Object.assign<AppState, AppState, AppState>({}, state, {
             sonarQubeAuthenticated: true
+        });
+    }
+
+    if (Actions.isType(action, Actions.JIRA_AUTHENTICATED)) {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
+            jiraAuthenticated: true
         });
     }
 

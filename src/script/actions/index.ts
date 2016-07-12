@@ -119,6 +119,15 @@ export function sonarQubeAuthenticated(): SonarQubeAuthenticatedAction {
     };
 }
 
+export const JIRA_AUTHENTICATED: ActionType<JiraAuthenticatedAction> = 'JIRA_AUTHENTICATED';
+interface JiraAuthenticatedAction extends Action {
+}
+export function jiraAuthenticated(): JiraAuthenticatedAction {
+    return {
+        type: JIRA_AUTHENTICATED
+    };
+}
+
 export const FETCH_REPOS_SUCCEEDED: ActionType<FetchReposAction> = 'FETCH_REPOS_SUCCEEDED';
 export interface FetchReposAction extends Action {
     payload: {

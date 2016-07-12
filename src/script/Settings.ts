@@ -70,6 +70,12 @@ export interface Items {
         displayName: string;
         visible: boolean;
         resolver: BranchNameLinkResolver
+    },
+    jiraIssue: {
+        enabled: boolean;
+        displayName: string;
+        visible: boolean;
+        resolver: JiraIssueResolver
     }
 }
 
@@ -83,6 +89,19 @@ export interface SonarQubeMetricsResolver {
     baseUrl: string;
     projectBaseKey: string;
     metrics: string;
+}
+
+export interface JiraIssueResolver {
+    pattern: string;
+    baseUrl: string;
+    linkBaseUrl: string;
+    fields: JiraIssueResolverField[];
+}
+
+export interface JiraIssueResolverField {
+    key: string;
+    displayName: string;
+    datePattern?: string; // YYYY/MM/DD
 }
 
 export interface FilterState {

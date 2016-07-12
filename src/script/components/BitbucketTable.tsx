@@ -6,8 +6,10 @@ import * as B from '../bulma';
 import { BehindAheadGraph } from './BehindAheadGraph';
 import { BuildStatusModal } from './BuildStatusModal';
 import { SonarQubeLoginModal } from './SonarQubeLoginModal';
+import { JiraLoginModal } from './JiraLoginModal';
 import { UnauthorizedIcon } from './UnauthorizedIcon';
-import { Settings, BranchNameLinkResolver } from '../Settings';
+import { Settings, BranchNameLinkResolver, JiraIssueResolverField } from '../Settings';
+import { formatDateString } from '../Utils';
 
 const LOADING = <B.Loading />;
 const NONE = <span>-</span>;
@@ -91,6 +93,12 @@ const COLUMN_METADATA: B.ColumnMetadata[] = [
         width: 100,
         visible: true,
         sortEnabled: true,
+    },
+    {
+        name: 'jiraIssue',
+        width: 300,
+        visible: true,
+        sortEnabled: true,
     }
 ];
 
@@ -106,6 +114,7 @@ interface Props {
     showFilter: boolean;
     handlePageChanged: (nextPage: number) => void;
     handleSonarQubeAuthenticated: () => void;
+    handleJiraAuthenticated: () => void;
     handleSort: (nextSortColumn: string) => void;
 }
 
@@ -118,7 +127,8 @@ export default class BitbucketDataTable extends React.Component<Props, void> {
         const { settings, api, results,
             pageSize, currentPage,
             sortColumn, sortAscending,
-            handlePageChanged, handleSonarQubeAuthenticated, handleSort } = this.props;
+            handlePageChanged, handleSonarQubeAuthenticated, handleJiraAuthenticated,
+            handleSort } = this.props;
 
         const resolvedColumnMetadata = COLUMN_METADATA.filter(x => {
             const item = settings.items[x.name];
@@ -138,6 +148,9 @@ export default class BitbucketDataTable extends React.Component<Props, void> {
                 }
                 if (meta.name === 'branchNameLink') {
                     meta.renderer = BranchNameLinkFormatter(item.resolver);
+                }
+                if (meta.name === 'jiraIssue') {
+                    meta.renderer = JiraIssueFormatter(settings, api, handleJiraAuthenticated);
                 }
                 return meta;
             });
@@ -495,4 +508,87 @@ function SonarQubeMetricsFormatter(api: API.API, onAuthenticated: () => void) {
             </div>;
         }
     }
+}
+
+function JiraIssueFormatter(settings: Settings, api: API.API, onAuthenticated: () => void) {
+    return (item: API.LazyItem<API.JiraIssue>, branchInfo: API.BranchInfo, metadata) => {
+        if (!item.completed) {
+            return LOADING;
+        }
+
+        const jiraIssue = item.value;
+
+        if (jiraIssue === null) {
+            return NONE;
+        }
+
+        if (API.isJiraError(jiraIssue)) {
+            // Show needing authentication
+            if (jiraIssue.status === 401) {
+                return (
+                    <B.ModalTriggerLink modal={<JiraLoginModal api={api} onAuthenticated={onAuthenticated} />}>
+                        <UnauthorizedIcon type='danger' />
+                        Unauthorized.&nbsp; Please click me.
+                    </B.ModalTriggerLink>
+                );
+            }
+
+            // Not Found
+            if (jiraIssue.status === 404) {
+                return NONE;
+            }
+
+            // TODO other errors
+
+        } else {
+            const style = {
+                fontSize: 11
+            };
+
+            const showFields = settings.items.jiraIssue.resolver.fields;
+            const fields = jiraIssue.fields;
+
+            return <div>
+                <h3><a href={api.createJiraIssueUrl(jiraIssue) } target='_blank'>{jiraIssue.key} {fields.summary}</a></h3>
+                <table className='table is-narrow' style={style}>
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        { showFields.map(x => {
+                            return (
+                                <tr key={x.key}>
+                                    <td>{x.displayName}</td>
+                                    <td>{_toJiraDisplayValue(x, fields)}</td>
+                                </tr>
+                            );
+                        }) }
+                    </tbody>
+                </table>
+            </div>;
+        }
+    }
+}
+
+function _toJiraDisplayValue(option: JiraIssueResolverField, fields: any): string {
+    const keys = option.key.split('.');
+    const value = keys.reduce((s, x) => {
+        const value = s[x];
+        if (value) {
+            return value;
+        } else {
+            return s;
+        }
+    }, fields);
+    
+    if (value !== undefined) {
+        if (option.datePattern && typeof value === 'string') {
+            return formatDateString(value, option.datePattern);
+        }
+        return value;
+    }
+    return '-';
 }

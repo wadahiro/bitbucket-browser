@@ -3,7 +3,8 @@ import * as B from '../bulma';
 import { Settings } from '../Settings';
 import * as BAPI from './BitbucketApi';
 import * as SQAPI from './SonarQubeApi';
-
+import * as JAPI from './JiraApi';
+import { formatDateTime, formatDate } from '../Utils';
 
 // bitbucket-browser models
 interface Project {
@@ -69,6 +70,7 @@ export interface BranchInfo extends Branch {
     buildStatus: LazyItem<BuildStatus>;
     sonarForBitbucketStatus: LazyItem<SonarForBitbucketStatus>;
     sonarQubeMetrics: LazyItem<SonarQubeMetrics>;
+    jiraIssue: LazyItem<JiraIssue>;
 
     fetchCompleted: boolean;
 }
@@ -76,6 +78,13 @@ export interface BranchInfo extends Branch {
 export interface LazyItem<T> {
     value: T;
     completed: boolean;
+}
+
+function newLazyItem<T>(value: T): LazyItem<T> {
+    return {
+        value,
+        completed: false
+    };
 }
 
 export interface PullRequestStatus {
@@ -101,6 +110,11 @@ export function isSonarQubeError(response: any): response is SQAPI.ErrorResponse
     return SQAPI.isErrorResponse(response);
 }
 
+export type JiraIssue = JAPI.JiraIssueResponse | JAPI.ErrorResponse;
+export function isJiraError(response: any): response is JAPI.ErrorResponse {
+    return JAPI.isErrorResponse(response);
+}
+
 export function isFetchCompleted(branchInfo: BranchInfo) {
     const hasFalse = Object.keys(branchInfo)
         .filter(x => branchInfo[x] && branchInfo[x].completed !== undefined)
@@ -112,15 +126,25 @@ export class API {
     settings: Settings;
     bitbucketApi: BAPI.BitbucketApi;
     sonarQubeApi: SQAPI.SonarQubeApi;
+    jiraApi: JAPI.JiraApi;
 
     constructor(settings: Settings) {
         this.settings = settings;
         this.bitbucketApi = new BAPI.BitbucketApi({
             baseUrl: settings.baseUrl
         });
-        this.sonarQubeApi = new SQAPI.SonarQubeApi({
-            baseUrl: settings.items.sonarQubeMetrics.resolver.baseUrl
-        });
+        if (settings.items.sonarQubeMetrics) {
+            this.sonarQubeApi = new SQAPI.SonarQubeApi({
+                baseUrl: settings.items.sonarQubeMetrics.resolver.baseUrl
+            });
+        }
+        if (settings.items.jiraIssue) {
+            const fields = settings.items.jiraIssue.resolver.fields.map(x => x.key);
+            this.jiraApi = new JAPI.JiraApi({
+                baseUrl: settings.items.jiraIssue.resolver.baseUrl,
+                fields: ['summary'].concat(fields)
+            });
+        }
     }
 
     async isAuthenticatedBitbucket(): Promise<boolean> {
@@ -137,10 +161,11 @@ export class API {
                     id: `${b.project}_${b.repo}_${b.branch}`,
                     branchNameLink: getBranchNameLink(this.settings, b.branch),
 
-                    pullRequestStatus: items.pullRequestStatus.enabled ? { value: null, completed: false } : null,
-                    buildStatus: items.buildStatus.enabled ? { value: null, completed: false } : null,
-                    sonarForBitbucketStatus: items.sonarForBitbucketStatus.enabled ? { value: null, completed: false } : null,
-                    sonarQubeMetrics: items.sonarQubeMetrics.enabled ? { value: null, completed: false } : null,
+                    pullRequestStatus: items.pullRequestStatus.enabled ? newLazyItem(null) : null,
+                    buildStatus: items.buildStatus.enabled ? newLazyItem(null) : null,
+                    sonarForBitbucketStatus: items.sonarForBitbucketStatus.enabled ? newLazyItem(null) : null,
+                    sonarQubeMetrics: items.sonarQubeMetrics.enabled ? newLazyItem(null) : null,
+                    jiraIssue: items.jiraIssue.enabled ? newLazyItem(null) : null,
 
                     fetchCompleted: false // update at reducer
                 });
@@ -285,6 +310,7 @@ export class API {
         }, <SonarForBitbucketStatus>{ repoId, values: [] });
     }
 
+    // For SonarQube
     async isAuthenticatedSonarQube(): Promise<boolean> {
         const authenticated = await this.sonarQubeApi.isAuthenticated();
         return authenticated;
@@ -310,6 +336,22 @@ export class API {
             }
             throw e;
         }
+    }
+
+    // For JIRA
+    async isAuthenticatedJira(): Promise<boolean> {
+        const authenticated = await this.jiraApi.isAuthenticated();
+        return authenticated;
+    }
+
+    async authenticateJira(login: string, password: string): Promise<boolean> {
+        const authenticated = await this.jiraApi.authenticate(login, password);
+        return authenticated;
+    }
+
+    async fetchJiraIssue(issueId: string): Promise<JiraIssue> {
+        const jiraIssue = await this.jiraApi.fetchIssue(issueId);
+        return jiraIssue;
     }
 
     // URL Generator functions
@@ -342,6 +384,11 @@ export class API {
         const url = `${this.settings.items.sonarQubeMetrics.resolver.baseUrl}/dashboard/index/${id}`;
         return url;
     }
+
+    createJiraIssueUrl(jiraIssue: JAPI.JiraIssueResponse) {
+        const url = `${this.settings.items.jiraIssue.resolver.linkBaseUrl}/brwose?/index/${jiraIssue.key}`;
+        return url;
+    }
 }
 
 function _count(container, key) {
@@ -372,26 +419,3 @@ function getBranchNameLink(settings: Settings, branch: string): string {
 
     return undefined;
 }
-
-function formatDateTime(dateMilliseconds: number) {
-    return formatDate(dateMilliseconds, 'YYYY/MM/DD hh:mm:ss');
-}
-
-function formatDate(dateMilliseconds: number, format = 'YYYY/MM/DD') {
-    if (!dateMilliseconds) {
-        return '';
-    }
-    const date = new Date(dateMilliseconds);
-    format = format.replace(/YYYY/g, date.getFullYear() + '');
-    format = format.replace(/MM/g, ('0' + (date.getMonth() + 1)).slice(-2));
-    format = format.replace(/DD/g, ('0' + date.getDate()).slice(-2));
-    format = format.replace(/hh/g, ('0' + date.getHours()).slice(-2));
-    format = format.replace(/mm/g, ('0' + date.getMinutes()).slice(-2));
-    format = format.replace(/ss/g, ('0' + date.getSeconds()).slice(-2));
-    if (format.match(/S/g)) {
-        var milliSeconds = ('00' + date.getMilliseconds()).slice(-3);
-        var length = format.match(/S/g).length;
-        for (var i = 0; i < length; i++) format = format.replace(/S/, milliSeconds.substring(i, i + 1));
-    }
-    return format;
-};
