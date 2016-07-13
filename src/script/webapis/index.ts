@@ -328,7 +328,7 @@ export class API {
         const sonarProjectKey = `${resolver.projectBaseKey}.${repo}`;
 
         try {
-            const metrics = await this.sonarQubeApi.fetchMetricsByKey(sonarProjectKey, sonarBranch, resolver.metrics);
+            const metrics = await this.sonarQubeApi.fetchMetricsByKey(sonarProjectKey, sonarBranch, resolver.fields.map(x => x.key).join(','));
             return metrics;
         } catch (e) {
             if (SQAPI.isErrorResponse(e)) {

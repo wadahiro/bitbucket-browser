@@ -224,28 +224,28 @@ function* handleSonarForBitbucketStatus(branchInfo: API.BranchInfo, prIds: numbe
         return;
     }
 
-    let sonarForBitbucketStatus;
+    let sonarForBitbucketStatus: API.SonarForBitbucketStatus;
     if (prIds.length === 0) {
         sonarForBitbucketStatus = {
             repoId: branchInfo.repoId,
             values: []
         };
     } else {
-        const sonarForBitbucketStatus: API.SonarForBitbucketStatus = yield request(api, api.fetchSonarForBitbucketStatus, branchInfo.repoId, prIds);
+        sonarForBitbucketStatus = yield request(api, api.fetchSonarForBitbucketStatus, branchInfo.repoId, prIds);
+    }
 
-        yield put(<actions.UpdateBranchInfoAction>{
-            type: actions.UPDATE_BRANCH_INFO,
-            payload: {
-                branchInfo: {
-                    id: branchInfo.id,
-                    sonarForBitbucketStatus: {
-                        value: sonarForBitbucketStatus,
-                        completed: true
-                    }
+    yield put(<actions.UpdateBranchInfoAction>{
+        type: actions.UPDATE_BRANCH_INFO,
+        payload: {
+            branchInfo: {
+                id: branchInfo.id,
+                sonarForBitbucketStatus: {
+                    value: sonarForBitbucketStatus,
+                    completed: true
                 }
             }
-        });
-    }
+        }
+    });
 }
 
 function* handleBuildStatus(branchInfo: API.BranchInfo): Iterable<Effect> {
