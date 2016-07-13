@@ -139,7 +139,7 @@ export class API {
             });
         }
         if (settings.items.jiraIssue) {
-            const fields = settings.items.jiraIssue.resolver.fields.map(x => x.key);
+            const fields = settings.items.jiraIssue.resolver.fields.map(x => x.key.split('.')[0]);
             this.jiraApi = new JAPI.JiraApi({
                 baseUrl: settings.items.jiraIssue.resolver.baseUrl,
                 fields: ['summary'].concat(fields)
@@ -350,8 +350,15 @@ export class API {
     }
 
     async fetchJiraIssue(issueId: string): Promise<JiraIssue> {
-        const jiraIssue = await this.jiraApi.fetchIssue(issueId);
-        return jiraIssue;
+        try {
+            const jiraIssue = await this.jiraApi.fetchIssue(issueId);
+            return jiraIssue;
+        } catch (e) {
+            if (JAPI.isErrorResponse(e)) {
+                return e;
+            }
+            throw e;
+        }
     }
 
     // URL Generator functions
