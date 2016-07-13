@@ -506,7 +506,22 @@ function JiraIssueFormatter(settings: Settings, api: API.API, onAuthenticated: (
             }
 
             if (jiraIssue.key !== null) {
-                return <a href={api.createJiraIssueUrl(jiraIssue) } target='_blank'>{jiraIssue.key}</a>
+                return (
+                    <div>
+                        <h3>
+                            <a href={api.createJiraIssueUrl(jiraIssue) } target='_blank'>
+                                <B.Icon iconClassName='fa fa-exclamation-triangle' color={'#d0b847'} lineHeight={20}>
+                                </B.Icon>
+                                {jiraIssue.key}
+                            </a>
+                        </h3>
+                        <ul>
+                            { jiraIssue.errorMessages.map(x => {
+                                return <li>{x}</li>;
+                            }) }
+                        </ul>
+                    </div>
+                );
             } else {
                 return NONE;
             }
