@@ -6,9 +6,11 @@ import { Link } from './Link';
 interface Props {
     title: string;
     loading: boolean;
+    downloading: boolean;
     showMenuButton: boolean;
     onMenuClick: () => void;
     onReloadClick: () => void;
+    onDownloadClick: (e: React.SyntheticEvent) => void;
 }
 
 export class NavigationHeader extends React.Component<Props, void> {
@@ -17,7 +19,7 @@ export class NavigationHeader extends React.Component<Props, void> {
     };
 
     render() {
-        const { title, loading, showMenuButton, onMenuClick, onReloadClick } = this.props;
+        const { title, loading, downloading, showMenuButton, onMenuClick, onReloadClick, onDownloadClick } = this.props;
 
         return (
             <B.Hero isInfo>
@@ -43,7 +45,24 @@ export class NavigationHeader extends React.Component<Props, void> {
 
                         <B.NavRight isMenu>
                             <B.NavItem>
-                                <B.Button onClick={onReloadClick} disabled={loading} isSuccess>
+                                <B.Button href='#' download={`branches.csv`} onClick={onDownloadClick} disabled={loading || downloading} isSuccess>
+                                    {downloading ?
+                                        <B.Loading />
+                                        :
+                                        <B.Icon size={18} iconClassName='fa fa-cloud-download' />
+                                    }
+                                    &nbsp;
+                                    Download
+                                </B.Button>
+                            </B.NavItem>
+                            <B.NavItem>
+                                <B.Button onClick={onReloadClick} disabled={loading } isSuccess>
+                                    {loading ?
+                                        <B.Loading />
+                                        :
+                                        <B.Icon size={18} iconClassName='fa fa-repeat' />
+                                    }
+                                    &nbsp;
                                     Reload
                                 </B.Button>
                             </B.NavItem>

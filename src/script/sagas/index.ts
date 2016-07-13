@@ -1,4 +1,4 @@
-import { Task, channel, takeEvery } from 'redux-saga'
+import { Task, channel } from 'redux-saga'
 import { race, call, apply, fork, spawn, join, select, Effect, put } from 'redux-saga/effects'
 import * as B from '../bulma';
 
@@ -11,6 +11,7 @@ import { trimSlash } from '../Utils';
 
 // TODO
 const { take } = require('redux-saga').effects;
+const { takeEvery } = require('redux-saga');
 
 async function fetchSettings(): Promise<Settings> {
     const response = await fetch('./settings.json', {
@@ -119,6 +120,30 @@ function* pollReloadBranchInfos(action: actions.ReloadBranchInfosAction): Iterab
         yield put(<actions.FetchBranchInfosAction>{
             type: actions.FETCH_BRANCH_INFOS_REQUESTED
         });
+    }
+}
+
+function* pollDownloadBranchInfos(): Iterable<Effect> {
+    while (true) {
+        const action: actions.DownloadBranchInfosAction = yield take(actions.DOWNLOAD_BRANCH_INFOS);
+
+        const settings: Settings = yield select((state: RootState) => state.settings);
+
+        const branchInfos: API.BranchInfo[] = yield select((state: RootState) => state.browser.branchInfos);
+
+        for (let i = 0; i < branchInfos.length; i++) {
+            const branchInfo = branchInfos[i];
+            if (!branchInfo.fetchCompleted) {
+                yield put({
+                    type: `${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${branchInfo.id}`
+                });
+            }
+        }
+
+        const succededAction: actions.FetchAllBranchInfosDetails = yield take(actions.FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED);
+
+        // Do download
+        action.payload.downalodHandler(succededAction.payload.branchInfos);
     }
 }
 
@@ -631,11 +656,29 @@ function* handleRequest(chan) {
     }
 }
 
+function* watchFetchAllBranchInfoDetails() {
+    yield* takeEvery(actions.UPDATE_BRANCH_INFO, function* (action: actions.UpdateBranchInfoAction): Iterable<Effect> {
+        const branchInfos: API.BranchInfo[] = yield select((state: RootState) => state.browser.branchInfos);
+
+        const found = branchInfos.find(x => x.fetchCompleted !== true);
+        if (!found) {
+            yield put({
+                type: actions.FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED,
+                payload: {
+                    branchInfos
+                }
+            });
+        }
+    });
+}
+
 export default function* root(): Iterable<Effect> {
     yield fork(watchAndLog);
     yield fork(watchRequests);
+    yield fork(watchFetchAllBranchInfoDetails);
     yield fork(initApp);
     yield fork(pollFetchBranchInfosRequested);
     yield fork(pollReloadBranchInfos);
+    yield fork(pollDownloadBranchInfos);
     yield fork(pollSaveAsQueryParameters);
 }

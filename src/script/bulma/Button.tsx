@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ModifiersProps, ButtonSyntaxProps, calcClassNames } from './Utils';
 
-export interface ButtonProps extends React.HTMLProps<HTMLButtonElement>, ModifiersProps, ButtonSyntaxProps {
+export interface ButtonProps extends React.HTMLProps<HTMLAnchorElement>, ModifiersProps, ButtonSyntaxProps {
 }
 
 export class Button extends React.Component<ButtonProps, void> {
@@ -9,9 +9,9 @@ export class Button extends React.Component<ButtonProps, void> {
         const className = calcClassNames(this.props);
 
         return (
-            <button {...this.props} className={`button ${className}`}>
+            <a {...this.props} className={`button ${className}`}>
                 { this.props.children }
-            </button>
+            </a>
         );
     }
 }

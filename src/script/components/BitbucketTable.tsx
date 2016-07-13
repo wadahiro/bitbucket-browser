@@ -517,7 +517,7 @@ function JiraIssueFormatter(settings: Settings, api: API.API, onAuthenticated: (
                         </h3>
                         <ul>
                             { jiraIssue.errorMessages.map(x => {
-                                return <li>{x}</li>;
+                                return <li key={x}>{x}</li>;
                             }) }
                         </ul>
                     </div>

@@ -17,6 +17,7 @@ import { AppState, RootState } from '../reducers';
 import * as Actions from '../actions';
 import { getSlicedBranchInfos, getPageSize, getFixedCurrentPage } from '../selectors';
 
+const BOM = new Uint8Array([0xEF, 0xBB, 0xBF]);
 
 interface Props {
     dispatch?: Dispatch
@@ -24,6 +25,7 @@ interface Props {
     settings?: Settings;
     api?: API.API;
     loading?: boolean;
+    downloading?: boolean;
 
     sonarQubeAuthenticated?: boolean;
 
@@ -42,6 +44,7 @@ function mapStateToProps(state: RootState, props: Props): Props {
         settings: state.settings,
         api: state.app.api,
         loading: state.app.loading,
+        downloading: state.app.downloading,
 
         sonarQubeAuthenticated: state.app.sonarQubeAuthenticated,
 
@@ -85,7 +88,22 @@ class BrowserView extends React.Component<Props, void> {
 
     reloadBranchInfos = () => {
         const { settings } = this.props;
-        this.props.dispatch(Actions.reloadBranchInfos(settings));
+        this.props.dispatch(Actions.reloadBranchInfos());
+    };
+
+    downloadBranchInfos = (e) => {
+        const { settings, branchInfos } = this.props;
+        const target = e.target;
+
+        const found = branchInfos.find(x => x.fetchCompleted !== true);
+        if (found) {
+            e.preventDefault();
+            this.props.dispatch(Actions.downloadBranchInfos((branchInfos: API.BranchInfo[]) => {
+                download(target, settings, branchInfos);
+            }));
+        } else {
+            download(target, settings, branchInfos);
+        }
     };
 
     handleToggleSidebar = () => {
@@ -104,6 +122,7 @@ class BrowserView extends React.Component<Props, void> {
     render() {
         const { settings, api,
             loading,
+            downloading,
             branchInfos,
             visibleBranchInfos,
             sortColumn, sortAscending,
@@ -123,9 +142,11 @@ class BrowserView extends React.Component<Props, void> {
                 <NavigationHeader
                     title={settings.title}
                     loading={loading}
+                    downloading={downloading}
                     showMenuButton={!settings.show}
                     onMenuClick={this.handleToggleSidebar}
                     onReloadClick={this.reloadBranchInfos}
+                    onDownloadClick={this.downloadBranchInfos}
                     />
 
                 <BitbucketTable
@@ -154,3 +175,51 @@ const BrowserViewContainer = connect(
 )(BrowserView)
 
 export default BrowserViewContainer;
+
+
+function download(target, settings: Settings, branchInfos: API.BranchInfo[]) {
+
+    const wrap = (value: string): string => {
+        return `"${value.replace(/"/g, '""')}"`;
+    }
+
+    const convert = (value: any): string => {
+        if (value === undefined || value === null) {
+            return '';
+        }
+        if (typeof value === 'string') {
+            return value;
+        }
+        if (typeof value === 'number') {
+            return String(value);
+        }
+        if (typeof value === 'object') {
+            if (typeof value.value === 'object') {
+                return JSON.stringify(value.value);
+            }
+            return JSON.stringify(value);
+        }
+    }
+
+    const csvHeaderKeys = Object.keys(settings.items).filter(x => settings.items[x].enabled !== false);
+    const csvHeader = csvHeaderKeys.map(x => wrap(settings.items[x].displayName));
+
+    const csvBody = branchInfos.map(row => {
+        return csvHeaderKeys.map(header => {
+            return wrap(convert(row[header]));
+        }).join(',');
+    });
+
+    const csvHeaderText = csvHeader.join(',');
+    const csvBodyText = csvBody.join('\r\n');
+
+    const blob = new Blob([BOM, `${csvHeaderText}\r\n${csvBodyText}`], { "type": "text/csv" });
+
+    if (window.navigator.msSaveBlob) {
+        window.navigator.msSaveBlob(blob, `branches.csv`);
+    } else {
+        window.URL = window.URL || window['webkitURL'];
+        target.href = window.URL.createObjectURL(blob);
+        target.click();
+    }
+}

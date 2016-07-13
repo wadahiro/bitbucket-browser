@@ -54,6 +54,7 @@ export const settingsReducer = (state: Settings = initSettings(), action: Action
 export interface AppState {
     api?: API.API;
     loading?: boolean;
+    downloading?: boolean;
     pending?: Actions.Action[];
     limit?: number;
     numOfRunning?: number;
@@ -64,6 +65,7 @@ export interface AppState {
 const initialAppState: AppState = {
     api: null,
     loading: false,
+    downloading: false,
     pending: [],
     limit: 5,
     numOfRunning: 0,
@@ -96,6 +98,18 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
     if (Actions.isType(action, Actions.FETCH_BRANCH_INFOS_SUCCEEDED)) {
         return Object.assign<AppState, AppState, AppState>({}, state, {
             loading: false
+        });
+    }
+
+    if (Actions.isType(action, Actions.DOWNLOAD_BRANCH_INFOS)) {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
+            downloading: true
+        });
+    }
+
+    if (Actions.isType(action, Actions.FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED)) {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
+            downloading: false
         });
     }
 

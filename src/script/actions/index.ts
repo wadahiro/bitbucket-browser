@@ -139,9 +139,24 @@ export interface FetchReposAction extends Action {
 export const RELOAD_BRANCH_INFOS: ActionType<ReloadBranchInfosAction> = 'RELOAD_BRANCH_INFOS';
 export interface ReloadBranchInfosAction extends Action {
 }
-export function reloadBranchInfos(settings: Settings): ReloadBranchInfosAction {
+export function reloadBranchInfos(): ReloadBranchInfosAction {
     return {
         type: RELOAD_BRANCH_INFOS
+    };
+}
+
+export const DOWNLOAD_BRANCH_INFOS: ActionType<DownloadBranchInfosAction> = 'DOWNLOAD_BRANCH_INFOS';
+export interface DownloadBranchInfosAction extends Action {
+    payload: {
+        downalodHandler: (branchInfos: API.BranchInfo[]) => void;
+    }
+}
+export function downloadBranchInfos(downalodHandler): DownloadBranchInfosAction {
+    return {
+        type: DOWNLOAD_BRANCH_INFOS,
+        payload: {
+            downalodHandler
+        }
     };
 }
 
@@ -158,6 +173,13 @@ export const FETCH_BRANCH_INFOS_SUCCEEDED: ActionType<FetchBranchInfosSucceededA
 export interface FetchBranchInfosSucceededAction extends Action {
 }
 
+export const FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED: ActionType<FetchAllBranchInfosDetails> = 'FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED';
+export interface FetchAllBranchInfosDetails extends Action {
+    payload: {
+        branchInfos: API.BranchInfo[];
+    }
+}
+
 export const APPEND_BRANCH_INFOS: ActionType<AppendBranchInfosAction> = 'APPEND_BRANCH_INFOS';
 export interface AppendBranchInfosAction extends Action {
     payload: {
@@ -172,6 +194,10 @@ export function showBranchInfoDetails(id: string): ShowBranchInfoDetailsAction {
     return {
         type: `${SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${id}`
     };
+}
+
+export const SHOW_ALL_BRANCH_INFO_DETAILS_REQUESTED: ActionType<ShowAllBranchInfoDetailsAction> = 'SHOW_BRANCH_INFO_DETAILS_REQUESTED';
+export interface ShowAllBranchInfoDetailsAction extends Action {
 }
 
 export const UPDATE_BRANCH_INFO: ActionType<UpdateBranchInfoAction> = 'UPDATE_BRANCH_INFO';
