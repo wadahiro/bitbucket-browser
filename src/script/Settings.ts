@@ -58,6 +58,7 @@ export interface Items {
         enabled: boolean;
         displayName: string;
         visible: boolean;
+        resolver: SonarForBitbucketStatusResolver
     },
     sonarQubeMetrics: {
         enabled: boolean;
@@ -85,20 +86,25 @@ export interface BranchNameLinkResolver {
     displayName: string;
 }
 
+export interface SonarForBitbucketStatusResolver {
+    fields: ResolverField[];
+}
+
 export interface SonarQubeMetricsResolver {
     baseUrl: string;
     projectBaseKey: string;
-    metrics: string;
+    fields: ResolverField[];
 }
 
 export interface JiraIssueResolver {
     pattern: string;
     baseUrl: string;
     linkBaseUrl: string;
-    fields: JiraIssueResolverField[];
+    fields: ResolverField[];
 }
 
-export interface JiraIssueResolverField {
+export interface ResolverField {
+    enabled: boolean;
     key: string;
     displayName: string;
     datePattern?: string; // YYYY/MM/DD

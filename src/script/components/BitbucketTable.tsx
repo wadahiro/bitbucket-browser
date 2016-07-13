@@ -8,7 +8,7 @@ import { BuildStatusModal } from './BuildStatusModal';
 import { SonarQubeLoginModal } from './SonarQubeLoginModal';
 import { JiraLoginModal } from './JiraLoginModal';
 import { UnauthorizedIcon } from './UnauthorizedIcon';
-import { Settings, BranchNameLinkResolver, JiraIssueResolverField } from '../Settings';
+import { Settings, BranchNameLinkResolver, ResolverField } from '../Settings';
 import { formatDateString } from '../Utils';
 
 const LOADING = <B.Loading />;
@@ -79,8 +79,7 @@ const COLUMN_METADATA: B.ColumnMetadata[] = [
         name: 'sonarForBitbucketStatus',
         width: 300,
         visible: true,
-        sortEnabled: false,
-        renderer: SonarQubeStatusFormatter
+        sortEnabled: false
     },
     {
         name: 'sonarQubeMetrics',
@@ -143,8 +142,11 @@ export default class BitbucketDataTable extends React.Component<Props, void> {
                 // hack
                 meta['_api'] = api;
 
+                if (meta.name === 'sonarForBitbucketStatus') {
+                    meta.renderer = SonarForBitbuecktStatusFormatter(settings);
+                }
                 if (meta.name === 'sonarQubeMetrics') {
-                    meta.renderer = SonarQubeMetricsFormatter(api, handleSonarQubeAuthenticated);
+                    meta.renderer = SonarQubeMetricsFormatter(settings, api, handleSonarQubeAuthenticated);
                 }
                 if (meta.name === 'branchNameLink') {
                     meta.renderer = BranchNameLinkFormatter(item.resolver);
@@ -341,105 +343,69 @@ function BuildStatusFormatter(item: API.LazyItem<API.BuildStatus>, values, metad
     );
 }
 
-function SonarQubeStatusFormatter(item: API.LazyItem<API.SonarForBitbucketStatus>, branchInfo: API.BranchInfo, metadata) {
-    if (!item.completed) {
-        return LOADING;
-    }
+function SonarForBitbuecktStatusFormatter(settings: Settings) {
+    return (item: API.LazyItem<API.SonarForBitbucketStatus>, branchInfo: API.BranchInfo, metadata) => {
+        if (!item.completed) {
+            return LOADING;
+        }
 
-    const sonarForBitbucketStatus = item.value;
+        const sonarForBitbucketStatus = item.value;
 
-    const api: API.API = metadata._api;
+        const api: API.API = metadata._api;
 
-    const items = sonarForBitbucketStatus.values.map(x => {
-        const fromKeys = Object.keys(x.from.statistics);
-        const toKeys = Object.keys(x.to.statistics);
-        const keys = _.union(fromKeys, toKeys).filter(x => x !== 'componentId');
+        const items = sonarForBitbucketStatus.values.map(x => {
+            const fromKeys = Object.keys(x.from.statistics);
+            const toKeys = Object.keys(x.to.statistics);
+            const keys = _.union(fromKeys, toKeys).filter(x => x !== 'componentId');
 
-        const style = {
-            fontSize: 11
-        };
+            const style = {
+                fontSize: 11
+            };
 
-        const item = <div key={x.pullRequestId}>
-            <h3><a href={api.createPullRequestDetailLink(branchInfo, x.pullRequestId) }>pull request #{x.pullRequestId}</a></h3>
-            <table className='table is-narrow' style={style}>
-                <thead>
-                    <tr>
-                        <th>Metric</th>
-                        <th>{x.from.name}</th>
-                        <th>{x.to.name}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    { keys.map(key => {
-                        return (
-                            <tr key={key}>
-                                <td>{_toSonarDisplayName(key) }</td>
-                                <td>{_toSonarDisplayValue(key, x.from.statistics[key]) }</td>
-                                <td>{_toSonarDisplayValue(key, x.to.statistics[key]) }</td>
-                            </tr>
-                        );
-                    }) }
-                </tbody>
-            </table>
-        </div>;
-        return item;
-    });
+            const showMetrics = settings.items.sonarForBitbucketStatus.resolver.fields.filter(x => x.enabled !== false);
 
-    if (items.length === 0) {
-        return NONE;
-    }
-    return <div>{items}</div>;
-}
+            const item = <div key={x.pullRequestId}>
+                <h3><a href={api.createPullRequestDetailLink(branchInfo, x.pullRequestId) }>pull request #{x.pullRequestId}</a></h3>
+                <table className='table is-narrow' style={style}>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>{x.from.name}</th>
+                            <th>{x.to.name}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        { showMetrics.map(metrics => {
+                            return (
+                                <tr key={metrics.key}>
+                                    <td>{metrics.displayName}</td>
+                                    <td>{_toSonarDisplayValue(metrics.key, x.from.statistics[metrics.key]) }</td>
+                                    <td>{_toSonarDisplayValue(metrics.key, x.to.statistics[metrics.key]) }</td>
+                                </tr>
+                            );
+                        }) }
+                    </tbody>
+                </table>
+            </div>;
+            return item;
+        });
 
-function _toSonarDisplayName(key: string): string {
-    // see http://docs.sonarqube.org/display/SONARQUBE43/Metric+definitions
-    switch (key) {
-        case 'lines':
-            return 'Lines';
-
-        case 'duplicatedLines': // Sonar For Bitbucket
-        case 'duplicated_lines':
-            return 'Dupl. lines';
-
-        case 'coverage': // Sonar For Bitbucket
-            return 'Coverage';
-
-        case 'violations': // Sonar For Bitbucket
-            return 'All issues';
-
-        case 'blocker_violations':
-            return 'Blocker issues';
-        case 'critical_violations':
-            return 'Critical issues';
-        case 'mejor_violations':
-            return 'Major issues';
-        case 'minor_violations':
-            return 'Minor issues';
-        case 'info_violations':
-            return 'Info issues';
-
-        case 'technicalDebt': // Sonar For Bitbucket
-        case 'sqale_index':
-            return 'Tech. dept';
-
-        default:
-            return key;
+        if (items.length === 0) {
+            return NONE;
+        }
+        return <div>{items}</div>;
     }
 }
 
 function _toSonarDisplayValue(key: string, value: string | number): string {
-    const v = String(value);
+    if (value === undefined) {
+        return '-';
+    }
     switch (key) {
-        case 'duplicatedLines':
-            return String(value);
         case 'coverage':
             if (value === -1) {
                 return 'n/a';
-            } else {
-                return String(value);
             }
-        case 'violations':
-            return String(value);
         case 'technicalDebt':
             if (typeof value === 'number') {
                 if (value >= 60) {
@@ -456,8 +422,7 @@ function _toSonarDisplayValue(key: string, value: string | number): string {
     }
 }
 
-
-function SonarQubeMetricsFormatter(api: API.API, onAuthenticated: () => void) {
+function SonarQubeMetricsFormatter(settings: Settings, api: API.API, onAuthenticated: () => void) {
     return (item: API.LazyItem<API.SonarQubeMetrics>, branchInfo: API.BranchInfo, metadata) => {
         if (!item.completed) {
             return LOADING;
@@ -485,6 +450,9 @@ function SonarQubeMetricsFormatter(api: API.API, onAuthenticated: () => void) {
                 fontSize: 11
             };
 
+            const showMetrics = settings.items.sonarQubeMetrics.resolver.fields.filter(x => x.enabled !== false);
+            const msrIndex = _.keyBy(metrics.msr, 'key');
+
             return <div>
                 <h3><a href={api.createSonarQubeDashboardUrl(metrics.id) } target='_blank'>{metrics.name}</a></h3>
                 <table className='table is-narrow' style={style}>
@@ -495,11 +463,11 @@ function SonarQubeMetricsFormatter(api: API.API, onAuthenticated: () => void) {
                         </tr>
                     </thead>
                     <tbody>
-                        { metrics.msr.map(metric => {
+                        { showMetrics.map(x => {
                             return (
-                                <tr key={metric.key}>
-                                    <td>{_toSonarDisplayName(metric.key) }</td>
-                                    <td>{metric.frmt_val}</td>
+                                <tr key={x.key}>
+                                    <td>{x.displayName}</td>
+                                    <td>{msrIndex[x.key] ? msrIndex[x.key].frmt_val : '-'}</td>
                                 </tr>
                             );
                         }) }
@@ -548,7 +516,7 @@ function JiraIssueFormatter(settings: Settings, api: API.API, onAuthenticated: (
                 fontSize: 11
             };
 
-            const showFields = settings.items.jiraIssue.resolver.fields;
+            const showFields = settings.items.jiraIssue.resolver.fields.filter(x => x.enabled !== false);
             const fields = jiraIssue.fields;
 
             return <div>
@@ -576,7 +544,7 @@ function JiraIssueFormatter(settings: Settings, api: API.API, onAuthenticated: (
     }
 }
 
-function _toJiraDisplayValue(option: JiraIssueResolverField, fields: any): string {
+function _toJiraDisplayValue(option: ResolverField, fields: any): string {
     const keys = option.key.split('.');
     const value = keys.reduce((s, x) => {
         const value = s[x];
