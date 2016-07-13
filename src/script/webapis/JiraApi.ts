@@ -107,7 +107,7 @@ export class JiraApi {
     }
 
     async fetchIssue(issueId: string): Promise<JiraIssueResponse> {
-        const response = await fetch(`${this.baseUrl}/rest/api/2/issue/${issueId}?fields=${this.fields.join(',')}created,updated,summary,status`, {
+        const response = await fetch(`${this.baseUrl}/rest/api/2/issue/${issueId}?fields=${this.fields.join(',')}`, {
             credentials: 'same-origin'
         })
 
