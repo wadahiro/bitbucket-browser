@@ -105,7 +105,7 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
         });
     }
 
-    if (Actions.isType(action, Actions.DOWNLOAD_BRANCH_INFOS)) {
+    if (Actions.isType(action, Actions.DOWNLOAD_BRANCH_INFOS_REQUEST)) {
         return Object.assign<AppState, AppState, AppState>({}, state, {
             downloading: true
         });

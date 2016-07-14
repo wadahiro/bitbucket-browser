@@ -147,6 +147,15 @@ export function reloadBranchInfos(): ReloadBranchInfosAction {
     };
 }
 
+export const DOWNLOAD_BRANCH_INFOS_REQUEST: ActionType<DownloadBranchInfosRequestAction> = 'DOWNLOAD_BRANCH_INFOS_REQUEST';
+export interface DownloadBranchInfosRequestAction extends Action {
+}
+export function downloadBranchInfosRequest(): DownloadBranchInfosRequestAction {
+    return {
+        type: DOWNLOAD_BRANCH_INFOS_REQUEST
+    };
+}
+
 export const DOWNLOAD_BRANCH_INFOS: ActionType<DownloadBranchInfosAction> = 'DOWNLOAD_BRANCH_INFOS';
 export interface DownloadBranchInfosAction extends Action {
     payload: {

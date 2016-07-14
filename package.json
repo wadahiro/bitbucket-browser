@@ -51,7 +51,7 @@
     "react-select": "^0.9.1",
     "react-sidebar": "^2.1.2",
     "redux": "^3.5.2",
-    "redux-saga": "^0.10.5",
+    "redux-saga": "^0.11.0",
     "reselect": "^2.5.1",
     "whatwg-fetch": "^0.10.1"
   }

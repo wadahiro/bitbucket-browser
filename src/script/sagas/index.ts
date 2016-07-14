@@ -4,7 +4,7 @@ import * as B from '../bulma';
 
 import * as actions from '../actions'
 import { getSlicedBranchInfos } from '../selectors'
-import { RootState, AppState }from '../reducers'
+import { RootState, AppState } from '../reducers'
 import * as API from '../webapis';
 import { Settings } from '../Settings';
 import { trimSlash } from '../Utils';
@@ -123,7 +123,7 @@ function* pollReloadBranchInfos(action: actions.ReloadBranchInfosAction): Iterab
     }
 }
 
-function* pollDownloadBranchInfos(): Iterable<Effect> {
+function* pollDownloadBranchInfos(): Iterable<Effect | Effect[]> {
     while (true) {
         const action: actions.DownloadBranchInfosAction = yield take(actions.DOWNLOAD_BRANCH_INFOS);
 
@@ -131,14 +131,10 @@ function* pollDownloadBranchInfos(): Iterable<Effect> {
 
         const branchInfos: API.BranchInfo[] = yield select((state: RootState) => state.browser.branchInfos);
 
-        for (let i = 0; i < branchInfos.length; i++) {
-            const branchInfo = branchInfos[i];
-            if (!branchInfo.fetchCompleted) {
-                yield put({
-                    type: `${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${branchInfo.id}`
-                });
-            }
-        }
+        yield branchInfos.filter(x => x.fetchCompleted !== true)
+            .map(x => put({
+                type: `${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${x.id}`
+            }));
 
         const succededAction: actions.FetchAllBranchInfosDetails = yield take(actions.FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED);
 
@@ -659,8 +655,8 @@ function* handleRequest(chan) {
 function* watchFetchAllBranchInfoDetails() {
     yield* takeEvery(actions.UPDATE_BRANCH_INFO, function* (action: actions.UpdateBranchInfoAction): Iterable<Effect> {
         const branchInfos: API.BranchInfo[] = yield select((state: RootState) => state.browser.branchInfos);
-
         const found = branchInfos.find(x => x.fetchCompleted !== true);
+
         if (!found) {
             yield put({
                 type: actions.FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED,

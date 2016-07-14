@@ -104,6 +104,7 @@ class BrowserView extends React.Component<Props, void> {
         const found = branchInfos.find(x => x.fetchCompleted !== true);
         if (found) {
             e.preventDefault();
+            this.props.dispatch(Actions.downloadBranchInfosRequest());
             this.props.dispatch(Actions.downloadBranchInfos((branchInfos: API.BranchInfo[]) => {
                 target.click();
             }));
