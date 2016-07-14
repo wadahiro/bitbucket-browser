@@ -5,6 +5,7 @@ import { Link } from './Link';
 
 interface Props {
     title: string;
+    initizalized: boolean;
     loading: boolean;
     downloading: boolean;
     showMenuButton: boolean;
@@ -19,14 +20,14 @@ export class NavigationHeader extends React.Component<Props, void> {
     };
 
     render() {
-        const { title, loading, downloading, showMenuButton, onMenuClick, onReloadClick, onDownloadClick } = this.props;
+        const { title, initizalized, loading, downloading, showMenuButton, onMenuClick, onReloadClick, onDownloadClick } = this.props;
 
         return (
             <B.Hero isInfo>
                 <B.Nav>
                     <B.Container isFluid>
                         <B.NavLeft>
-                            { showMenuButton &&
+                            {showMenuButton &&
                                 <B.NavItemLink onClick={onMenuClick}>
                                     <B.Icon iconClassName='fa fa-angle-double-right' color={'white'} />
                                 </B.NavItemLink>
@@ -45,7 +46,7 @@ export class NavigationHeader extends React.Component<Props, void> {
 
                         <B.NavRight isMenu>
                             <B.NavItem>
-                                <B.Button href='#' download={`branches.csv`} onClick={onDownloadClick} disabled={loading || downloading} isSuccess>
+                                <B.Button href='#' download={`branches.csv`} onClick={onDownloadClick} disabled={!initizalized || loading || downloading} isSuccess>
                                     {downloading ?
                                         <B.Loading />
                                         :
@@ -56,7 +57,7 @@ export class NavigationHeader extends React.Component<Props, void> {
                                 </B.Button>
                             </B.NavItem>
                             <B.NavItem>
-                                <B.Button onClick={onReloadClick} disabled={loading } isSuccess>
+                                <B.Button onClick={onReloadClick} disabled={!initizalized || loading} isSuccess>
                                     {loading ?
                                         <B.Loading />
                                         :

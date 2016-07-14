@@ -38,13 +38,15 @@ export const INIT_APP_SUCCEEDED: ActionType<InitAppAction> = 'INIT_APP_SUCCEEDED
 export interface InitAppAction extends Action {
     payload: {
         sonarQubeAuthenticated: boolean;
+        jiraAuthenticated: boolean;
     }
 }
 export function initApp(): InitAppAction {
     return {
         type: INIT_APP,
         payload: {
-            sonarQubeAuthenticated: false
+            sonarQubeAuthenticated: false,
+            jiraAuthenticated: false
         }
     };
 }

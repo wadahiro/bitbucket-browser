@@ -53,6 +53,7 @@ export const settingsReducer = (state: Settings = initSettings(), action: Action
 
 export interface AppState {
     api?: API.API;
+    initizalized?: boolean;
     loading?: boolean;
     downloading?: boolean;
     pending?: Actions.Action[];
@@ -64,6 +65,7 @@ export interface AppState {
 
 const initialAppState: AppState = {
     api: null,
+    initizalized: false,
     loading: false,
     downloading: false,
     pending: [],
@@ -74,18 +76,20 @@ const initialAppState: AppState = {
 };
 
 export const appStateReducer = (state: AppState = initialAppState, action: Actions.Action) => {
-    if (Actions.isType(action, Actions.INIT_APP_SUCCEEDED)) {
-        const payload = action.payload;
-
-        return Object.assign<AppState, AppState, AppState>({}, state, payload);
-    }
-
     if (Actions.isType(action, Actions.FETCH_SETTINGS_SUCCEEDED)) {
         const { settings } = action.payload;
         const api = new API.API(settings);
 
         return Object.assign<AppState, AppState, AppState>({}, state, {
             api
+        });
+    }
+
+    if (Actions.isType(action, Actions.INIT_APP_SUCCEEDED)) {
+        const payload = action.payload;
+
+        return Object.assign<AppState, AppState, AppState, AppState>({}, state, payload, {
+            initizalized: true
         });
     }
 

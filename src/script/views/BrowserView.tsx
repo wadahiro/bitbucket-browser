@@ -24,6 +24,9 @@ interface Props {
 
     settings?: Settings;
     api?: API.API;
+
+    initizalized?: boolean;
+
     loading?: boolean;
     downloading?: boolean;
 
@@ -43,6 +46,9 @@ function mapStateToProps(state: RootState, props: Props): Props {
     return {
         settings: state.settings,
         api: state.app.api,
+
+        initizalized: state.app.initizalized,
+
         loading: state.app.loading,
         downloading: state.app.downloading,
 
@@ -99,7 +105,7 @@ class BrowserView extends React.Component<Props, void> {
         if (found) {
             e.preventDefault();
             this.props.dispatch(Actions.downloadBranchInfos((branchInfos: API.BranchInfo[]) => {
-                download(target, settings, branchInfos);
+                target.click();
             }));
         } else {
             download(target, settings, branchInfos);
@@ -121,6 +127,7 @@ class BrowserView extends React.Component<Props, void> {
 
     render() {
         const { settings, api,
+            initizalized,
             loading,
             downloading,
             branchInfos,
@@ -141,6 +148,7 @@ class BrowserView extends React.Component<Props, void> {
                 >
                 <NavigationHeader
                     title={settings.title}
+                    initizalized={initizalized}
                     loading={loading}
                     downloading={downloading}
                     showMenuButton={!settings.show}
@@ -194,10 +202,12 @@ function download(target, settings: Settings, branchInfos: API.BranchInfo[]) {
             return String(value);
         }
         if (typeof value === 'object') {
-            if (typeof value.value === 'object') {
-                return JSON.stringify(value.value);
+            if (value.value === null) {
+                return '';
+            } else if (typeof value.value === 'object') {
+                return JSON.stringify(value.value, null, 2);
             }
-            return JSON.stringify(value);
+            return JSON.stringify(value, null, 2);
         }
     }
 
