@@ -393,7 +393,7 @@ export class API {
     }
 
     createJiraIssueUrl(jiraIssue: JiraIssue) {
-        const url = `${this.settings.items.jiraIssue.resolver.linkBaseUrl}/brwose?/index/${jiraIssue.key}`;
+        const url = `${this.settings.items.jiraIssue.resolver.linkBaseUrl}/${jiraIssue.key}`;
         return url;
     }
 }
