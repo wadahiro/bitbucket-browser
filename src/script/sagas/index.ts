@@ -42,39 +42,35 @@ function* initApp(): Iterable<Effect> {
     const bitbucketAuthenticated = yield call([api, api.isAuthenticatedBitbucket]);
 
     if (!bitbucketAuthenticated) {
-        // Redirect to Bitbucket Login page
-        const path = location.pathname.substring(settings.baseUrl.length);
-        let hash = '';
-        if (location.hash) {
-            hash = `#${encodeURIComponent(location.hash.substring(1))}`;
-        }
-        location.href = `${settings.baseUrl}/login?next=${path}${hash}`;
-    } else {
-        // Restore app state
-        yield fork(restoreStateFromQueryParameter);
-
-        let sonarQubeAuthenticated = false;
-        let jiraAuthenticated = false;
-        if (settings.items.sonarQubeMetrics.enabled) {
-            sonarQubeAuthenticated = yield call([api, api.isAuthenticatedSonarQube]);
-        }
-        if (settings.items.jiraIssue.enabled) {
-            jiraAuthenticated = yield call([api, api.isAuthenticatedJira]);
-        }
-
-        yield put(<actions.InitAppAction>{
-            type: actions.INIT_APP_SUCCEEDED,
-            payload: {
-                sonarQubeAuthenticated,
-                jiraAuthenticated
-            }
-        });
-
-        // Auto fetching branchs after app initialized 
-        yield put(<actions.FetchBranchInfosAction>{
-            type: actions.FETCH_BRANCH_INFOS_REQUESTED
-        });
+        // Open Bitbucket Login page and wait for authenticated
+        yield put(actions.showBitbucketLogin());
+        yield take(actions.BITBUCKET_AUTHENTICATED);
     }
+
+    // Restore app state
+    yield fork(restoreStateFromQueryParameter);
+
+    let sonarQubeAuthenticated = false;
+    let jiraAuthenticated = false;
+    if (settings.items.sonarQubeMetrics.enabled) {
+        sonarQubeAuthenticated = yield call([api, api.isAuthenticatedSonarQube]);
+    }
+    if (settings.items.jiraIssue.enabled) {
+        jiraAuthenticated = yield call([api, api.isAuthenticatedJira]);
+    }
+
+    yield put(<actions.InitAppAction>{
+        type: actions.INIT_APP_SUCCEEDED,
+        payload: {
+            sonarQubeAuthenticated,
+            jiraAuthenticated
+        }
+    });
+
+    // Auto fetching branchs after app initialized 
+    yield put(<actions.FetchBranchInfosAction>{
+        type: actions.FETCH_BRANCH_INFOS_REQUESTED
+    });
 }
 
 function resolveSettings(settings: Settings): Settings {

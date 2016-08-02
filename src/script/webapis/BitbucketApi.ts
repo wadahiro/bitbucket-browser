@@ -210,6 +210,27 @@ export class BitbucketApi {
         return true;
     }
 
+    async authenticate(loginId: string, password: string): Promise<boolean> {
+        // Because of Basic Authorization doesn't return set-cookie header, use form post authentication
+        // const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects`, {
+        //     credentials: 'same-origin',
+        //     headers: {
+        //         'Authorization': `Basic ${new Buffer(`${loginId}:${password}`).toString('base64')}`
+        //     }
+        // });
+        const response = await fetch(`${this.baseUrl}/j_stash_security_check`, {
+            redirect: 'manual', // for redirect ignore
+            credentials: 'same-origin',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `j_username=${encodeURIComponent(loginId)}&j_password=${encodeURIComponent(password)}&_spring_security_remember_me=on`
+        });
+
+        return await this.isAuthenticated();
+    }
+
     async fetchProjects(): Promise<BitBucketProjects> {
         const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects`, {
             credentials: 'same-origin'

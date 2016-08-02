@@ -53,24 +53,28 @@ export const settingsReducer = (state: Settings = initSettings(), action: Action
 
 export interface AppState {
     api?: API.API;
+    showBitbucketLogin?: boolean;
     initizalized?: boolean;
     loading?: boolean;
     downloading?: boolean;
     pending?: Actions.Action[];
     limit?: number;
     numOfRunning?: number;
+    bitbucketAuthenticated?: boolean;
     sonarQubeAuthenticated?: boolean;
     jiraAuthenticated?: boolean;
 }
 
 const initialAppState: AppState = {
     api: null,
+    showBitbucketLogin: false,
     initizalized: false,
     loading: false,
     downloading: false,
     pending: [],
     limit: 5,
     numOfRunning: 0,
+    bitbucketAuthenticated: true,
     sonarQubeAuthenticated: true,
     jiraAuthenticated: true
 };
@@ -82,6 +86,18 @@ export const appStateReducer = (state: AppState = initialAppState, action: Actio
 
         return Object.assign<AppState, AppState, AppState>({}, state, {
             api
+        });
+    }
+
+    if (Actions.isType(action, Actions.SHOW_BITBUCKET_LOGIN)) {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
+            showBitbucketLogin: true
+        });
+    }
+
+    if (Actions.isType(action, Actions.BITBUCKET_AUTHENTICATED)) {
+        return Object.assign<AppState, AppState, AppState>({}, state, {
+            showBitbucketLogin: false
         });
     }
 

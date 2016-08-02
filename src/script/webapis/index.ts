@@ -151,6 +151,11 @@ export class API {
         return await this.bitbucketApi.isAuthenticated();
     }
 
+    async authenticateBitbucket(login: string, password: string): Promise<boolean> {
+        const authenticated = await this.bitbucketApi.authenticate(login, password);
+        return authenticated;
+    }
+
     async fetchBranchInfo(repo: Repo): Promise<BranchInfo[]> {
         try {
             const branches = await this.fetchBranches(repo);

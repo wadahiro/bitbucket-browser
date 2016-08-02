@@ -9,7 +9,7 @@ import * as API from '../webapis';
 import BitbucketTable from '../components/BitbucketTable';
 import { Footer } from '../components/Footer';
 import { Settings } from '../Settings';
-import { SonarQubeLoginModal } from '../components/SonarQubeLoginModal';
+import { BitbucketLoginModal } from '../components/BitbucketLoginModal';
 import { NavigationHeader } from '../components/NavigationHeader';
 import { SidebarSettings, SelectOption } from '../components/SidebarSettings';
 import { AppState, RootState } from '../reducers';
@@ -25,6 +25,7 @@ interface Props {
     settings?: Settings;
     api?: API.API;
 
+    showBitbucketLogin?: boolean;
     initizalized?: boolean;
 
     loading?: boolean;
@@ -47,6 +48,7 @@ function mapStateToProps(state: RootState, props: Props): Props {
         settings: state.settings,
         api: state.app.api,
 
+        showBitbucketLogin: state.app.showBitbucketLogin,
         initizalized: state.app.initizalized,
 
         loading: state.app.loading,
@@ -82,6 +84,10 @@ class BrowserView extends React.Component<Props, void> {
 
     handleSettingsChanged = (settings: Settings) => {
         this.props.dispatch(Actions.changeSettings(settings));
+    };
+
+    handleBitbucketAuthenticate = () => {
+        this.props.dispatch(Actions.bitbucketAuthenticated());
     };
 
     handleSonarQubeAuthenticated = () => {
@@ -128,6 +134,7 @@ class BrowserView extends React.Component<Props, void> {
 
     render() {
         const { settings, api,
+            showBitbucketLogin,
             initizalized,
             loading,
             downloading,
@@ -157,6 +164,10 @@ class BrowserView extends React.Component<Props, void> {
                     onReloadClick={this.reloadBranchInfos}
                     onDownloadClick={this.downloadBranchInfos}
                     />
+
+                { showBitbucketLogin && 
+                    <BitbucketLoginModal api={api} onAuthenticated={this.handleBitbucketAuthenticate} show={true} />
+                }
 
                 <BitbucketTable
                     settings={settings}

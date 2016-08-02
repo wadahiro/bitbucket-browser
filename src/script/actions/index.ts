@@ -33,6 +33,15 @@ export interface FetchSettingsScceededAction extends Action {
     }
 }
 
+export const SHOW_BITBUCKET_LOGIN: ActionType<ShowBitbucketLogin> = 'SHOW_BITBUCKET_LOGIN';
+interface ShowBitbucketLogin extends Action {
+}
+export function showBitbucketLogin(): ShowBitbucketLogin {
+    return {
+        type: SHOW_BITBUCKET_LOGIN
+    };
+}
+
 export const INIT_APP: ActionType<InitAppAction> = 'INIT_APP';
 export const INIT_APP_SUCCEEDED: ActionType<InitAppAction> = 'INIT_APP_SUCCEEDED';
 export interface InitAppAction extends Action {
@@ -109,6 +118,15 @@ export function changeSettings(settings: Settings): ChangeSettingsAction {
         payload: {
             settings
         }
+    };
+}
+
+export const BITBUCKET_AUTHENTICATED: ActionType<BitbucketAuthenticatedAction> = 'BITBUCKET_AUTHENTICATED';
+interface BitbucketAuthenticatedAction extends Action {
+}
+export function bitbucketAuthenticated(): BitbucketAuthenticatedAction {
+    return {
+        type: BITBUCKET_AUTHENTICATED
     };
 }
 
