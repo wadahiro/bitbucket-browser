@@ -22,6 +22,9 @@ build:
   # Read more about steps on our dev center:
   # http://devcenter.wercker.com/docs/steps/index.html
   steps:
+    # A step that executes `npm install` command
+    - npm-install
+
     # A custom script step, name value is used in the UI
     # and the code value contains the command that get executed
     - script:
@@ -30,8 +33,8 @@ build:
           echo "node version $(node -v) running"
           echo "npm version $(npm -v) running"
 
-    # A step that executes `npm install` command
-    - npm-install
-    # A step that executes `npm test` command
-    - npm-run-dist
+    - script:
+        name: release build
+        code: |
+          npm run dist`
 
