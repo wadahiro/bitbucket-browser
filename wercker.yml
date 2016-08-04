@@ -34,6 +34,11 @@ build:
           echo "npm version $(npm -v) running"
 
     - script:
+        name: install d.ts
+        code: |
+          ./node_modules/.bin/typings install
+
+    - script:
         name: release build
         code: |
           npm run dist
