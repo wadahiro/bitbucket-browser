@@ -2,6 +2,7 @@ bin
 node_modules
 *.log
 public
+dist
 typings
 dll
 .tmp
