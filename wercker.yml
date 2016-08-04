@@ -36,5 +36,5 @@ build:
     - script:
         name: release build
         code: |
-          npm run dist`
+          npm run dist
 
