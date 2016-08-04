@@ -43,3 +43,23 @@ build:
         code: |
           npm run dist
 
+    - script:
+        name: move to output
+        code: |
+          export RELEASE_TAG=$(node -pe 'require("./package.json").version')
+          echo "${RELEASE_TAG}" > $WERCKER_OUTPUT_DIR/.release_tag
+          mv dist/bitbucket-browser.tar.gz $WERCKER_OUTPUT_DIR/bitbucket-browser-${RELEASE_TAG}.tar.gz
+
+deploy:
+  steps:
+    - script:
+        name: restore release tag
+        code: |
+          export RELEASE_TAG=$(cat .release_tag)
+          ls -al .
+    - wercker/github-create-release:
+        token: $GITHUB_TOKEN
+        tag: v${RELEASE_TAG}
+    - wercker/github-upload-asset:
+        token: $GITHUB_TOKEN
+        file: bitbucket-browser-${RELEASE_TAG}.tar.gz
