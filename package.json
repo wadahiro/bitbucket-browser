@@ -13,7 +13,7 @@
     "build:script": "cross-env webpack --config webpack/webpack.config.js",
     "build:assets": "npm run build:dll && npm run build:style && npm run build:html",
     "build": "cross-env NODE_ENV=production npm run build:assets && cross-env NODE_ENV=production npm run build:script",
-    "dist": "rm -rf dist && mkdir dist && cp -rap public dist/bitbucket-browser && cp settings.json.sample dist/bitbucket-browser/settings.json && tar -C dist -cvzf dist/bitbucket-browser.tar.gz bitbucket-browser",
+    "dist": "npm run build && rm -rf dist && mkdir dist && cp -rap public dist/bitbucket-browser && cp settings.json.sample dist/bitbucket-browser/settings.json && tar -C dist -cvzf dist/bitbucket-browser.tar.gz bitbucket-browser",
     "server": "node-dev test-server.js",
     "start": "npm run build:assets && node-dev webpack/webpack.server.js"
   },
