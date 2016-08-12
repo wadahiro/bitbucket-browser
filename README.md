@@ -16,12 +16,12 @@
 ![Bitbucket Browser](./images/browser.png)
 
 ## Deploy
-**Bitbucket Browser** is made by static files only and **it's not Bitbucket plugins**. You can deploy the files to the web server which is in front of your Bitbucket server.
+**Bitbucket Browser** is made by static files only and **it's not Bitbucket plugins**. You can deploy the files to the reverse proxy web server which is in front of your Bitbucket server.
 
 ### Notes
-You must deploy the files under the context path of Bitbucket server in order to use the cookie for Bitbucket server.
+You must setup the web server to proxy Bitbucket server and configure cookie path converting correctly in order to use the Bitbucket server cookie.
 
-For example, if your Bitbucket server is running under `/bitbucket`, **Bitbucket Browser** must be deployed under `/bitbucket/bitbucket-browser`.
+For example, if your web server proxy Bitbucket server to `/bitbucket` and you deploy **Bitbucket Browser** under `/bitbucket-browser`, you should configure to convert the cookie path from `/bitbucket` to `/`.
 
 ## Settings
 
@@ -44,7 +44,7 @@ For example, if your Bitbucket server is running under `/bitbucket`, **Bitbucket
             "displayName": "Branch"
         },
         "branchAuthor": {
-            "enabled": true,
+            "enabled": false,
             "displayName": "Branch Author"
         },
         "branchCreated": {
@@ -69,7 +69,31 @@ For example, if your Bitbucket server is running under `/bitbucket`, **Bitbucket
         },
         "sonarForBitbucketStatus": {
             "enabled": false,
-            "displayName": "Sonar for Stash Metric"
+            "displayName": "Sonar for Stash Metric",
+            "resolver": {
+                "fields": [
+                    {
+                        "key": "duplicatedLines",
+                        "displayName": "Dupl. lines",
+                        "enabled": true
+                    },
+                    {
+                        "key": "coverage",
+                        "displayName": "Coverage",
+                        "enabled": true
+                    },
+                    {
+                        "key": "violations",
+                        "displayName": "Issues",
+                        "enabled": false
+                    },
+                    {
+                        "key": "technicalDebt",
+                        "displayName": "Tech. dept",
+                        "enabled": true
+                    }
+                ]
+            }
         },
         "sonarQubeMetrics": {
             "enabled": false,
@@ -77,7 +101,49 @@ For example, if your Bitbucket server is running under `/bitbucket`, **Bitbucket
             "resolver": {
                 "baseUrl": "/sonar",
                 "projectBaseKey": "foo.bar",
-                "metrics": "lines,blocker_violations,critical_violations"
+                "__comment__": "see http://docs.sonarqube.org/display/SONARQUBE43/Metric+definitions",
+                "fields": [
+                    {
+                        "key": "lines",
+                        "displayName": "Lines",
+                        "enabled": true
+                    },
+                    {
+                        "key": "duplicated_lines",
+                        "displayName": "Dupl. lines",
+                        "enabled": false
+                    },
+                    {
+                        "key": "blocker_violations",
+                        "displayName": "Blocker issues",
+                        "enabled": true
+                    },
+                    {
+                        "key": "critical_violations",
+                        "displayName": "Critical issues",
+                        "enabled": true
+                    },
+                    {
+                        "key": "mejor_violations",
+                        "displayName": "Major issues",
+                        "enabled": false
+                    },
+                    {
+                        "key": "minor_violations",
+                        "displayName": "Minor issues",
+                        "enabled": false
+                    },
+                    {
+                        "key": "info_violations",
+                        "displayName": "Info issues",
+                        "enabled": false
+                    },
+                    {
+                        "key": "sqale_index",
+                        "displayName": "Tech. dept",
+                        "enabled": false
+                    }
+                ]
             }
         },
         "branchNameLink": {
@@ -87,6 +153,28 @@ For example, if your Bitbucket server is running under `/bitbucket`, **Bitbucket
                 "pattern": "ISSUE\\-[0-9]+",
                 "baseUrl": "http://jira.example.org/browse",
                 "displayName": "JIRA Ticket"
+            }
+        },
+        "jiraIssue": {
+            "enabled": true,
+            "displayName": "JIRA Ticket",
+            "resolver": {
+                "pattern": "ISSUE\\-[0-9]+",
+                "baseUrl": "/jira",
+                "linkBaseUrl": "http://jira.example.org/jira/browse",
+                "fields": [
+                    {
+                        "key": "status.name",
+                        "displayName": "Status",
+                        "enabled": true
+                    },
+                    {
+                        "key": "created",
+                        "displayName": "Created",
+                        "datePattern": "YYYY/MM/DD",
+                        "enabled": true
+                    }
+                ]
             }
         }
     }
