@@ -198,7 +198,7 @@ function DefaultFormatter(data, values) {
 
 function LinkFormatter(data, values, metadata, transform) {
     if (transform && data) {
-        return <a href={transform(data, values) } target='_blank'>{data}</a>;
+        return <a href={transform(data, values)} target='_blank'>{data}</a>;
     } else {
         return <span>{data}</span>;
     }
@@ -267,7 +267,7 @@ function ProgressBarLink(now, values, metadata, transform) {
         </B.ProgressBar>;
 
     if (transform) {
-        return <a href={ transform(now, values) } target='_blank'>
+        return <a href={transform(now, values)} target='_blank'>
             {progressBar}
         </a>;
     } else {
@@ -293,10 +293,10 @@ function PullRequestStatusFormatter(item: API.LazyItem<API.PullRequestStatus>, v
 
     return (
         <div>
-            <div style={style}>Open(Source): {data.prCountSource} {PullRequestBarLink(metadata._api, 'open')(data.prCountSource, values, metadata) }</div>
-            <div style={style}>Open(Target): {data.prCountTarget}  {PullRequestBarLink(metadata._api, 'open')(data.prCountTarget, values, metadata) }</div>
-            <div style={style}>Merged: {data.prCountMerged}  {PullRequestBarLink(metadata._api, 'merged')(data.prCountMerged, values, metadata) }</div>
-            <div style={style}>Declined: {data.prCountDeclined}  {PullRequestBarLink(metadata._api, 'declined')(data.prCountDeclined, values, metadata) }</div>
+            <div style={style}>Open(Source): {data.prCountSource} {PullRequestBarLink(metadata._api, 'open')(data.prCountSource, values, metadata)}</div>
+            <div style={style}>Open(Target): {data.prCountTarget}  {PullRequestBarLink(metadata._api, 'open')(data.prCountTarget, values, metadata)}</div>
+            <div style={style}>Merged: {data.prCountMerged}  {PullRequestBarLink(metadata._api, 'merged')(data.prCountMerged, values, metadata)}</div>
+            <div style={style}>Declined: {data.prCountDeclined}  {PullRequestBarLink(metadata._api, 'declined')(data.prCountDeclined, values, metadata)}</div>
         </div>
     );
 }
@@ -337,7 +337,7 @@ function BuildStatusFormatter(item: API.LazyItem<API.BuildStatus>, values, metad
 
     return (
         <B.ModalTriggerLink modal={<BuildStatusModal buildStatus={buildStatus} />}>
-            {buildStatus.values.length} Build(s) &nbsp;
+            {buildStatus.values.length}Build(s) &nbsp;
             <B.Icon iconClassName={iconClassName} color={color} lineHeight={20} />
         </B.ModalTriggerLink>
     );
@@ -365,7 +365,7 @@ function SonarForBitbuecktStatusFormatter(settings: Settings) {
             const showMetrics = settings.items.sonarForBitbucketStatus.resolver.fields.filter(x => x.enabled !== false);
 
             const item = <div key={x.pullRequestId}>
-                <h3><a href={api.createPullRequestDetailLink(branchInfo, x.pullRequestId) }>pull request #{x.pullRequestId}</a></h3>
+                <h3><a href={api.createPullRequestDetailLink(branchInfo, x.pullRequestId)}>pull request #{x.pullRequestId}</a></h3>
                 <table className='table is-narrow' style={style}>
                     <thead>
                         <tr>
@@ -375,15 +375,15 @@ function SonarForBitbuecktStatusFormatter(settings: Settings) {
                         </tr>
                     </thead>
                     <tbody>
-                        { showMetrics.map(metrics => {
+                        {showMetrics.map(metrics => {
                             return (
                                 <tr key={metrics.key}>
                                     <td>{metrics.displayName}</td>
-                                    <td>{_toSonarDisplayValue(metrics.key, x.from.statistics[metrics.key]) }</td>
-                                    <td>{_toSonarDisplayValue(metrics.key, x.to.statistics[metrics.key]) }</td>
+                                    <td>{_toSonarDisplayValue(metrics.key, x.from.statistics[metrics.key])}</td>
+                                    <td>{_toSonarDisplayValue(metrics.key, x.to.statistics[metrics.key])}</td>
                                 </tr>
                             );
-                        }) }
+                        })}
                     </tbody>
                 </table>
             </div>;
@@ -454,7 +454,7 @@ function SonarQubeMetricsFormatter(settings: Settings, api: API.API, onAuthentic
             const msrIndex = _.keyBy(metrics.msr, 'key');
 
             return <div>
-                <h3><a href={api.createSonarQubeDashboardUrl(metrics.id) } target='_blank'>{metrics.name}</a></h3>
+                <h3><a href={api.createSonarQubeDashboardUrl(metrics.id)} target='_blank'>{metrics.name}</a></h3>
                 <table className='table is-narrow' style={style}>
                     <thead>
                         <tr>
@@ -463,14 +463,14 @@ function SonarQubeMetricsFormatter(settings: Settings, api: API.API, onAuthentic
                         </tr>
                     </thead>
                     <tbody>
-                        { showMetrics.map(x => {
+                        {showMetrics.map(x => {
                             return (
                                 <tr key={x.key}>
                                     <td>{x.displayName}</td>
                                     <td>{msrIndex[x.key] ? msrIndex[x.key].frmt_val : '-'}</td>
                                 </tr>
                             );
-                        }) }
+                        })}
                     </tbody>
                 </table>
             </div>;
@@ -495,8 +495,8 @@ function JiraIssueFormatter(settings: Settings, api: API.API, onAuthenticated: (
             if (jiraIssue.status === 401) {
                 return (
                     <div>
-                        <h3><a href={api.createJiraIssueUrl(jiraIssue) } target='_blank'>{jiraIssue.key}</a></h3>
-                        <br/>
+                        <h3><a href={api.createJiraIssueUrl(jiraIssue)} target='_blank'>{jiraIssue.key}</a></h3>
+                        <br />
                         <B.ModalTriggerLink modal={<JiraLoginModal api={api} onAuthenticated={onAuthenticated} />}>
                             <UnauthorizedIcon type='danger' />
                             Unauthorized.&nbsp; Please click me.
@@ -509,16 +509,16 @@ function JiraIssueFormatter(settings: Settings, api: API.API, onAuthenticated: (
                 return (
                     <div>
                         <h3>
-                            <a href={api.createJiraIssueUrl(jiraIssue) } target='_blank'>
+                            <a href={api.createJiraIssueUrl(jiraIssue)} target='_blank'>
                                 <B.Icon iconClassName='fa fa-exclamation-triangle' color={'#d0b847'} lineHeight={20}>
                                 </B.Icon>
                                 {jiraIssue.key}
                             </a>
                         </h3>
                         <ul>
-                            { jiraIssue.errorMessages.map(x => {
+                            {jiraIssue.errorMessages.map(x => {
                                 return <li key={x}>{x}</li>;
-                            }) }
+                            })}
                         </ul>
                     </div>
                 );
@@ -535,7 +535,7 @@ function JiraIssueFormatter(settings: Settings, api: API.API, onAuthenticated: (
             const fields = jiraIssue.fields;
 
             return <div>
-                <h3><a href={api.createJiraIssueUrl(jiraIssue) } target='_blank'>{jiraIssue.key} {fields.summary}</a></h3>
+                <h3><a href={api.createJiraIssueUrl(jiraIssue)} target='_blank'>{jiraIssue.key} {fields.summary}</a></h3>
                 <table className='table is-narrow' style={style}>
                     <thead>
                         <tr>
@@ -544,14 +544,14 @@ function JiraIssueFormatter(settings: Settings, api: API.API, onAuthenticated: (
                         </tr>
                     </thead>
                     <tbody>
-                        { showFields.map(x => {
+                        {showFields.map(x => {
                             return (
                                 <tr key={x.key}>
                                     <td>{x.displayName}</td>
-                                    <td>{_toJiraDisplayValue(x, fields) }</td>
+                                    <td>{_toJiraDisplayValue(x, fields)}</td>
                                 </tr>
                             );
-                        }) }
+                        })}
                     </tbody>
                 </table>
             </div>;
@@ -569,6 +569,11 @@ function _toJiraDisplayValue(option: ResolverField, fields: any): string {
             return s;
         }
     }, fields);
+
+    // unresolved
+    if (typeof value === 'object') {
+        return '-';
+    }
 
     if (value !== undefined) {
         if (option.datePattern && typeof value === 'string') {
