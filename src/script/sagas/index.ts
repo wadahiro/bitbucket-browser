@@ -1,5 +1,5 @@
 import { Task, channel } from 'redux-saga'
-import { race, call, apply, fork, spawn, join, select, Effect, put } from 'redux-saga/effects'
+import { race, call, apply, fork, spawn, join, select, Effect, TakeEffect, Pattern, put } from 'redux-saga/effects'
 import * as B from '../bulma';
 
 import * as actions from '../actions'
@@ -10,7 +10,9 @@ import { Settings } from '../Settings';
 import { trimSlash } from '../Utils';
 
 // TODO
-const { take } = require('redux-saga').effects;
+type takeFunc<T> = (action: T) => TakeEffect<any>;
+const take: takeFunc<actions.Types | actions.Types[]> = require('redux-saga').effects.take;
+const takePattern: takeFunc<Pattern<any>> = take;
 const { takeEvery } = require('redux-saga');
 
 async function fetchSettings(): Promise<Settings> {
@@ -24,14 +26,14 @@ async function fetchSettings(): Promise<Settings> {
 }
 
 function* initApp(): Iterable<Effect> {
-    const action: actions.InitAppAction = yield take(actions.INIT_APP);
+    const action: actions.InitAppAction = yield take('INIT_APP');
 
     let settings: Settings = yield call(fetchSettings);
 
     settings = resolveSettings(settings);
 
     yield put(<actions.FetchSettingsScceededAction>{
-        type: actions.FETCH_SETTINGS_SUCCEEDED,
+        type: 'FETCH_SETTINGS_SUCCEEDED',
         payload: {
             settings
         }
@@ -44,7 +46,7 @@ function* initApp(): Iterable<Effect> {
     if (!bitbucketAuthenticated) {
         // Open Bitbucket Login page and wait for authenticated
         yield put(actions.showBitbucketLogin());
-        yield take(actions.BITBUCKET_AUTHENTICATED);
+        yield take('BITBUCKET_AUTHENTICATED');
     }
 
     // Restore app state
@@ -60,7 +62,7 @@ function* initApp(): Iterable<Effect> {
     }
 
     yield put(<actions.InitAppAction>{
-        type: actions.INIT_APP_SUCCEEDED,
+        type: 'INIT_APP_SUCCEEDED',
         payload: {
             sonarQubeAuthenticated,
             jiraAuthenticated
@@ -69,7 +71,7 @@ function* initApp(): Iterable<Effect> {
 
     // Auto fetching branchs after app initialized 
     yield put(<actions.FetchBranchInfosAction>{
-        type: actions.FETCH_BRANCH_INFOS_REQUESTED
+        type: 'FETCH_BRANCH_INFOS_REQUESTED'
     });
 }
 
@@ -111,17 +113,17 @@ function fixResolverBaseUrl(item) {
 
 function* pollReloadBranchInfos(action: actions.ReloadBranchInfosAction): Iterable<Effect> {
     while (true) {
-        yield take(actions.RELOAD_BRANCH_INFOS);
+        yield take('RELOAD_BRANCH_INFOS');
 
         yield put(<actions.FetchBranchInfosAction>{
-            type: actions.FETCH_BRANCH_INFOS_REQUESTED
+            type: 'FETCH_BRANCH_INFOS_REQUESTED'
         });
     }
 }
 
 function* pollDownloadBranchInfos(): Iterable<Effect | Effect[]> {
     while (true) {
-        const action: actions.DownloadBranchInfosAction = yield take(actions.DOWNLOAD_BRANCH_INFOS);
+        const action: actions.DownloadBranchInfosAction = yield take('DOWNLOAD_BRANCH_INFOS');
 
         const settings: Settings = yield select((state: RootState) => state.settings);
 
@@ -132,7 +134,7 @@ function* pollDownloadBranchInfos(): Iterable<Effect | Effect[]> {
                 type: `${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${x.id}`
             }));
 
-        const succededAction: actions.FetchAllBranchInfosDetails = yield take(actions.FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED);
+        const succededAction: actions.FetchAllBranchInfosDetails = yield take('FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED');
 
         // Do download
         action.payload.downalodHandler(succededAction.payload.branchInfos);
@@ -141,7 +143,7 @@ function* pollDownloadBranchInfos(): Iterable<Effect | Effect[]> {
 
 function* pollFetchBranchInfosRequested(action: actions.FetchBranchInfosAction): Iterable<Effect> {
     while (true) {
-        yield take(actions.FETCH_BRANCH_INFOS_REQUESTED);
+        yield take('FETCH_BRANCH_INFOS_REQUESTED');
 
         const api: API.API = yield select((state: RootState) => state.app.api);
 
@@ -151,8 +153,8 @@ function* pollFetchBranchInfosRequested(action: actions.FetchBranchInfosAction):
 
         yield join(task);
 
-        yield put(<actions.FetchBranchInfosAction>{
-            type: actions.FETCH_BRANCH_INFOS_SUCCEEDED
+        yield put(<actions.FetchBranchInfosSucceededAction>{
+            type: 'FETCH_BRANCH_INFOS_SUCCEEDED'
         });
     }
 }
@@ -170,7 +172,7 @@ function* handleFetchBranchInfosPerRepo(api: API.API, repo: API.Repo): Iterable<
     const branchInfos: API.BranchInfo[] = yield call([api, api.fetchBranchInfo], repo);
 
     yield put(<actions.AppendBranchInfosAction>{
-        type: actions.APPEND_BRANCH_INFOS,
+        type: 'APPEND_BRANCH_INFOS',
         payload: {
             branchInfos
         }
@@ -197,7 +199,7 @@ function* handleFetchPullRequestCount(branchInfosPerRepo: API.BranchInfo[]): Ite
 
     // wait for showing this branchInfo details
     const actionTypes = branchInfosPerRepo.map(x => `${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${x.id}`);
-    yield take(actionTypes);
+    yield takePattern(actionTypes);
 
     const prCountPerRepo: API.PullRequestCount = yield request(api, api.fetchPullRequests, branchInfosPerRepo[0]);
 
@@ -219,7 +221,7 @@ function* handleFetchPullRequestCount(branchInfosPerRepo: API.BranchInfo[]): Ite
         yield fork(handleSonarForBitbucketStatus, branchInfo, pullRequestStatusPerBranch.prIds);
 
         yield put(<actions.UpdateBranchInfoAction>{
-            type: actions.UPDATE_BRANCH_INFO,
+            type: 'UPDATE_BRANCH_INFO',
             payload: {
                 branchInfo: {
                     id,
@@ -252,7 +254,7 @@ function* handleSonarForBitbucketStatus(branchInfo: API.BranchInfo, prIds: numbe
     }
 
     yield put(<actions.UpdateBranchInfoAction>{
-        type: actions.UPDATE_BRANCH_INFO,
+        type: 'UPDATE_BRANCH_INFO',
         payload: {
             branchInfo: {
                 id: branchInfo.id,
@@ -275,7 +277,7 @@ function* handleBuildStatus(branchInfo: API.BranchInfo): Iterable<Effect> {
     const { id, latestCommitHash } = branchInfo;
 
     // wait for showing this branchInfo details
-    yield take(`${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${id}`);
+    yield takePattern(`${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${id}`);
 
     let buildStatus: API.BuildStatus;
     if (latestCommitHash === '') {
@@ -288,7 +290,7 @@ function* handleBuildStatus(branchInfo: API.BranchInfo): Iterable<Effect> {
     }
 
     yield put(<actions.UpdateBranchInfoAction>{
-        type: actions.UPDATE_BRANCH_INFO,
+        type: 'UPDATE_BRANCH_INFO',
         payload: {
             branchInfo: {
                 id,
@@ -312,7 +314,7 @@ function* handleSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
     const { id } = branchInfo;
 
     // wait for showing this branchInfo details
-    yield take(`${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${id}`);
+    yield takePattern(`${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${id}`);
 
     const sonarQubeAuthenticated: boolean = yield select((state: RootState) => state.app.sonarQubeAuthenticated);
 
@@ -326,7 +328,7 @@ function* handleSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
         };
 
         yield put(<actions.UpdateBranchInfoAction>{
-            type: actions.UPDATE_BRANCH_INFO,
+            type: 'UPDATE_BRANCH_INFO',
             payload: {
                 branchInfo: {
                     id,
@@ -338,7 +340,7 @@ function* handleSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
             }
         });
 
-        yield take(actions.SONARQUBE_AUTHENTICATED);
+        yield take('SONARQUBE_AUTHENTICATED');
 
         // Retry after authenticated
         yield fork(updateSonarQubeMetrics, branchInfo);
@@ -352,7 +354,7 @@ function* updateSonarQubeMetrics(branchInfo: API.BranchInfo): Iterable<Effect> {
     const sonarQubeMetrics: API.SonarQubeMetrics = yield request(api, api.fetchSonarQubeMetricsByKey, repo, branch);
 
     yield put(<actions.UpdateBranchInfoAction>{
-        type: actions.UPDATE_BRANCH_INFO,
+        type: 'UPDATE_BRANCH_INFO',
         payload: {
             branchInfo: {
                 id,
@@ -379,7 +381,7 @@ function* handleJiraIssue(branchInfo: API.BranchInfo): Iterable<Effect> {
 
     if (!matched) {
         yield put(<actions.UpdateBranchInfoAction>{
-            type: actions.UPDATE_BRANCH_INFO,
+            type: 'UPDATE_BRANCH_INFO',
             payload: {
                 branchInfo: {
                     id,
@@ -394,7 +396,7 @@ function* handleJiraIssue(branchInfo: API.BranchInfo): Iterable<Effect> {
     }
 
     // wait for showing this branchInfo details
-    yield take(`${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${id}`);
+    yield takePattern(`${actions.SHOW_BRANCH_INFO_DETAILS_REQUESTED}:${id}`);
 
     const jiraAuthenticated: boolean = yield select((state: RootState) => state.app.jiraAuthenticated);
 
@@ -410,7 +412,7 @@ function* handleJiraIssue(branchInfo: API.BranchInfo): Iterable<Effect> {
         };
 
         yield put(<actions.UpdateBranchInfoAction>{
-            type: actions.UPDATE_BRANCH_INFO,
+            type: 'UPDATE_BRANCH_INFO',
             payload: {
                 branchInfo: {
                     id,
@@ -422,7 +424,7 @@ function* handleJiraIssue(branchInfo: API.BranchInfo): Iterable<Effect> {
             }
         });
 
-        yield take(actions.JIRA_AUTHENTICATED);
+        yield take('JIRA_AUTHENTICATED');
 
         // Retry after authenticated
         yield fork(updateJiraIssue, branchInfo, matched[0]);
@@ -436,7 +438,7 @@ function* updateJiraIssue(branchInfo: API.BranchInfo, issueId: string): Iterable
     const jiraIssue: API.JiraIssue = yield request(api, api.fetchJiraIssue, issueId);
 
     yield put(<actions.UpdateBranchInfoAction>{
-        type: actions.UPDATE_BRANCH_INFO,
+        type: 'UPDATE_BRANCH_INFO',
         payload: {
             branchInfo: {
                 id,
@@ -450,7 +452,7 @@ function* updateJiraIssue(branchInfo: API.BranchInfo, issueId: string): Iterable
 }
 
 function* watchAndLog() {
-    yield take(actions.FETCH_SETTINGS_SUCCEEDED);
+    yield take('FETCH_SETTINGS_SUCCEEDED');
 
     const state: RootState = yield select((state: RootState) => state);
 
@@ -520,7 +522,7 @@ function* restoreStateFromQueryParameter(): Iterable<Effect> {
         }
 
         yield put(<actions.RestoreSettingsAction>{
-            type: actions.RESTORE_SETTINGS,
+            type: 'RESTORE_SETTINGS',
             payload: {
                 settings: Object.assign({}, settings, {
                     items: restoredItems,
@@ -537,7 +539,7 @@ function* restoreStateFromQueryParameter(): Iterable<Effect> {
 
 function* pollSaveAsQueryParameters(): Iterable<Effect> {
     while (true) {
-        const action = yield take([actions.CHANGE_SETTINGS, actions.TOGGLE_SETTINGS]);
+        const action = yield take(['CHANGE_SETTINGS', 'TOGGLE_SETTINGS']);
 
         const settings: Settings = yield select((state: RootState) => state.settings);
 
@@ -589,7 +591,7 @@ function* request(context, func, ...args): any {
 
     // console.log('wait...', id)
 
-    const action: ResponseAction = yield take(`${RESPONSE}:${id}`);
+    const action: ResponseAction = yield takePattern(`${RESPONSE}:${id}`);
 
     // console.log('take', id, action)
 
@@ -615,7 +617,7 @@ interface ResponseAction {
     }
 }
 
-function* watchRequests() {
+function* watchRequests(): Iterable<Effect> {
     // create a channel to queue incoming requests
     const chan = yield call(channel);
 
@@ -630,7 +632,7 @@ function* watchRequests() {
     });
 }
 
-function* handleRequest(chan) {
+function* handleRequest(chan): Iterable<Effect> {
     while (true) {
         const req: RequestAction = yield take(chan);
 
@@ -649,13 +651,13 @@ function* handleRequest(chan) {
 }
 
 function* watchFetchAllBranchInfoDetails() {
-    yield* takeEvery(actions.UPDATE_BRANCH_INFO, function* (action: actions.UpdateBranchInfoAction): Iterable<Effect> {
+    yield* takeEvery('UPDATE_BRANCH_INFO', function* (action: actions.UpdateBranchInfoAction): Iterable<Effect> {
         const branchInfos: API.BranchInfo[] = yield select((state: RootState) => state.browser.branchInfos);
         const found = branchInfos.find(x => x.fetchCompleted !== true);
 
         if (!found) {
             yield put({
-                type: actions.FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED,
+                type: 'FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED',
                 payload: {
                     branchInfos
                 }

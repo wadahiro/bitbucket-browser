@@ -6,6 +6,46 @@ import * as API from '../webapis';
 import { Settings } from '../Settings';
 import { AppState } from '../reducers';
 
+
+export interface Action {
+    type: Types;
+    payload?: any;
+}
+
+export type Types =
+    'FETCH_SETTINGS_SUCCEEDED' |
+    'SHOW_BITBUCKET_LOGIN' |
+
+    'INIT_APP' |
+    'INIT_APP_SUCCEEDED' |
+
+    'RESTORE_SETTINGS' |
+    'TOGGLE_SETTINGS' |
+
+    'CHANGE_PAGE' |
+    'CHANGE_SORT_COLUMN' |
+    'CHANGE_SETTINGS' |
+
+    'BITBUCKET_AUTHENTICATED' |
+    'SONARQUBE_AUTHENTICATED' |
+    'JIRA_AUTHENTICATED' |
+    'FETCH_REPOS_SUCCEEDED' |
+
+    'RELOAD_BRANCH_INFOS' |
+    'DOWNLOAD_BRANCH_INFOS_REQUEST' |
+    'DOWNLOAD_BRANCH_INFOS' |
+
+    'FETCH_BRANCH_INFOS_REQUESTED' |
+    'FETCH_BRANCH_INFOS_SUCCEEDED' |
+    'FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED' |
+
+    'APPEND_BRANCH_INFOS' |
+
+    'SHOW_BRANCH_INFO_DETAILS_REQUESTED' |
+    'UPDATE_BRANCH_INFO'
+    ;
+
+
 export type ActionTypes =
     FetchSettingsScceededAction |
     ShowBitbucketLogin |
@@ -35,14 +75,14 @@ export type ActionTypes =
     UpdateBranchInfoAction
     ;
 
-interface FetchSettingsScceededAction {
+export interface FetchSettingsScceededAction extends Action {
     type: 'FETCH_SETTINGS_SUCCEEDED';
     payload: {
         settings: Settings;
     }
 }
 
-interface ShowBitbucketLogin {
+export interface ShowBitbucketLogin extends Action {
     type: 'SHOW_BITBUCKET_LOGIN';
 }
 export function showBitbucketLogin(): ShowBitbucketLogin {
@@ -51,7 +91,7 @@ export function showBitbucketLogin(): ShowBitbucketLogin {
     };
 }
 
-export interface InitAppAction {
+export interface InitAppAction extends Action {
     type: 'INIT_APP' | 'INIT_APP_SUCCEEDED';
     payload: {
         sonarQubeAuthenticated: boolean;
@@ -68,14 +108,14 @@ export function initApp(): InitAppAction {
     };
 }
 
-export interface RestoreSettingsAction {
+export interface RestoreSettingsAction extends Action {
     type: 'RESTORE_SETTINGS';
     payload: {
         settings: Settings;
     }
 }
 
-interface ToggleSettingsAction {
+interface ToggleSettingsAction extends Action {
     type: 'TOGGLE_SETTINGS';
 }
 export function toggleSettings(): ToggleSettingsAction {
@@ -84,7 +124,7 @@ export function toggleSettings(): ToggleSettingsAction {
     };
 }
 
-export interface ChangePageAction {
+export interface ChangePageAction extends Action {
     type: 'CHANGE_PAGE';
     payload: {
         nextPage: number;
@@ -99,7 +139,7 @@ export function changePage(nextPage: number): ChangePageAction {
     };
 }
 
-interface ChangeSortColumnAction {
+interface ChangeSortColumnAction extends Action {
     type: 'CHANGE_SORT_COLUMN';
     payload: {
         nextSortColumn: string;
@@ -114,7 +154,7 @@ export function changeSortColumn(nextSortColumn: string): ChangeSortColumnAction
     };
 }
 
-interface ChangeSettingsAction {
+interface ChangeSettingsAction extends Action {
     type: 'CHANGE_SETTINGS';
     payload: {
         settings: Settings;
@@ -129,7 +169,7 @@ export function changeSettings(settings: Settings): ChangeSettingsAction {
     };
 }
 
-interface BitbucketAuthenticatedAction {
+interface BitbucketAuthenticatedAction extends Action {
     type: 'BITBUCKET_AUTHENTICATED';
 }
 export function bitbucketAuthenticated(): BitbucketAuthenticatedAction {
@@ -138,8 +178,7 @@ export function bitbucketAuthenticated(): BitbucketAuthenticatedAction {
     };
 }
 
-
-interface SonarQubeAuthenticatedAction {
+interface SonarQubeAuthenticatedAction extends Action {
     type: 'SONARQUBE_AUTHENTICATED';
 }
 export function sonarQubeAuthenticated(): SonarQubeAuthenticatedAction {
@@ -148,7 +187,7 @@ export function sonarQubeAuthenticated(): SonarQubeAuthenticatedAction {
     };
 }
 
-interface JiraAuthenticatedAction {
+interface JiraAuthenticatedAction extends Action {
     type: 'JIRA_AUTHENTICATED';
 }
 export function jiraAuthenticated(): JiraAuthenticatedAction {
@@ -157,7 +196,7 @@ export function jiraAuthenticated(): JiraAuthenticatedAction {
     };
 }
 
-export interface FetchReposAction {
+export interface FetchReposAction extends Action {
     type: 'FETCH_REPOS_SUCCEEDED';
     payload: {
         settings: Settings;
@@ -165,7 +204,7 @@ export interface FetchReposAction {
     };
 }
 
-export interface ReloadBranchInfosAction {
+export interface ReloadBranchInfosAction extends Action {
     type: 'RELOAD_BRANCH_INFOS';
 }
 export function reloadBranchInfos(): ReloadBranchInfosAction {
@@ -174,7 +213,7 @@ export function reloadBranchInfos(): ReloadBranchInfosAction {
     };
 }
 
-export interface DownloadBranchInfosRequestAction {
+export interface DownloadBranchInfosRequestAction extends Action {
     type: 'DOWNLOAD_BRANCH_INFOS_REQUEST';
 }
 export function downloadBranchInfosRequest(): DownloadBranchInfosRequestAction {
@@ -183,7 +222,7 @@ export function downloadBranchInfosRequest(): DownloadBranchInfosRequestAction {
     };
 }
 
-export interface DownloadBranchInfosAction {
+export interface DownloadBranchInfosAction extends Action {
     type: 'DOWNLOAD_BRANCH_INFOS';
     payload: {
         downalodHandler: (branchInfos: API.BranchInfo[]) => void;
@@ -198,8 +237,8 @@ export function downloadBranchInfos(downalodHandler): DownloadBranchInfosAction 
     };
 }
 
-export interface FetchBranchInfosAction {
-    type: 'FETCH_BRANCH_INFOS_REQUESTED'
+export interface FetchBranchInfosAction extends Action {
+    type: 'FETCH_BRANCH_INFOS_REQUESTED';
 }
 export function fetchBranchInfos(settings: Settings): FetchBranchInfosAction {
     return {
@@ -207,18 +246,18 @@ export function fetchBranchInfos(settings: Settings): FetchBranchInfosAction {
     };
 }
 
-export interface FetchBranchInfosSucceededAction {
+export interface FetchBranchInfosSucceededAction extends Action {
     type: 'FETCH_BRANCH_INFOS_SUCCEEDED';
 }
 
-export interface FetchAllBranchInfosDetails {
+export interface FetchAllBranchInfosDetails extends Action {
     type: 'FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED';
     payload: {
         branchInfos: API.BranchInfo[];
     }
 }
 
-export interface AppendBranchInfosAction {
+export interface AppendBranchInfosAction extends Action {
     type: 'APPEND_BRANCH_INFOS';
     payload: {
         branchInfos: API.BranchInfo[];
@@ -235,11 +274,11 @@ export function showBranchInfoDetails(id: string): ShowBranchInfoDetailsAction {
     };
 }
 
-export interface ShowAllBranchInfoDetailsAction {
+export interface ShowAllBranchInfoDetailsAction extends Action {
     type: 'SHOW_BRANCH_INFO_DETAILS_REQUESTED';
 }
 
-export interface UpdateBranchInfoAction {
+export interface UpdateBranchInfoAction extends Action {
     type: 'UPDATE_BRANCH_INFO';
     payload: {
         branchInfo: API.BranchInfo;
