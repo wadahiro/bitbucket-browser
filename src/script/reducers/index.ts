@@ -28,23 +28,21 @@ function initSettings(): Settings {
     };
 }
 
-export const settingsReducer = (state: Settings = initSettings(), action: Actions.Action): Settings => {
-    if (Actions.isType(action, Actions.FETCH_SETTINGS_SUCCEEDED)) {
-        return Object.assign<Settings, Settings, Settings>({}, state, action.payload.settings);
-    }
+export const settingsReducer = (state: Settings = initSettings(), action: Actions.ActionTypes): Settings => {
+    switch (action.type) {
+        case 'FETCH_SETTINGS_SUCCEEDED':
+            return Object.assign<Settings, Settings, Settings>({}, state, action.payload.settings);
 
-    if (Actions.isType(action, Actions.RESTORE_SETTINGS)) {
-        return Object.assign<Settings, Settings, Settings>({}, state, action.payload.settings);
-    }
+        case 'RESTORE_SETTINGS':
+            return Object.assign<Settings, Settings, Settings>({}, state, action.payload.settings);
 
-    if (Actions.isType(action, Actions.TOGGLE_SETTINGS)) {
-        return Object.assign<Settings, Settings, Settings>({}, state, {
-            show: !state.show
-        });
-    }
+        case 'TOGGLE_SETTINGS':
+            return Object.assign<Settings, Settings, Settings>({}, state, {
+                show: !state.show
+            });
 
-    if (Actions.isType(action, Actions.CHANGE_SETTINGS)) {
-        return Object.assign<Settings, Settings, Settings>({}, state, action.payload.settings);
+        case 'CHANGE_SETTINGS':
+            return Object.assign<Settings, Settings, Settings>({}, state, action.payload.settings);
     }
 
     return state;
@@ -57,7 +55,6 @@ export interface AppState {
     initizalized?: boolean;
     loading?: boolean;
     downloading?: boolean;
-    pending?: Actions.Action[];
     limit?: number;
     numOfRunning?: number;
     bitbucketAuthenticated?: boolean;
@@ -71,7 +68,6 @@ const initialAppState: AppState = {
     initizalized: false,
     loading: false,
     downloading: false,
-    pending: [],
     limit: 5,
     numOfRunning: 0,
     bitbucketAuthenticated: true,
@@ -79,70 +75,62 @@ const initialAppState: AppState = {
     jiraAuthenticated: true
 };
 
-export const appStateReducer = (state: AppState = initialAppState, action: Actions.Action) => {
-    if (Actions.isType(action, Actions.FETCH_SETTINGS_SUCCEEDED)) {
-        const { settings } = action.payload;
-        const api = new API.API(settings);
+export const appStateReducer = (state: AppState = initialAppState, action: Actions.ActionTypes) => {
+    switch (action.type) {
+        case 'FETCH_SETTINGS_SUCCEEDED':
+            const { settings } = action.payload;
+            const api = new API.API(settings);
 
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            api
-        });
-    }
+            return Object.assign<AppState, AppState, AppState>({}, state, {
+                api
+            });
 
-    if (Actions.isType(action, Actions.SHOW_BITBUCKET_LOGIN)) {
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            showBitbucketLogin: true
-        });
-    }
+        case 'SHOW_BITBUCKET_LOGIN':
+            return Object.assign<AppState, AppState, AppState>({}, state, {
+                showBitbucketLogin: true
+            });
 
-    if (Actions.isType(action, Actions.BITBUCKET_AUTHENTICATED)) {
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            showBitbucketLogin: false
-        });
-    }
+        case 'BITBUCKET_AUTHENTICATED':
+            return Object.assign<AppState, AppState, AppState>({}, state, {
+                showBitbucketLogin: false
+            });
 
-    if (Actions.isType(action, Actions.INIT_APP_SUCCEEDED)) {
-        const payload = action.payload;
+        case 'INIT_APP_SUCCEEDED':
+            const payload = action.payload;
 
-        return Object.assign<AppState, AppState, AppState, AppState>({}, state, payload, {
-            initizalized: true
-        });
-    }
+            return Object.assign<AppState, AppState, AppState, AppState>({}, state, payload, {
+                initizalized: true
+            });
 
-    if (Actions.isType(action, Actions.FETCH_BRANCH_INFOS_REQUESTED)) {
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            loading: true
-        });
-    }
+        case 'FETCH_BRANCH_INFOS_REQUESTED':
+            return Object.assign<AppState, AppState, AppState>({}, state, {
+                loading: true
+            });
 
-    if (Actions.isType(action, Actions.FETCH_BRANCH_INFOS_SUCCEEDED)) {
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            loading: false
-        });
-    }
+        case 'FETCH_BRANCH_INFOS_SUCCEEDED':
+            return Object.assign<AppState, AppState, AppState>({}, state, {
+                loading: false
+            });
 
-    if (Actions.isType(action, Actions.DOWNLOAD_BRANCH_INFOS_REQUEST)) {
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            downloading: true
-        });
-    }
+        case 'DOWNLOAD_BRANCH_INFOS_REQUEST':
+            return Object.assign<AppState, AppState, AppState>({}, state, {
+                downloading: true
+            });
 
-    if (Actions.isType(action, Actions.FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED)) {
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            downloading: false
-        });
-    }
+        case 'FETCH_ALL_BRANCH_INFO_DETAILS_SUCCEEDED':
+            return Object.assign<AppState, AppState, AppState>({}, state, {
+                downloading: false
+            });
 
-    if (Actions.isType(action, Actions.SONARQUBE_AUTHENTICATED)) {
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            sonarQubeAuthenticated: true
-        });
-    }
+        case 'SONARQUBE_AUTHENTICATED':
+            return Object.assign<AppState, AppState, AppState>({}, state, {
+                sonarQubeAuthenticated: true
+            });
 
-    if (Actions.isType(action, Actions.JIRA_AUTHENTICATED)) {
-        return Object.assign<AppState, AppState, AppState>({}, state, {
-            jiraAuthenticated: true
-        });
+        case 'JIRA_AUTHENTICATED':
+            return Object.assign<AppState, AppState, AppState>({}, state, {
+                jiraAuthenticated: true
+            });
     }
 
     return state;
@@ -166,62 +154,54 @@ const initialBrowserState: BrowserState = {
     currentSortAscending: true
 };
 
-export const browserStateReducer = (state: BrowserState = initialBrowserState, action: Actions.Action) => {
+export const browserStateReducer = (state: BrowserState = initialBrowserState, action: Actions.ActionTypes) => {
 
-    if (Actions.isType(action, Actions.APPEND_BRANCH_INFOS)) {
-        const payload = action.payload;
-        const nextBranchInfos = state.branchInfos.concat(payload.branchInfos);
+    switch (action.type) {
+        case 'APPEND_BRANCH_INFOS':
+            const nextBranchInfos = state.branchInfos.concat(action.payload.branchInfos);
 
-        return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
-            branchInfos: nextBranchInfos
-        });
-    }
+            return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
+                branchInfos: nextBranchInfos
+            });
 
-    if (Actions.isType(action, Actions.RELOAD_BRANCH_INFOS)) {
-        return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
-            branchInfos: []
-        });
-    }
+        case 'RELOAD_BRANCH_INFOS':
+            return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
+                branchInfos: []
+            });
 
-    if (Actions.isType(action, Actions.UPDATE_BRANCH_INFO)) {
-        const { branchInfo } = action.payload;
+        case 'UPDATE_BRANCH_INFO':
+            const { branchInfo } = action.payload;
 
-        return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
-            branchInfos: state.branchInfos.map(x => {
-                if (x.id === branchInfo.id) {
-                    const newBranchInfo = Object.assign({}, x, branchInfo);
+            return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
+                branchInfos: state.branchInfos.map(x => {
+                    if (x.id === branchInfo.id) {
+                        const newBranchInfo = Object.assign({}, x, branchInfo);
 
-                    // Check lazy loading completed
-                    const fetchCompleted = API.isFetchCompleted(newBranchInfo);
-                    newBranchInfo.fetchCompleted = fetchCompleted;
+                        // Check lazy loading completed
+                        const fetchCompleted = API.isFetchCompleted(newBranchInfo);
+                        newBranchInfo.fetchCompleted = fetchCompleted;
 
-                    return newBranchInfo;
-                }
-                return x;
-            })
-        });
-    }
+                        return newBranchInfo;
+                    }
+                    return x;
+                })
+            });
 
-    if (Actions.isType(action, Actions.CHANGE_PAGE)) {
-        const payload = action.payload;
+        case 'CHANGE_PAGE':
+            return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
+                currentPage: action.payload.nextPage
+            });
 
-        return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
-            currentPage: payload.nextPage
-        });
-    }
+        case 'CHANGE_SORT_COLUMN':
+            let nextAscending = state.currentSortAscending;
+            if (state.currentSortColumn === action.payload.nextSortColumn) {
+                nextAscending = !nextAscending;
+            }
 
-    if (Actions.isType(action, Actions.CHANGE_SORT_COLUMN)) {
-        const payload = action.payload;
-
-        let nextAscending = state.currentSortAscending;
-        if (state.currentSortColumn === payload.nextSortColumn) {
-            nextAscending = !nextAscending;
-        }
-
-        return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
-            currentSortColumn: payload.nextSortColumn,
-            currentSortAscending: nextAscending
-        });
+            return Object.assign<BrowserState, BrowserState, BrowserState>({}, state, {
+                currentSortColumn: action.payload.nextSortColumn,
+                currentSortAscending: nextAscending
+            });
     }
 
     return state;
