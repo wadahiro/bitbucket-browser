@@ -502,6 +502,7 @@ app.get('/jira/rest/api/2/issue/:id', function (req, res) {
             summary: 'Sample issue',
             created: '2016-07-07T18:03:40.000+0900',
             updated: '2016-07-07T20:30:00.000+0900',
+            duedate: '2016-08-01',
             status: {
                 id: '1',
                 name: 'Open',
