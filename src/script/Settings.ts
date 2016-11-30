@@ -1,6 +1,7 @@
 export interface Settings {
     title?: string;
     baseUrl?: string;
+    linkBaseUrl?: string;
     items?: Items;
     show?: boolean;
     resultsPerPage?: {
