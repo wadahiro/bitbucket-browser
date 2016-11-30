@@ -187,7 +187,7 @@ export class API {
     async fetchRepos(project: string): Promise<Repo[]> {
         const repos = await this.bitbucketApi.fetchRepos(project)
 
-        return repos.values.map(r => {
+        return repos.map(r => {
             return {
                 project: project,
                 repo: r.slug,
@@ -199,7 +199,7 @@ export class API {
     async fetchAllRepos(): Promise<Repo[]> {
         const repos = await this.bitbucketApi.fetchAllRepos();
 
-        return repos.values.map(r => {
+        return repos.map(r => {
             return {
                 project: r.project.key,
                 repo: r.slug,
@@ -211,7 +211,7 @@ export class API {
     async fetchBranches(repo: Repo): Promise<Branch[]> {
         const branches = await this.bitbucketApi.fetchBranches(repo.project, repo.repo);
 
-        return branches.values.map(b => {
+        return branches.map(b => {
             let behindAheadBranch = {
                 behindBranch: 0,
                 aheadBranch: 0
@@ -267,7 +267,7 @@ export class API {
             merged: {},
             declined: {},
         };
-        return pullRequests.values.reduce<PullRequestCount>((s, p) => {
+        return pullRequests.reduce<PullRequestCount>((s, p) => {
             const { pullRequestIds, from, to, merged, declined } = s;
             if (p.state === 'OPEN') {
                 _count(from, p.fromRef.id);
@@ -286,7 +286,7 @@ export class API {
         const buildStatus = await this.bitbucketApi.fetchBuildStatus(commitHash);
 
         // sort by dateAdded desc
-        buildStatus.values.sort((a, b) => {
+        buildStatus.sort((a, b) => {
             if (a.dateAdded < b.dateAdded) return 1;
             if (a.dateAdded > b.dateAdded) return -1;
             return 0;
@@ -294,7 +294,7 @@ export class API {
 
         return {
             commitHash,
-            values: buildStatus.values.map(x => {
+            values: buildStatus.map(x => {
                 x.dateAdded = formatDateTime(x.dateAdded as number);
                 return x;
             })

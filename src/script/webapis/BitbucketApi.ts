@@ -4,6 +4,7 @@ export interface BitBucketPage {
     limit: number;
     size: number;
     start: number;
+    nextPageStart?: number;
 }
 export interface BitBucketProjects extends BitBucketPage {
     values: BitBucketProject[];
@@ -204,7 +205,7 @@ export class BitbucketApi {
     async isAuthenticated(): Promise<boolean> {
         const projects = await this.fetchProjects();
 
-        if (projects.values.length === 0) {
+        if (projects.length === 0) {
             return false;
         }
         return true;
@@ -231,52 +232,118 @@ export class BitbucketApi {
         return await this.isAuthenticated();
     }
 
-    async fetchProjects(): Promise<BitBucketProjects> {
-        const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects`, {
-            credentials: 'same-origin'
-        });
-        const json: BitBucketProjects = await response.json();
-        return json;
+    async fetchProjects(): Promise<BitBucketProject[]> {
+        const projects: BitBucketProject[] = [];
+        let start = 0;
+        while (true) {
+            const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects?start=${start}`, {
+                credentials: 'same-origin'
+            });
+            const json: BitBucketProjects = await response.json();
+
+            projects.push(...json.values);
+
+            if (json.isLastPage !== false) {
+                break;
+            }
+            start = json.nextPageStart;
+        }
+        return projects;
     }
 
-    async fetchRepos(project): Promise<BitBucketRepos> {
-        const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects/${project}/repos`, {
-            credentials: 'same-origin'
-        });
-        const json: BitBucketRepos = await response.json();
-        return json;
+    async fetchRepos(project): Promise<BitBucketRepo[]> {
+        const repos: BitBucketRepo[] = [];
+        let start = 0;
+        while (true) {
+            const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects/${project}/repos?start=${start}`, {
+                credentials: 'same-origin'
+            });
+            const json: BitBucketRepos = await response.json();
+
+            repos.push(...json.values);
+
+            if (json.isLastPage !== false) {
+                break;
+            }
+            start = json.nextPageStart;
+        }
+        return repos;
     }
 
-    async fetchAllRepos(): Promise<BitBucketRepos> {
-        const response = await fetch(`${this.baseUrl}/rest/api/1.0/repos?limit=2000`, {
-            credentials: 'same-origin'
-        });
-        const json: BitBucketRepos = await response.json();
-        return json;
+    async fetchAllRepos(): Promise<BitBucketRepo[]> {
+        const repos: BitBucketRepo[] = [];
+        let start = 0;
+        while (true) {
+            const response = await fetch(`${this.baseUrl}/rest/api/1.0/repos?limit=2000&start=${start}`, {
+                credentials: 'same-origin'
+            });
+            const json: BitBucketRepos = await response.json();
+
+            repos.push(...json.values);
+
+            if (json.isLastPage !== false) {
+                break;
+            }
+            start = json.nextPageStart;
+        }
+        return repos;
     }
 
-    async fetchBranches(project: string, repo: string): Promise<BitbucketBranches> {
-        const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects/${project}/repos/${repo}/branches?details=true`, {
-            credentials: 'same-origin'
-        });
-        const json: BitbucketBranches = await response.json();
-        return json;
+    async fetchBranches(project: string, repo: string): Promise<BitbucketBranch[]> {
+        const branches: BitbucketBranch[] = [];
+        let start = 0;
+        while (true) {
+            const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects/${project}/repos/${repo}/branches?details=true&start=${start}`, {
+                credentials: 'same-origin'
+            });
+            const json: BitbucketBranches = await response.json();
+
+            branches.push(...json.values);
+
+            if (json.isLastPage !== false) {
+                break;
+            }
+            start = json.nextPageStart;
+        }
+        return branches;
     }
 
-    async fetchPullRequests(project: string, repo: string): Promise<BitbucketPullRequests> {
-        const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects/${project}/repos/${repo}/pull-requests?state=ALL&withProperties=false&withAttributes=false`, {
-            credentials: 'same-origin'
-        });
-        const json: BitbucketPullRequests = await response.json();
-        return json;
+    async fetchPullRequests(project: string, repo: string): Promise<BitbucketPullRequest[]> {
+        const purrRequests: BitbucketPullRequest[] = [];
+        let start = 0;
+        while (true) {
+            const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects/${project}/repos/${repo}/pull-requests?state=ALL&withProperties=false&withAttributes=false&start=${start}`, {
+                credentials: 'same-origin'
+            });
+            const json: BitbucketPullRequests = await response.json();
+
+            purrRequests.push(...json.values);
+
+            if (json.isLastPage !== false) {
+                break;
+            }
+            start = json.nextPageStart;
+        }
+        return purrRequests;
     }
 
-    async fetchBuildStatus(commitHash: string): Promise<BitbucketBuildStatuses> {
-        const response = await fetch(`${this.baseUrl}/rest/build-status/1.0/commits/${commitHash}`, {
-            credentials: 'same-origin'
-        });
-        const json: BitbucketBuildStatuses = await response.json();
-        return json;
+    async fetchBuildStatus(commitHash: string): Promise<BitbucketBuildStatus[]> {
+        const buildStatusList: BitbucketBuildStatus[] = [];
+        let start = 0;
+        while (true) {
+            const response = await fetch(`${this.baseUrl}/rest/build-status/1.0/commits/${commitHash}?start=${start}`, {
+                credentials: 'same-origin'
+            });
+            const json: BitbucketBuildStatuses = await response.json();
+
+            buildStatusList.push(...json.values);
+
+            if (json.isLastPage !== false) {
+                break;
+            }
+            start = json.nextPageStart;
+        }
+        return buildStatusList;
     }
 
     async fetchSonarForBitbucketStatus(repoId: number, pullRequestId: number): Promise<BitbucketSonarStatus> {

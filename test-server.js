@@ -75,14 +75,13 @@ app.get(contextPath + '/rest/api/1.0/projects', function (req, res) {
     res.json({
         "size": 1,
         "limit": 25,
-        "isLastPage": false,
+        "isLastPage": true,
         "values": [
             {
                 "key": "PRJ1"
             }
         ],
-        "start": 0,
-        "nextPageStart": 25
+        "start": 0
     });
 });
 
@@ -96,7 +95,11 @@ app.get(new RegExp(contextPath + '/rest/api/1.0/projects/(.*)/repos/(.*)-(.*)/br
     if (repo === 'utils') {
         res.json(
             {
-                values: []
+                "size": 0,
+                "limit": 25,
+                "isLastPage": true,
+                "values": [],
+                "start": 0
             }
         );
     } else {
