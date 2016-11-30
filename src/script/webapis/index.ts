@@ -127,6 +127,7 @@ export class API {
     bitbucketApi: BAPI.BitbucketApi;
     sonarQubeApi: SQAPI.SonarQubeApi;
     jiraApi: JAPI.JiraApi;
+    linkBaseUrl: string;
 
     constructor(settings: Settings) {
         this.settings = settings;
@@ -145,6 +146,7 @@ export class API {
                 fields: ['summary'].concat(fields)
             });
         }
+        this.linkBaseUrl = settings.linkBaseUrl || settings.baseUrl;
     }
 
     async isAuthenticatedBitbucket(): Promise<boolean> {
@@ -369,7 +371,7 @@ export class API {
     // URL Generator functions
 
     createBitbucketProjectUrl(branchInfo: BranchInfo) {
-        return `${this.bitbucketApi.baseUrl}/projects/${branchInfo.project}`;
+        return `${this.linkBaseUrl}/projects/${branchInfo.project}`;
     }
 
     createBitbucketRepoUrl(branchInfo: BranchInfo) {

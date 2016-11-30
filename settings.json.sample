@@ -1,6 +1,7 @@
 {
     "title": "Bitbucket Browser",
-    "baseUrl": "/bitbucket-browser/stash",
+    "baseUrl": "/bitbucket-browser/bitbucket",
+    "linkBaseUrl": "http://your-bitbucket-host/bitbucket",
     "debug": false,
     "items": {
         "project": {
