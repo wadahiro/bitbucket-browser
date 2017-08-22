@@ -113,7 +113,7 @@ app.get(new RegExp(contextPath + '/rest/api/1.0/projects/(.*)/repos/(.*)-(.*)/br
                         "id": "refs/heads/feature/experimental",
                         "displayId": "feature/experimental",
                         "metadata": {
-                            "com.atlassian.stash.stash-branch-utils:ahead-behind-metadata-provider": {
+                            "com.atlassian.bitbucket.server.bitbucket-branch:ahead-behind-metadata-provider": {
                                 "ahead": 3,
                                 "behind": 10
                             }
@@ -126,7 +126,7 @@ app.get(new RegExp(contextPath + '/rest/api/1.0/projects/(.*)/repos/(.*)-(.*)/br
                         "latestCommit": "ddfa05c0bb2f988f5fd8b8ce0c085fcd5e429190",
                         "isDefault": true,
                         "metadata": {
-                            "com.atlassian.stash.stash-branch-utils:ahead-behind-metadata-provider": {
+                            "com.atlassian.bitbucket.server.bitbucket-branch:ahead-behind-metadata-provider": {
                                 "ahead": 5,
                                 "behind": 4
                             }
@@ -139,7 +139,7 @@ app.get(new RegExp(contextPath + '/rest/api/1.0/projects/(.*)/repos/(.*)-(.*)/br
                         "latestCommit": "adfa05c0bb2f988f5fd8b8ce0c085fcd5e429190",
                         "isDefault": true,
                         "metadata": {
-                            "com.atlassian.stash.stash-branch-utils:ahead-behind-metadata-provider": {
+                            "com.atlassian.bitbucket.server.bitbucket-branch:ahead-behind-metadata-provider": {
                                 "ahead": 3,
                                 "behind": 1
                             }
@@ -152,7 +152,7 @@ app.get(new RegExp(contextPath + '/rest/api/1.0/projects/(.*)/repos/(.*)-(.*)/br
                         "latestCommit": "bdfa05c0bb2f988f5fd8b8ce0c085fcd5e429190",
                         "isDefault": true,
                         "metadata": {
-                            "com.atlassian.stash.stash-branch-utils:ahead-behind-metadata-provider": {
+                            "com.atlassian.bitbucket.server.bitbucket-branch:ahead-behind-metadata-provider": {
                                 "ahead": 10,
                                 "behind": 1
                             }
@@ -165,7 +165,7 @@ app.get(new RegExp(contextPath + '/rest/api/1.0/projects/(.*)/repos/(.*)-(.*)/br
                         "latestCommit": "95f773d9188ca4de6e3d7de0483957f93c279934",
                         "isDefault": false,
                         "metadata": {
-                            "com.atlassian.stash.stash-branch-utils:ahead-behind-metadata-provider": {
+                            "com.atlassian.bitbucket.server.bitbucket-branch:ahead-behind-metadata-provider": {
                                 "ahead": 6,
                                 "behind": 6
                             }

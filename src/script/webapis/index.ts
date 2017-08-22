@@ -224,18 +224,18 @@ export class API {
             let latestCommitHash = '';
 
             if (b.metadata) {
-                if (b.metadata['com.atlassian.stash.stash-branch-utils:ahead-behind-metadata-provider']) {
-                    const metadata = b.metadata['com.atlassian.stash.stash-branch-utils:ahead-behind-metadata-provider'];
+                if (b.metadata.aheadBehindMetadata) {
+                    const metadata = b.metadata.aheadBehindMetadata;
                     behindAheadBranch.aheadBranch = metadata.ahead;
                     behindAheadBranch.behindBranch = metadata.behind;
                 }
-                if (b.metadata['com.atlassian.stash.stash-branch-utils:latest-changeset-metadata']) {
-                    const metadata = b.metadata['com.atlassian.stash.stash-branch-utils:latest-changeset-metadata'];
+                if (b.metadata.latestCommitMetadata) {
+                    const metadata = b.metadata.latestCommitMetadata;
                     latestCommitDate = formatDateTime(metadata.authorTimestamp);
                     latestCommitHash = metadata.id;
                 }
-                if (b.metadata['com.github.wadahiro.bitbucket.branchauthor:branchAuthor']) {
-                    const metadata = b.metadata['com.github.wadahiro.bitbucket.branchauthor:branchAuthor'];
+                if (b.metadata.branchAuthor) {
+                    const metadata = b.metadata.branchAuthor;
                     if (metadata.author) {
                         branchAuthor = metadata.author.displayName === metadata.author.emailAddress ? metadata.author.displayName : `${metadata.author.displayName} (${metadata.author.emailAddress})`;
                         branchCreated = formatDate(metadata.created);
