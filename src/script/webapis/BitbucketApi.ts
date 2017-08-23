@@ -99,11 +99,11 @@ export interface BitbucketBranch {
     latestChangeset: string;
     latestCommit: string;
     metadata: {
-        "com.atlassian.stash.stash-branch-utils:ahead-behind-metadata-provider"?: {
+        aheadBehindMetadata?: {
             ahead: number;
             behind: number;
         };
-        "com.atlassian.stash.stash-branch-utils:latest-changeset-metadata": {
+        latestCommitMetadata: {
             author: {
                 avatarUrl: string;
                 emailAddress: string;
@@ -115,10 +115,10 @@ export interface BitbucketBranch {
             message: string;
             parents: BitbucketChangeset[];
         };
-        "com.atlassian.stash.stash-ref-metadata-plugin:outgoing-pull-request-metadata"?: {
+        outgoigPullRequestMetadata?: {
             pullRequest: BitbucketPullRequest | BitbucketPullRequest[];
         };
-        "com.github.wadahiro.bitbucket.branchauthor:branchAuthor": {
+        branchAuthor: {
             author?: {
                 displayName: string;
                 emailAddress: string;
@@ -296,7 +296,7 @@ export class BitbucketApi {
             const response = await fetch(`${this.baseUrl}/rest/api/1.0/projects/${project}/repos/${repo}/branches?details=true&start=${start}`, {
                 credentials: 'same-origin'
             });
-            const json: BitbucketBranches = await response.json();
+            const json = toBitbucketBranches(await response.json());
 
             branches.push(...json.values);
 
@@ -366,4 +366,20 @@ function trimSlash(url: string) {
         return url.substring(0, url.length - 1)
     }
     return url;
+}
+
+function toBitbucketBranches(jsonResponse: any): BitbucketBranches {
+    if (jsonResponse.values) {
+        jsonResponse.values = jsonResponse.values.map(x => {
+            if (x['metadata']) {
+                x.metadata.aheadBehindMetadata = x.metadata['com.atlassian.stash.stash-branch-utils:ahead-behind-metadata-provider'] || x.metadata['com.atlassian.bitbucket.server.bitbucket-branch:ahead-behind-metadata-provider'];
+                x.metadata.lastCommitMetadata = x.metadata['com.atlassian.stash.stash-branch-utils:latest-changeset-metadata'] || x.metadata['com.atlassian.bitbucket.server.bitbucket-branch:latest-commit-metadata'];
+                x.metadata.outgoigPullRequestMetadata = x.metadata['com.atlassian.stash.stash-ref-metadata-plugin:outgoing-pull-request-metadata'] || x.metadata['com.atlassian.bitbucket.server.bitbucket-ref-metadata:outgoing-pull-request-metadata'];
+                x.metadata.branchAuthor = x.metadata['com.github.wadahiro.bitbucket.branchauthor:branchAuthor'];
+            }
+            return x;
+        });
+    }
+
+    return jsonResponse;
 }

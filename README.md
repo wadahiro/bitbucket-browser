@@ -31,7 +31,8 @@ For example, if your web server proxy Bitbucket server to `/bitbucket` and you d
 ```
 {
     "title": "Bitbucket Browser",
-    "baseUrl": "/bitbucket",
+    "baseUrl": "/bitbucket-browser/bitbucket",
+    "linkBaseUrl": "http://your-bitbucket-host/bitbucket",
     "debug": false,
     "items": {
         "project": {
@@ -195,6 +196,7 @@ For example, if your web server proxy Bitbucket server to `/bitbucket` and you d
 npm install
  ```
 
+
 ### Run with development mode
 
 1. Run dummy bitbucket server for development.
@@ -209,7 +211,21 @@ npm run server
 npm start
  ```
  
-3. Open http://localhost:9000
+3. Create `public/settings.json` for development environment.
+
+ ```bash
+cp settings.json.sample public/
+ ```
+
+4. Edit `baseUrl` in `public/settings.json` as follows.
+
+ ```
+{
+    "title": "Bitbucket Browser",
+    "baseUrl": "/bitbucket",
+ ```
+
+5. Open http://localhost:9000
 
 ### Release Build
 
