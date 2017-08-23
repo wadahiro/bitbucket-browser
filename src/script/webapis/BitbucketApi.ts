@@ -373,7 +373,7 @@ function toBitbucketBranches(jsonResponse: any): BitbucketBranches {
         jsonResponse.values = jsonResponse.values.map(x => {
             if (x['metadata']) {
                 x.metadata.aheadBehindMetadata = x.metadata['com.atlassian.stash.stash-branch-utils:ahead-behind-metadata-provider'] || x.metadata['com.atlassian.bitbucket.server.bitbucket-branch:ahead-behind-metadata-provider'];
-                x.metadata.lastCommitMetadata = x.metadata['com.atlassian.stash.stash-branch-utils:latest-changeset-metadata'] || x.metadata['com.atlassian.bitbucket.server.bitbucket-branch:latest-commit-metadata'];
+                x.metadata.latestCommitMetadata = x.metadata['com.atlassian.stash.stash-branch-utils:latest-changeset-metadata'] || x.metadata['com.atlassian.bitbucket.server.bitbucket-branch:latest-commit-metadata'];
                 x.metadata.outgoigPullRequestMetadata = x.metadata['com.atlassian.stash.stash-ref-metadata-plugin:outgoing-pull-request-metadata'] || x.metadata['com.atlassian.bitbucket.server.bitbucket-ref-metadata:outgoing-pull-request-metadata'];
                 x.metadata.branchAuthor = x.metadata['com.github.wadahiro.bitbucket.branchauthor:branchAuthor'];
             }
