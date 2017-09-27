@@ -387,7 +387,7 @@ export class API {
     }
 
     createPullRequestLink(branchInfo: BranchInfo, state: string) {
-        return `${this.createBitbucketRepoUrl(branchInfo)}/pull-requests?state=${state}`;
+        return `${this.createBitbucketRepoUrl(branchInfo)}/pull-requests?state=${state.toUpperCase()}`;
     }
 
     createPullRequestDetailLink(branchInfo: BranchInfo, pullRequestId: number) {
